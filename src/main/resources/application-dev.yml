@@ -1,0 +1,60 @@
+custom:
+  swagger:
+    enable: true #是否启用swagger文档
+  log:
+    path: D:/logback/${spring.application.name}/${spring.profiles.active}
+  token:
+        cache:
+          initialCapacity: 500 #token缓存初始大小
+          maximumSize: 100000 #token缓存的最大大小
+          expireAfterAccessWithMinutes: 30 #最后一次访问后间隔多少分钟失效
+        userClaim: userInfo
+        survivalTime: 7200000
+        secret: BD12@6$133a
+        ingoreTokenUrls: /userController/loginUser,/userController/registUser,/swagger-ui.html#/*,/swagger-ui.html,/upload/  #忽略检查token的URL
+
+spring:
+  application:
+    name: mes
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/mes?serverTimezone=GMT%2B8&useSSL=false&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+    username: root
+    password:
+    initialization-mode: always
+    sql-script-encoding : utf-8
+  jpa:
+    show-sql: true
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+
+  main:
+      allow-bean-definition-overriding: true
+
+#配置了mvc.static-path-pattern跟web.resources.static-locations这两个就能通过IP访问本地图片了
+  mvc:
+    static-path-pattern: /upload/**
+  web:
+    resources:
+      static-locations: file:D://upload/
+  servlet:
+    multipart:
+      max-file-size: 200MB #设置单个文件大小
+      max-request-size: 200MB #设置单次请求文件的总大小
+
+file:
+  uploadFolder: D:/ #文件上传目录(window是d/e/f盘， linux是/)（注意Linux和Windows上的目录结构不同）
+  imagePath: upload/ #文件保存路径(文件存在具体的文件夹的路径)
+  staticAccessPath: /upload/**  #静态资源对外暴露的访问路径(访问图片的路径)
+  uri: /upload/ #浏览器访问
+
+servlet:
+
+
+server:
+  port: 8080
+
+
+mes:
+  staffNumber: YG
+
