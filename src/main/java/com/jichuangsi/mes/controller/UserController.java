@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.io.InputStream;
 
 @Api("后台角色相关")
@@ -36,9 +35,9 @@ public class UserController {
     @ApiOperation("后台用户登录")
     @ApiImplicitParams({})
     @PostMapping("/loginUser")
-    public ResponseModel loginUser(@RequestBody BackUserLoginModel model,HttpServletRequest request,InputStream inputStream,HttpSession session){
+    public ResponseModel loginUser(@RequestBody BackUserLoginModel model,HttpServletRequest request,InputStream inputStream){
         try {
-            return ResponseModel.sucess("",userService.loginBackUser(model,request,inputStream,session));
+            return ResponseModel.sucess("",userService.loginBackUser(model,request,inputStream));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -47,9 +46,9 @@ public class UserController {
     @ApiOperation("后台修改密码")
     @ApiImplicitParams({})
     @PostMapping("/updateUserPwd")
-    public ResponseModel updateUserPwd(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdatePwdModel model){
+    public ResponseModel updateUserPwd(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdatePwdModel model,HttpServletRequest request){
         try {
-            userService.updateBackUserPwd(userInfoForToken,model);
+            userService.updateBackUserPwd(userInfoForToken,model,request);
             return ResponseModel.sucessWithEmptyData("");
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());

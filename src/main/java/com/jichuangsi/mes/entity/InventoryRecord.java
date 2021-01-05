@@ -14,13 +14,69 @@ public class InventoryRecord {
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//库存记录Id
     private Integer productDetailid;//产品规格明细Id
+    private Integer pppId;//生产id
+
+    private String stockName;//名称
+    private String stockModel;//模型
+    private String stockNumber;//编号
+    private String standards;//规格
+    private Integer unitId;//单位
+
     private Integer warehouseId;//仓库ID
-    private Integer recordType;//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购 6盘点等)
+    private Integer recordType;//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购 6盘点 7 生产出库等)
     private long createTime= new Date().getTime();//创建时间
     private String changequantity ;//发生数量
     private Integer surplusquantity;//剩余数量
     private Integer inventoryType;//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
     private String remark;//备注
+
+    public Integer getPppId() {
+        return pppId;
+    }
+
+    public void setPppId(Integer pppId) {
+        this.pppId = pppId;
+    }
+
+    public String getStockName() {
+        return stockName;
+    }
+
+    public void setStockName(String stockName) {
+        this.stockName = stockName;
+    }
+
+    public String getStockModel() {
+        return stockModel;
+    }
+
+    public void setStockModel(String stockModel) {
+        this.stockModel = stockModel;
+    }
+
+    public String getStockNumber() {
+        return stockNumber;
+    }
+
+    public void setStockNumber(String stockNumber) {
+        this.stockNumber = stockNumber;
+    }
+
+    public String getStandards() {
+        return standards;
+    }
+
+    public void setStandards(String standards) {
+        this.standards = standards;
+    }
+
+    public Integer getUnitId() {
+        return unitId;
+    }
+
+    public void setUnitId(Integer unitId) {
+        this.unitId = unitId;
+    }
 
     public Integer getId() {
         return id;

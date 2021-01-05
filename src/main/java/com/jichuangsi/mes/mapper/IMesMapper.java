@@ -41,12 +41,21 @@ public interface IMesMapper {
             "</script>")
     Integer countByUser(@Param("name")String name,@Param("deId")Integer deId);
 
-    @Select(value = "<script>SELECT sf.*,de.department_name AS departmentName,mp.post_name as postName\n" +
-            "FROM s_staff sf\n" +
-            "INNER JOIN department de ON sf.department_id = de.id\n" +
-            "INNER JOIN mes_post mp on sf.post_id = mp.id\n" +
-            "where sf.id = #{uid}</script>")
-    List<UserInfoModel> findUserByUid(@Param("uid")Integer uid);
+    @Select(value = "<script>SELECT sf.id as id, sf.staff_num as staffNum, sf.staff_name as staffName,\n" +
+            "sf.staff_age as staffAge,sf.post_id as postId,\n" +
+            "sf.gender as gender,sf.phone as phone,sf.e_mail as eMail,sf.idcard as idcard,\n" +
+            "sf.staff_address as staffAddress,sf.department_id as departmentId,sf.workshop_id as workshopId,\n" +
+            "sf.state as state,\n" +
+            " (SELECT GROUP_CONCAT(s_role.id) FROM s_role \n" +
+            "INNER JOIN s_staffrole onesf ON s_role.id = onesf.role_id \n" +
+            "where onesf.staff_id = sf.id)as roleId \n" +
+            "FROM s_staff sf \n" +
+            "INNER JOIN department de ON sf.department_id = de.id \n" +
+            "INNER JOIN mes_post mp on sf.post_id = mp.id \n" +
+            "INNER JOIN workshop ws on sf.workshop_id = ws.id \n" +
+            "WHERE sf.delete_no = 0 \n" +
+            "AND sf.id = #{deId}</script>")
+    UserInfoModel findUserById(@Param("deId")Integer deId);
 
 //    查询职称下拉框
     @Select(value = "<script>SELECT id as MapKey,post_name as MapValue FROM mes_post WHERE delete_no = 0 and post_state = 0</script>")
@@ -637,34 +646,74 @@ public interface IMesMapper {
     Integer countByNotice(@Param("name")String name);
 
     //库存管理-出入库管理-页面查询-原料
-    @Select(value = "<script>SELECT ire.id as id,FROM_UNIXTIME(ire.create_time/1000) as createTime,\n" +
-            "ire.record_type as recordTypeId,ire.inventory_type as inventType,\n" +
-            "ire.changequantity AS changequantity,ire.surplusquantity AS surplusquantity,\n" +
-            "tw.warehousen_name as warehousenName,st.stock_name as stockName,\n" +
-            "st.stock_model as stockModel,st.stock_number as stockNumber,\n" +
-            "stan.standards as standards,sd.`name` as unitName,ire.remark as remark," +
+    @Select(value = "<script>SELECT ire.id as id,FROM_UNIXTIME(ire.create_time/1000) as createTime, ire.record_type as recordTypeId," +
+            "ire.inventory_type as inventType, ire.changequantity AS changequantity,ire.surplusquantity AS surplusquantity, " +
+            "tw.warehousen_name as warehousenName,\n" +
+            "ire.stock_name as stockName, ire.stock_model as stockModel,ire.stock_number as stockNumber, \n" +
+            "ire.standards as standards,sd.`name` as unitName,ire.remark as remark,\n" +
             "(case WHEN ire.record_type =1 then \"出库\" \n" +
-            "\t\t\t\t\t\tWHEN ire.record_type =2 then \"入库\"\n" +
-            "\t\t\t\t\t\tWHEN ire.record_type =3 then \"调拨\"\n" +
-            "\t\t\t\t\t\tWHEN ire.record_type =4 then \"销售\"\n" +
-            "\t\t\t\t\t\tWHEN ire.record_type =5 then \"采购\"\n" +
-            "\t\t\t\t\t\tWHEN ire.record_type =6 then \"盘点\" end) as recordType\n" +
+            "\tWHEN ire.record_type =2 then \"入库\" \n" +
+            "\tWHEN ire.record_type =3 then \"调拨\" \n" +
+            "\tWHEN ire.record_type =4 then \"销售\" \n" +
+            "\tWHEN ire.record_type =5 then \"采购\" \n" +
+            "\tWHEN ire.record_type =7 then \"生产出库\" \n" +
+            "\tWHEN ire.record_type =6 then \"盘点\" end) as recordType\n" +
             "FROM inventory_record ire\n" +
             "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
-            "LEFT JOIN t_standards stan ON stan.id = ire.product_detailid\n" +
-            "LEFT JOIN  t_stock st ON st.id = stan.material_id\n" +
-            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+            "LEFT JOIN  s_dictionarier sd ON sd.id = ire.unit_id\n" +
             "WHERE  ire.inventory_type =#{modelNameId}   \n"+
-            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='name != null'>AND ire.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null'>AND ire.product_detailid =#{deId} </if>\n"+
             "<if test='warehouseId != null'>AND ire.warehouse_id =#{warehouseId}</if>\n"+
             "<if test='starttime != null and endtime != null'>AND  FROM_UNIXTIME(ire.create_time/1000) BETWEEN #{starttime} AND #{endtime}</if>\n"+
-            "GROUP BY ire.id \n" +
+            "GROUP BY ire.id   ORDER BY ire.id DESC \n" +
             "<if test='pageNum !=null and pageSize != null'>LIMIT #{pageNum},#{pageSize}</if></script>")
-    List<InventoryRecordVo> findAllInventoryRecordByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name,
+    List<InventoryRecordVo> findAllInventoryRecord(@Param("modelNameId")Integer modelNameId,@Param("name")String name,
                                                           @Param("deId")Integer deId,@Param("warehouseId")Integer warehouseId,
                                                           @Param("starttime")String starttime,@Param("endtime")String endtime,
                                                           @Param("pageNum")Integer pageNum,@Param("pageSize")Integer pageSize);
+//    @Select(value = "<script>SELECT ire.id as id,FROM_UNIXTIME(ire.create_time/1000) as createTime,\n" +
+//            "ire.record_type as recordTypeId,ire.inventory_type as inventType,\n" +
+//            "ire.changequantity AS changequantity,ire.surplusquantity AS surplusquantity,\n" +
+//            "tw.warehousen_name as warehousenName,st.stock_name as stockName,\n" +
+//            "st.stock_model as stockModel,st.stock_number as stockNumber,\n" +
+//            "stan.standards as standards,sd.`name` as unitName,ire.remark as remark," +
+//            "(case WHEN ire.record_type =1 then \"出库\" \n" +
+//            "\t\t\t\t\t\tWHEN ire.record_type =2 then \"入库\"\n" +
+//            "\t\t\t\t\t\tWHEN ire.record_type =3 then \"调拨\"\n" +
+//            "\t\t\t\t\t\tWHEN ire.record_type =4 then \"销售\"\n" +
+//            "\t\t\t\t\t\tWHEN ire.record_type =5 then \"采购\"\n" +
+//            "\t\t\t\t\t\tWHEN ire.record_type =7 then \"生产出库\"\n" +
+//            "\t\t\t\t\t\tWHEN ire.record_type =6 then \"盘点\" end) as recordType\n" +
+//            "FROM inventory_record ire\n" +
+//            "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
+//            "LEFT JOIN t_standards stan ON stan.id = ire.product_detailid\n" +
+//            "LEFT JOIN  t_stock st ON st.id = stan.material_id\n" +
+//            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+//            "WHERE  ire.inventory_type =#{modelNameId}   \n"+
+//            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+//            "<if test='deId != null'>AND ire.product_detailid =#{deId} </if>\n"+
+//            "<if test='warehouseId != null'>AND ire.warehouse_id =#{warehouseId}</if>\n"+
+//            "<if test='starttime != null and endtime != null'>AND  FROM_UNIXTIME(ire.create_time/1000) BETWEEN #{starttime} AND #{endtime}</if>\n"+
+//            "GROUP BY ire.id   ORDER BY ire.id DESC \n" +
+//            "<if test='pageNum !=null and pageSize != null'>LIMIT #{pageNum},#{pageSize}</if></script>")
+//    List<InventoryRecordVo> findAllInventoryRecordByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name,
+//                                                          @Param("deId")Integer deId,@Param("warehouseId")Integer warehouseId,
+//                                                          @Param("starttime")String starttime,@Param("endtime")String endtime,
+//                                                          @Param("pageNum")Integer pageNum,@Param("pageSize")Integer pageSize);
+
+
+    //库存管理-出入库管理-页面查询
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM (SELECT count(1) FROM inventory_record ire\n" +
+            "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
+            "LEFT JOIN  s_dictionarier sd ON sd.id = ire.unit_id\n" +
+            "WHERE  ire.inventory_type =#{modelNameId} \n"+
+            "<if test='name != null'>AND ire.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='starttime != null and endtime != null'>AND  FROM_UNIXTIME(ire.create_time/1000) BETWEEN #{starttime} AND #{endtime}</if>\n"+
+            "GROUP BY ire.id)a\n"+
+            "</script>")
+    Integer countByInventoryRecord(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("starttime")String starttime,@Param("endtime")String endtime);
 
     //库存管理-出入库管理-页面查询-原料
     @Select(value = "<script>SELECT ire.id as id,FROM_UNIXTIME(ire.create_time/1000) as createTime,\n" +
@@ -690,19 +739,19 @@ public interface IMesMapper {
                                                           @Param("starttime")String starttime,@Param("endtime")String endtime,
                                                           @Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
-    //库存管理-出入库管理-页面查询
-    @Select(value = "<script>SELECT count(1)\n" +
-            "FROM (SELECT count(1) FROM inventory_record ire\n" +
-            "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
-            "LEFT JOIN t_standards stan ON stan.id = ire.product_detailid\n" +
-            "LEFT JOIN  t_stock st ON st.id = stan.material_id\n" +
-            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
-            "WHERE  ire.inventory_type =#{modelNameId} \n"+
-            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
-            "<if test='starttime != null and endtime != null'>AND  FROM_UNIXTIME(ire.create_time/1000) BETWEEN #{starttime} AND #{endtime}</if>\n"+
-            "GROUP BY ire.id)a\n"+
-            "</script>")
-    Integer countByInventoryRecordByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("starttime")String starttime,@Param("endtime")String endtime);
+//    //库存管理-出入库管理-页面查询
+//    @Select(value = "<script>SELECT count(1)\n" +
+//            "FROM (SELECT count(1) FROM inventory_record ire\n" +
+//            "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
+//            "LEFT JOIN t_standards stan ON stan.id = ire.product_detailid\n" +
+//            "LEFT JOIN  t_stock st ON st.id = stan.material_id\n" +
+//            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+//            "WHERE  ire.inventory_type =#{modelNameId} \n"+
+//            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+//            "<if test='starttime != null and endtime != null'>AND  FROM_UNIXTIME(ire.create_time/1000) BETWEEN #{starttime} AND #{endtime}</if>\n"+
+//            "GROUP BY ire.id)a\n"+
+//            "</script>")
+//    Integer countByInventoryRecordByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("starttime")String starttime,@Param("endtime")String endtime);
 
     //库存管理-出入库管理-调拨/出库数据查询明细
     @Select(value = "<script>SELECT id as updateID,standards as updateRemark\n" +
@@ -735,33 +784,67 @@ public interface IMesMapper {
             "AND ts.material_id = #{materialId}</script>")
     List<UpdateModel> findAllInventoryStateByCDDataId(@Param("deId")Integer deId, @Param("materialId")Integer materialId);
 
-
     //库存管理-库存管理-页面查询(原料)
-    @Select(value = "<script>SELECT invs.id as id,invs.product_id as productId,invs.inventorysum as inventorysum,\n" +
-            "st.stock_name as stockName,st.stock_model as stockModel,\n" +
-            "st.stock_number as stockNumber,ts.standards as standards,\n" +
-            "sd.`name` as unitName,tw.warehousen_name as warehousenName\n" +
-            "FROM inventory_status invs\n" +
-            "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id\n" +
-            "LEFT JOIN t_standards ts ON ts.id = invs.product_id\n" +
-            "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
-            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+    @Select(value = "<script>SELECT invs.id as id,invs.product_id as productId,invs.inventorysum as inventorysum, \n" +
+            "invs.stock_name as stockName,invs.stock_model as stockModel, \n" +
+            "invs.stock_number as stockNumber,invs.standards as standards, \n" +
+            "sd.`name` as unitName,tw.warehousen_name as warehousenName, \n" +
+            "(CASE WHEN invs.inventory_type = 1 THEN \"原料\" \n" +
+            "WHEN invs.inventory_type = 2 THEN \"产品\" \n" +
+            "WHEN invs.inventory_type = 3 THEN \"半成品\" \n" +
+            "WHEN invs.inventory_type = 4 THEN \"废料\" \n" +
+            "WHEN invs.inventory_type = 5 THEN \"线轴\" \n" +
+            "WHEN invs.inventory_type = 6 THEN \"其他\" END)as inventoryTypestr \n" +
+            "FROM inventory_status invs \n" +
+            "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id \n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = invs.unit_id\n" +
             "WHERE  invs.inventory_type =#{modelNameId}   \n"+
-            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
-            "LIMIT #{pageNum},#{pageSize}</script>")
-    List<InventoryStatusVo> findAllInventoryStatesByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+            "<if test='name != null'>AND invs.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "ORDER BY invs.id DESC LIMIT #{pageNum},#{pageSize}</script>")
+    List<InventoryStatusVo> findAllInventoryStates(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
     //库存管理-库存管理-页面查询(原料)
     @Select(value = "<script>SELECT count(1)\n" +
             "FROM inventory_status invs\n" +
             "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id\n" +
-            "LEFT JOIN t_standards ts ON ts.id = invs.product_id\n" +
-            "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
-            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+            "LEFT JOIN  s_dictionarier sd ON sd.id = invs.unit_id\n" +
             "WHERE  invs.inventory_type =#{modelNameId}   \n"+
-            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='name != null'>AND invs.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "</script>")
-    Integer countByInventoryStatesByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name);
+    Integer countByInventoryStates(@Param("modelNameId")Integer modelNameId,@Param("name")String name);
+
+    //库存管理-库存管理-页面查询(原料)
+//    @Select(value = "<script>SELECT invs.id as id,invs.product_id as productId,invs.inventorysum as inventorysum,\n" +
+//            "st.stock_name as stockName,st.stock_model as stockModel,\n" +
+//            "st.stock_number as stockNumber,ts.standards as standards,\n" +
+//            "sd.`name` as unitName,tw.warehousen_name as warehousenName,\n" +
+//            "(CASE WHEN invs.inventory_type = 1 THEN \"原料\"\n" +
+//            "WHEN invs.inventory_type = 2 THEN \"产品\"\n" +
+//            "WHEN invs.inventory_type = 3 THEN \"半成品\"\n" +
+//            "WHEN invs.inventory_type = 4 THEN \"废料\"\n" +
+//            "WHEN invs.inventory_type = 5 THEN \"线轴\"\n" +
+//            "WHEN invs.inventory_type = 6 THEN \"其他\" END)as inventoryTypestr\n" +
+//            "FROM inventory_status invs\n" +
+//            "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id\n" +
+//            "LEFT JOIN t_standards ts ON ts.id = invs.product_id\n" +
+//            "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
+//            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+//            "WHERE  invs.inventory_type =#{modelNameId}   \n"+
+//            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+//            "ORDER BY invs.id DESC LIMIT #{pageNum},#{pageSize}</script>")
+//    List<InventoryStatusVo> findAllInventoryStatesByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+//    //库存管理-库存管理-页面查询(原料)
+//    @Select(value = "<script>SELECT count(1)\n" +
+//            "FROM inventory_status invs\n" +
+//            "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id\n" +
+//            "LEFT JOIN t_standards ts ON ts.id = invs.product_id\n" +
+//            "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
+//            "LEFT JOIN  s_dictionarier sd ON sd.id = st.dictionarier_id\n" +
+//            "WHERE  invs.inventory_type =#{modelNameId}   \n"+
+//            "<if test='name != null'>AND st.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+//            "</script>")
+//    Integer countByInventoryStatesByStock(@Param("modelNameId")Integer modelNameId,@Param("name")String name);
 
     //库存管理-库存管理-根据规格id查询原料参数
     @Select(value = "<script>SELECT st.stock_number as stockNumber,sdd.`name` as stockType,\n" +

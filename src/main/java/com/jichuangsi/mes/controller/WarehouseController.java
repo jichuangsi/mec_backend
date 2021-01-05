@@ -130,7 +130,7 @@ public class WarehouseController {
     @ApiOperation("库存管理-出入库管理-入库操作")
     @ApiImplicitParams({})
     @PostMapping("/updateWarehouseIn")
-    public ResponseModel updateWarehouseIn(@RequestBody List<UpdateModel> smodel){
+    public ResponseModel updateWarehouseIn(@RequestBody List<UpdateModel> smodel){//List<UpdateModel> smodel
         try {
             warehouseService.updateWarehouseIn(smodel);
         }catch (PassportException e){

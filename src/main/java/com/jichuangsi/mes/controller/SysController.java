@@ -35,6 +35,17 @@ public class SysController {
         }
     }
 
+    @ApiOperation("系统管理-根据id查询详情(员工管理，部门管理，职称管理，班组管理，角色管理)")
+    @ApiImplicitParams({})
+    @PostMapping("/getAllSysByNameId")
+    public ResponseModel getAllSysByNameId(@RequestBody SelectModel smodel,HttpServletRequest request,InputStream inputStream){
+        try {
+            return ResponseModel.sucess("",sysService.getAllSysByNameId(smodel,request,inputStream));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
     @ApiOperation("系统管理-用户修改状态 （state或者delete_no状态）(员工管理，部门管理，职称管理，班组管理，角色管理) ")
     @ApiImplicitParams({})
     @PostMapping("/updateSysStateById")

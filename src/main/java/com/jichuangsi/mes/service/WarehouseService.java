@@ -163,10 +163,37 @@ public class WarehouseService {
             endtime = smodel.getFindDate() +" 23:59:59";
         }
 
-        List<InventoryRecordVo> listdata = mesMapper.findAllInventoryRecordByStock(getInventoryType(smodel.getFindModelName()),strfindName,null,null,starttime,endtime,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
-
+        List<InventoryRecordVo> listdata = mesMapper.findAllInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,null,null,starttime,endtime,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
         page.setList(listdata);
-        page.setTotal(mesMapper.countByInventoryRecordByStock(getInventoryType(smodel.getFindModelName()),strfindName,starttime,endtime));
+        page.setTotal(mesMapper.countByInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,starttime,endtime));
+//        switch (smodel.getFindModelName()){
+//            case "stock"://原材料
+//            case "elseother"://其他
+//                List<InventoryRecordVo> listdata = mesMapper.findAllInventoryRecordByStock(getInventoryType(smodel.getFindModelName()),strfindName,null,null,starttime,endtime,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+//                page.setList(listdata);
+//                page.setTotal(mesMapper.countByInventoryRecordByStock(getInventoryType(smodel.getFindModelName()),strfindName,starttime,endtime));
+//
+//                break;
+//            case "nofinished"://半成品
+//
+//                break;
+//
+//            case "product"://成品
+//
+//
+//                break;
+//            case "bobbin"://线轴
+//
+//
+//                break;
+//            case "waste"://废料
+//
+//                break;
+//            default:
+//                break;
+//        }
+
+
         page.setPageSize(smodel.getPageSize());
         page.setPageNum(smodel.getPageNum());
         return page;
@@ -273,7 +300,7 @@ public class WarehouseService {
             case "stock"://原料
                 returnInt =1;
                 break;
-            case "nofinished"://半成品
+            case "selfproduct"://半成品
                 returnInt =3;
                 break;
             case "product"://成品
@@ -338,7 +365,7 @@ public class WarehouseService {
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
 
         for(UpdateModel updateModel : model){
-            if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getFindModelName())){
+            if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getFindModelName())|| StringUtils.isEmpty(updateModel.getStockModel()) || StringUtils.isEmpty(updateModel.getUnitId())){
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
             }
             Integer recordType =getrecordType("rk") ;
@@ -349,6 +376,13 @@ public class WarehouseService {
             if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(updateModel.getUpdateID());//产品/原料明细Id
+
+                inventoryStatus.setStockName(updateModel.getStockName());//材料名称
+                inventoryStatus.setStockModel(updateModel.getStockModel());//模型
+                inventoryStatus.setStockNumber(updateModel.getStockNumber());//编号
+                inventoryStatus.setStandards(updateModel.getStandards());//规格
+                inventoryStatus.setUnitId(updateModel.getUnitId());//单位id
+
                 inventoryStatus.setWarehouseId(updateModel.getUpdateWarehourseID());//仓库Id
 //                inventoryStatus.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
                 inventoryStatus.setInventoryType(inventoruType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
@@ -372,6 +406,12 @@ public class WarehouseService {
             inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord.setRemark(updateModel.getUpdateRemark());
             inventoryRecord.setWarehouseId(updateModel.getUpdateWarehourseID());
+
+            inventoryRecord.setStockName(updateModel.getStockName());//材料名称
+            inventoryRecord.setStockModel(updateModel.getStockModel());//模型
+            inventoryRecord.setStockNumber(updateModel.getStockNumber());//编号
+            inventoryRecord.setStandards(updateModel.getStandards());//规格
+            inventoryRecord.setUnitId(updateModel.getUnitId());//单位id
             inventoryRecordList.add(inventoryRecord);
         }
 
@@ -475,6 +515,12 @@ public class WarehouseService {
                 inventoryStatus.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
                 surplusquantity = updateModel.getUpdateNum();
                 inventoryStatus.setInventorysum(updateModel.getUpdateNum());
+
+                inventoryStatus.setStockName(updateModel.getStockName());
+                inventoryStatus.setStockNumber(updateModel.getStockNumber());
+                inventoryStatus.setStockModel(updateModel.getStockModel());
+                inventoryStatus.setStandards(updateModel.getStandards());
+                inventoryStatus.setUnitId(updateModel.getUnitId());
                 inventoryStatusList.add(inventoryStatus);
             }else{
                 surplusquantity = countInventoryStatus1.getInventorysum() + updateModel.getUpdateNum();
@@ -492,6 +538,12 @@ public class WarehouseService {
             inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord.setRemark(updateModel.getUpdateRemark());
             inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
+
+            inventoryRecord.setStockName(updateModel.getStockName());
+            inventoryRecord.setStockNumber(updateModel.getStockNumber());
+            inventoryRecord.setStockModel(updateModel.getStockModel());
+            inventoryRecord.setStandards(updateModel.getStandards());
+            inventoryRecord.setUnitId(updateModel.getUnitId());
             inventoryRecordList.add(inventoryRecord);
 
             //调拨-存入记录
@@ -504,6 +556,13 @@ public class WarehouseService {
             inventoryRecord1.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord1.setRemark(updateModel.getUpdateRemark());
             inventoryRecord1.setWarehouseId(updateModel.getUpdateWarehourseID());
+
+            inventoryRecord1.setStockName(updateModel.getStockName());
+            inventoryRecord1.setStockNumber(updateModel.getStockNumber());
+            inventoryRecord1.setStockModel(updateModel.getStockModel());
+            inventoryRecord1.setStandards(updateModel.getStandards());
+            inventoryRecord1.setUnitId(updateModel.getUnitId());
+
             inventoryRecordList.add(inventoryRecord1);
 
         }
@@ -547,6 +606,12 @@ public class WarehouseService {
             inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord.setRemark(updateModel.getUpdateRemark());
             inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
+
+            inventoryRecord.setStockName(updateModel.getStockName());
+            inventoryRecord.setStockNumber(updateModel.getStockNumber());
+            inventoryRecord.setStockModel(updateModel.getStockModel());
+            inventoryRecord.setStandards(updateModel.getStandards());
+            inventoryRecord.setUnitId(updateModel.getUnitId());
             inventoryRecordList.add(inventoryRecord);
 
         }
@@ -576,34 +641,37 @@ public class WarehouseService {
         if(!StringUtils.isEmpty(smodel.getFindName())){
             strfindName = smodel.getFindName();
         }
+        List<InventoryStatusVo> listdata = mesMapper.findAllInventoryStates(getInventoryType(smodel.getFindModelName()),strfindName,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
 
-        switch (smodel.getFindModelName()){
-            case "stock"://原材料
-            case "elseother"://其他
-                List<InventoryStatusVo> listdata = mesMapper.findAllInventoryStatesByStock(getInventoryType(smodel.getFindModelName()),strfindName,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
-
-                page.setList(listdata);
-                page.setTotal(mesMapper.countByInventoryStatesByStock(getInventoryType(smodel.getFindModelName()),strfindName));
-
-                break;
-            case "nofinished"://半成品
-
-                break;
-
-            case "product"://成品
-
-
-                break;
-            case "bobbin"://线轴
-
-
-                break;
-            case "waste"://废料
-
-                break;
-            default:
-                break;
-        }
+        page.setList(listdata);
+        page.setTotal(mesMapper.countByInventoryStates(getInventoryType(smodel.getFindModelName()),strfindName));
+//        switch (smodel.getFindModelName()){
+//            case "stock"://原材料
+//            case "elseother"://其他
+//                List<InventoryStatusVo> listdata = mesMapper.findAllInventoryStatesByStock(getInventoryType(smodel.getFindModelName()),strfindName,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+//
+//                page.setList(listdata);
+//                page.setTotal(mesMapper.countByInventoryStatesByStock(getInventoryType(smodel.getFindModelName()),strfindName));
+//
+//                break;
+//            case "nofinished"://半成品
+//
+//                break;
+//
+//            case "product"://成品
+//
+//
+//                break;
+//            case "bobbin"://线轴
+//
+//
+//                break;
+//            case "waste"://废料
+//
+//                break;
+//            default:
+//                break;
+//        }
 
         page.setPageSize(smodel.getPageSize());
         page.setPageNum(smodel.getPageNum());
@@ -680,7 +748,7 @@ public class WarehouseService {
             case "elseother"://其他
                 jsonObject.put("stockDetail",mesMapper.findByStockDetailId(productDetailId));//参数
                 jsonObject.put("currentInventory",mesMapper.findByStockInventoryDetailId(productDetailId,warehourseId));//当前库存
-                jsonObject.put("InventoryRecord",mesMapper.findAllInventoryRecordByStock(getInventoryType(smodel.getFindModelName()),null,productDetailId,warehourseId,null,null,null,null));//库存记录
+                jsonObject.put("InventoryRecord",mesMapper.findAllInventoryRecord(getInventoryType(smodel.getFindModelName()),null,productDetailId,warehourseId,null,null,null,null));//库存记录
                 jsonObject.put("currentInventoryNum",mesMapper.countByInventoryStatusSum(productDetailId,warehourseId));//当前库存数量
                 jsonObject.put("InventorySum",mesMapper.countByInventoryStatusSum(productDetailId,null));//总库存数量
                 break;

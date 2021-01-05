@@ -7,6 +7,7 @@ public class InventoryStatusVo {
     private Integer warehouseId;//仓库ID
     private Integer inventorysum;//库存总数
     private Integer inventoryType;//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
+    private String inventoryTypestr;//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
 
     private String warehousenName;//仓库名称
     private String stockName;//名称
@@ -14,6 +15,14 @@ public class InventoryStatusVo {
     private String stockNumber;//编号
     private String standards;//规格
     private String unitName;//单位
+
+    public String getInventoryTypestr() {
+        return inventoryTypestr;
+    }
+
+    public void setInventoryTypestr(String inventoryTypestr) {
+        this.inventoryTypestr = inventoryTypestr;
+    }
 
     public Integer getId() {
         return id;

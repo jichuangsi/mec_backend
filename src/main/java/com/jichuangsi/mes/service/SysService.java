@@ -121,6 +121,42 @@ public class SysService {
         return page;
     }
 
+
+    /**
+     * 系统管理-根据id查询详情(员工管理，部门管理，职称管理，班组管理，角色管理)
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getAllSysByNameId(SelectModel smodel,HttpServletRequest request,InputStream inputStream)throws PassportException{
+        JSONObject jsonObject=new JSONObject();
+        if(StringUtils.isEmpty(smodel.getFindById()) || StringUtils.isEmpty(smodel.getFindModelName())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        switch (smodel.getFindModelName()){
+            case "staff"://员工管理-查询员工
+                jsonObject.put("data",mesMapper.findUserById(smodel.getFindById()));
+                break;
+            case "department"://部门管理-查询部门
+
+                jsonObject.put("data",deRepository.findByid(smodel.getFindById()));
+                break;
+            case "mesPost"://职称管理-查询职称
+
+                jsonObject.put("data",mesPostRepository.findByid(smodel.getFindById()));
+                break;
+            case "tTeam"://班组管理-查询班组
+                jsonObject.put("data",tteamPostRepository.findByid(smodel.getFindById()));
+                break;
+            case "sRole"://角色管理-查询角色
+                jsonObject.put("data",sroleRepository.findByid(smodel.getFindById()));
+                break;
+            default:
+
+        }
+        return jsonObject;
+    }
+
     /**
      * 员工管理-用户修改状态 （state或者delete_no状态）
      * @param
@@ -618,6 +654,7 @@ public class SysService {
         sDictionarier.setDeleteNo(0);
         sDictionarier.setCreateTime(new Date());
         sDictionarier.setStaffId(1);//暂定
+        sDictionarier.setState(0);
         sdictionarierRepository.save(sDictionarier);
 
     }

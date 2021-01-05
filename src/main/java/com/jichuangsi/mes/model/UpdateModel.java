@@ -11,6 +11,54 @@ public class UpdateModel {
 
     private String updateRemark;//需要添加的备注
 
+
+
+    private String stockName;//名称
+    private String stockModel;//模型
+    private String stockNumber;//编号
+    private String standards;//规格
+    private Integer unitId;//单位id
+
+    public String getStockName() {
+        return stockName;
+    }
+
+    public void setStockName(String stockName) {
+        this.stockName = stockName;
+    }
+
+    public String getStockModel() {
+        return stockModel;
+    }
+
+    public void setStockModel(String stockModel) {
+        this.stockModel = stockModel;
+    }
+
+    public String getStockNumber() {
+        return stockNumber;
+    }
+
+    public void setStockNumber(String stockNumber) {
+        this.stockNumber = stockNumber;
+    }
+
+    public String getStandards() {
+        return standards;
+    }
+
+    public void setStandards(String standards) {
+        this.standards = standards;
+    }
+
+    public Integer getUnitId() {
+        return unitId;
+    }
+
+    public void setUnitId(Integer unitId) {
+        this.unitId = unitId;
+    }
+
     public Integer getUpdateNum() {
         return updateNum;
     }

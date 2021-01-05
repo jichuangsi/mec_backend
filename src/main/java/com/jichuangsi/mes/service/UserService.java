@@ -46,13 +46,16 @@ public class UserService {
                 || StringUtils.isEmpty(usermodel.getStaffName())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        if (userRepository.countByStaffNum(usermodel.getStaffNum())>0){
-            throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
-        }
+//        if (userRepository.countByStaffNum(usermodel.getStaffNum())>0){
+//            throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
+//        }
+
+        Integer staffcount = userRepository.countByid()+1;
+        String strnum = "YG000"+staffcount;
 
         SStaff setstaff = new SStaff();
         setstaff.setDepartmentId(usermodel.getDepartmentId());
-        setstaff.setStaffNum(usermodel.getStaffNum());
+        setstaff.setStaffNum(strnum);
         setstaff.setStaffName(usermodel.getStaffName());
         setstaff.setStaffAge(usermodel.getStaffAge());
         setstaff.setPostId(usermodel.getPostId().toString());
@@ -72,24 +75,14 @@ public class UserService {
         //用户角色批量存进数据库
         String str = usermodel.getRoleId();
         String[] strArr = str.split("\\,");
-        for (int i = 0; i < strArr.length; i++) {
-            SStaffRole sr = new SStaffRole();
-            sr.setRoleId(Integer.valueOf(strArr[i]) );
-            sr.setStaffId(staffid);
-            sstaffRoleRepository.save(sr);
+        if(strArr.length != 0){
+            for (int i = 0; i < strArr.length; i++) {
+                SStaffRole sr = new SStaffRole();
+                sr.setRoleId(Integer.valueOf(strArr[i]) );
+                sr.setStaffId(staffid);
+                sstaffRoleRepository.save(sr);
+            }
         }
-    }
-
-    public static void main(String[] args) {
-//        String str = "1,2,23,1";
-//        String[] strArr = str.split("\\,");
-//        for (int i = 0; i < strArr.length; i++) {
-//            System.out.println(strArr[i]);
-//        }
-
-
-//        System.out.println(GenerationNumberConfig.getStaffNumber());
-
     }
 
     /**
@@ -98,7 +91,7 @@ public class UserService {
      * @return
      * @throws PassportException
      */
-    public String loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream,HttpSession session)throws PassportException{
+    public String loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
         if (StringUtils.isEmpty(model.getAccount()) || StringUtils.isEmpty(model.getPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -112,6 +105,7 @@ public class UserService {
 
             logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
             //记录用户信息
+            HttpSession session = request.getSession();
             session.setAttribute("userId", backUser.getId());
 
             return backTokenService.createdToken(user);
@@ -126,16 +120,20 @@ public class UserService {
      * @param model
      * @throws PassportException
      */
-    public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model)throws PassportException {
+    public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model,HttpServletRequest request)throws PassportException {
         if(StringUtils.isEmpty(model.getOldPwd()) ||StringUtils.isEmpty(model.getFirstPwd()) || StringUtils.isEmpty(model.getSecondPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
         if(!(model.getFirstPwd().equals(model.getSecondPwd()))){
             throw new PassportException(ResultCode.PWD_NOT_MSG);
         }
-        SStaff user=userRepository.findByid(Integer.valueOf(model.getUserid()));
 
-        if(null==user){
+        //记录用户信息
+        HttpSession session = request.getSession();
+        Integer userId = (Integer) session.getAttribute("userId");
+        SStaff user=userRepository.findByid(userId);
+
+        if(StringUtils.isEmpty(user)){
             throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);
         }
 

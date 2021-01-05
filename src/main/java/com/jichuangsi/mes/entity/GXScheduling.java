@@ -15,7 +15,15 @@ public class GXScheduling {
 
     private String staffName;//员工名称
     private String staffNumber;//员工编号
+    private String staffId;//员工id
 
+    public String getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(String staffId) {
+        this.staffId = staffId;
+    }
 
     public String getStaffName() {
         return staffName;

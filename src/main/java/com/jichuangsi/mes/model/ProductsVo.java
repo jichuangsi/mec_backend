@@ -8,6 +8,7 @@ public class ProductsVo {
     private Integer id;//熔炼产物ID
     private Integer PPPId;//生产id
     private Integer gxId;//工序id
+    private Integer Fid;//上级id（默认0）
     private String gxName;//工序名称
     private Date createTime;//生产时间
 
@@ -22,6 +23,8 @@ public class ProductsVo {
     private BigDecimal wastageg;//废料g
     private BigDecimal lossg;//损耗g
 
+
+
     //    半成品/细拉的时候
     private String Slip;//滑差
     private String tractionSpeed;//牵引速度
@@ -33,10 +36,24 @@ public class ProductsVo {
     private String straightLine;//直线
 
     //绕线
-    private Integer totalLength;//总长度
-    private BigDecimal netWeightgSum;//总净重g
+    private Integer numbers;//数量
+    private Integer flatCable;//排线
+    private Integer tension;//张力
+    private BigDecimal oddmentsG;//余料g
+    private BigDecimal totalLength;//总长度（长度*数量）
+    private BigDecimal netWeightgSum;//总净重g(净重*数量)
+
+    private Integer state;//改绕/绕线否 0否 1是（默认0）
 
     private Integer deleteNo;//删除否
+
+    public Integer getFid() {
+        return Fid;
+    }
+
+    public void setFid(Integer fid) {
+        Fid = fid;
+    }
 
     public Integer getId() {
         return id;
@@ -198,12 +215,52 @@ public class ProductsVo {
         this.straightLine = straightLine;
     }
 
-    public Integer getTotalLength() {
+    public Integer getNumbers() {
+        return numbers;
+    }
+
+    public void setNumbers(Integer numbers) {
+        this.numbers = numbers;
+    }
+
+    public Integer getFlatCable() {
+        return flatCable;
+    }
+
+    public void setFlatCable(Integer flatCable) {
+        this.flatCable = flatCable;
+    }
+
+    public Integer getTension() {
+        return tension;
+    }
+
+    public void setTension(Integer tension) {
+        this.tension = tension;
+    }
+
+    public BigDecimal getOddmentsG() {
+        return oddmentsG;
+    }
+
+    public void setOddmentsG(BigDecimal oddmentsG) {
+        this.oddmentsG = oddmentsG;
+    }
+
+    public BigDecimal getTotalLength() {
         return totalLength;
     }
 
-    public void setTotalLength(Integer totalLength) {
+    public void setTotalLength(BigDecimal totalLength) {
         this.totalLength = totalLength;
+    }
+
+    public Integer getState() {
+        return state;
+    }
+
+    public void setState(Integer state) {
+        this.state = state;
     }
 
     public BigDecimal getNetWeightgSum() {
