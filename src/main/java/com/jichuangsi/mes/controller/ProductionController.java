@@ -264,10 +264,21 @@ public class ProductionController {
         }
     }
 
+    @ApiOperation(" 生产管理（改绕）- 根据选择需要改绕的数据查询详情信息")
+    @ApiImplicitParams({})
+    @PostMapping("/getPDetourDetailByChooseIds")
+    public ResponseModel getPDetourDetailByChooseIds(@RequestBody List<SelectModel> selectModel) {
+        try {
+            return ResponseModel.sucess("",productionService.getPDetourDetailByChooseIds(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
     @ApiOperation("生产管理（改绕）- 根据生产管理id查询详情信息")
     @ApiImplicitParams({})
     @PostMapping("/getPDetourDetailByPPPId")
-    public ResponseModel getPDetourDetailByPPPId(@RequestBody List<SelectModel> selectModel) {
+    public ResponseModel getPDetourDetailByPPPId(@RequestBody SelectModel selectModel) {
         try {
             return ResponseModel.sucess("",productionService.getPDetourDetailByPPPId(selectModel));
         }catch (PassportException e){

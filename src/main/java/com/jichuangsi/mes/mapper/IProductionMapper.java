@@ -192,7 +192,6 @@ public interface IProductionMapper {
             "</script>")
     List<ProductsVo> findProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 
-
     //绕线-回填-查询产物(上班/本班)  sd.`name` as gxName,
     @Select(value = "<script>SELECT pp.id as id,pp.gx_id as gxId, pp.create_time as createTime,\n" +
             "pp.bobbin_detail_id as bobbinDetailId,tb.bobbin_name as bobbinName,\n" +
@@ -379,6 +378,18 @@ public interface IProductionMapper {
             "GROUP BY ppp_id</script>")
     List<PPProductionVo> findAllFinished();
 
+
+    //工序-回填-根据库存数据查询绕线数量
+    @Select(value = "<script>SELECT pp.id as id,tb.bobbin_name as bobbinName,\n" +
+            "pp.lengthm as lengthM,ins.inventorynumbers as numbers\n" +
+            "FROM ppp_products#{id} pp\n" +
+            "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
+            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
+            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "WHERE pp.pppid = #{deId} AND ins.ppp_id = #{deId} AND pp.delete_no = 0\n" +
+            "</script>")
+    List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 
 
 
