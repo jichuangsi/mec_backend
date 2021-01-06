@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -664,7 +665,7 @@ public class BasicSettingService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void  saveEquipmentOverhaulRecord(EquipmentModel equipmentModel)throws PassportException{
+    public void  saveEquipmentOverhaulRecord(UserInfoForToken userInfoForToken, EquipmentModel equipmentModel)throws PassportException{
         EquipmentCheckRecord equipmentCheckRecord =  equipmentModel.getEquipmentCheckRecord();
 
         if(StringUtils.isEmpty(equipmentCheckRecord.getEquipmentId()) ||StringUtils.isEmpty(equipmentCheckRecord.getFrequency())){
@@ -683,7 +684,7 @@ public class BasicSettingService {
             mesMapper.insertEquipmentOverhaul(equipmentCheckRecord.getEquipmentId(),strArr[0]+"-"+strArr[1]);//把当前设备的检修项目记录下来。
         }
 
-        equipmentCheckRecord.setStaffId(1);//暂时
+        equipmentCheckRecord.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         equipmentCheckRecord.setCreateTime(new Date());
         equipmentCheckRecord.setCheckYear(Integer.valueOf(strArr[0]));
         equipmentCheckRecord.setCheckMonth(Integer.valueOf(strArr[1]));

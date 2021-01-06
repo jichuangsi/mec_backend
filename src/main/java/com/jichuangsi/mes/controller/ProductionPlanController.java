@@ -1,10 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.exception.PassportException;
-import com.jichuangsi.mes.model.ProductPlanModel;
-import com.jichuangsi.mes.model.ResponseModel;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UpdateModel;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.ProductionPlanService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -61,9 +58,9 @@ public class ProductionPlanController {
     @ApiOperation("生产计划单- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveProductPlan")
-    public ResponseModel saveProductPlan(@RequestBody ProductPlanModel productPlanModel){
+    public ResponseModel saveProductPlan(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody ProductPlanModel productPlanModel){
         try {
-            productionPlanService.saveProductPlan(productPlanModel);
+            productionPlanService.saveProductPlan(userInfoForToken,productPlanModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -110,9 +107,9 @@ public class ProductionPlanController {
     @ApiOperation("生产计划单-审核详情修改生产计划单状态(审核流程点击的通过/驳回)")
     @ApiImplicitParams({})
     @PostMapping("/updatePPStateByid")
-    public ResponseModel updatePPStateByid(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updatePPStateByid(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdateModel smodel){
         try {
-            productionPlanService.updatePPStateByid(smodel,session);
+            productionPlanService.updatePPStateByid(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

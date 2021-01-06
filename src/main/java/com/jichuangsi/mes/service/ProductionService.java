@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -284,7 +285,7 @@ public class ProductionService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void savesmeltingProductsList(PPProductionModel ppProductionModel)throws PassportException {
+    public void savesmeltingProductsList(UserInfoForToken userInfoForToken,PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();
         if (StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) ||StringUtils.isEmpty(ppProduction.getEquipmentId())|| StringUtils.isEmpty(ppProduction.getSuitId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -351,7 +352,7 @@ public class ProductionService {
             ppProductionnew.setFinishNum(0);
             ppProductionnew.setGXId(ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing));
             ppProductionnew.setGxName(dictionarierRepository.findByid(ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing)).getName());//工序名称
-            ppProductionnew.setStaffId(1);//暂时
+            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
             ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
             ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
 
@@ -501,7 +502,7 @@ public class ProductionService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void savePPProduction(PPProductionModel ppProductionModel)throws PassportException {
+    public void savePPProduction(@ModelAttribute UserInfoForToken userInfoForToken,PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();
         if (StringUtils.isEmpty(ppProduction.getProductionNumber()) || StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) ||StringUtils.isEmpty(ppProduction.getEquipmentId())|| StringUtils.isEmpty(ppProduction.getSuitId())|| StringUtils.isEmpty(ppProduction.getStaffId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -560,7 +561,7 @@ public class ProductionService {
             ppProductionnew.setSuitId(ppProductions.getSuitId());//套模id
 
             ppProductionnew.setFinishNum(0);
-            ppProductionnew.setStaffId(1);//暂时
+            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
             ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
             ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
 
@@ -571,7 +572,7 @@ public class ProductionService {
         }
 
         if(ppProduction.getState() == 3){//转退火
-            annealingPPProduction(ppProductionModel);//直接到转退火工序
+            annealingPPProduction(Integer.valueOf(userInfoForToken.getUserId()),ppProductionModel);//直接到转退火工序
         }
     }
 
@@ -690,7 +691,7 @@ public class ProductionService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void annealingPPProduction(PPProductionModel ppProductionModel)throws PassportException {
+    public void annealingPPProduction(Integer staffId, PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();
         if (StringUtils.isEmpty(ppProduction.getProductionNumber()) || StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) ||StringUtils.isEmpty(ppProduction.getEquipmentId())|| StringUtils.isEmpty(ppProduction.getSuitId())|| StringUtils.isEmpty(ppProduction.getStaffId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -741,7 +742,7 @@ public class ProductionService {
         ppProductionnew.setSuitId(ppProductions.getSuitId());//套模id
 
         ppProductionnew.setFinishNum(0);
-        ppProductionnew.setStaffId(1);//暂时
+        ppProductionnew.setStaffId(staffId);
         ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
         ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
 
@@ -794,7 +795,7 @@ public class ProductionService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void transferToPPProduction(SelectModel selectModel)throws PassportException {
+    public void transferToPPProduction(UserInfoForToken userInfoForToken,SelectModel selectModel)throws PassportException {
         if (StringUtils.isEmpty(selectModel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -822,7 +823,7 @@ public class ProductionService {
             ppProductionnew.setSuitId(ppProductions2.getSuitId());//套模id
 
             ppProductionnew.setFinishNum(0);
-            ppProductionnew.setStaffId(1);//暂时
+            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
             ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
             ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
 
@@ -1181,7 +1182,7 @@ public class ProductionService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void savePDetour(PPProductionModel ppProductionModel)throws PassportException {
+    public void savePDetour(UserInfoForToken userInfoForToken, PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();//本班的工序
         if (StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) || StringUtils.isEmpty(ppProduction.getSuitId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -1201,7 +1202,7 @@ public class ProductionService {
             ppProductionnew.setSuitId(ppProduction.getSuitId());//套模id
 
             ppProductionnew.setFinishNum(0);
-            ppProductionnew.setStaffId(1);//暂时
+            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
             ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
             ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
 

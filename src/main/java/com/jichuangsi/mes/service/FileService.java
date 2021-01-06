@@ -10,10 +10,7 @@ import com.jichuangsi.mes.entity.FileTable;
 import com.jichuangsi.mes.entity.SNotice;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IMesMapper;
-import com.jichuangsi.mes.model.NoticeVo;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UpdateModel;
-import com.jichuangsi.mes.model.fileTableVo;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.repository.FileTableRepository;
 import com.jichuangsi.mes.repository.SNoticeRepository;
 import com.jichuangsi.mes.utill.FileUtils;
@@ -23,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -222,7 +220,7 @@ public class FileService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void saveFile(FileTable fileTable)throws PassportException {
+    public void saveFile(UserInfoForToken userInfoForToken,FileTable fileTable)throws PassportException {
         if (StringUtil.isEmpty(fileTable.getFileName())||StringUtil.isEmpty(fileTable.getFileRoute())||StringUtil.isEmpty(fileTable.getFilePassword())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -236,7 +234,7 @@ public class FileService {
             fileTable.setCreateTime(t4);
         }
 
-        fileTable.setStaffId(1);//暂时
+        fileTable.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         fileTable.setFilePassword(Md5Util.encodeByMd5(fileTable.getFilePassword()));
         fileTable.setDeleteNo(0);
         fileTableRepository.save(fileTable);
@@ -319,7 +317,7 @@ public class FileService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void saveSysAnnouncement(SNotice sNotice)throws PassportException {
+    public void saveSysAnnouncement(UserInfoForToken userInfoForToken, SNotice sNotice)throws PassportException {
         if (StringUtil.isEmpty(sNotice.getNoticeName())||StringUtil.isEmpty(sNotice.getNoticeRoute())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -329,7 +327,7 @@ public class FileService {
             sNotice.setCreateTime(t4);
         }
 
-        sNotice.setStaffId(1);//暂时
+        sNotice.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         sNotice.setIsshow(0);
         sNotice.setDeleteNo(0);
         sNoticeRepository.save(sNotice);

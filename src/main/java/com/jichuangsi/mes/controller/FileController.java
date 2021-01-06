@@ -6,6 +6,7 @@ import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.ResponseModel;
 import com.jichuangsi.mes.model.SelectModel;
 import com.jichuangsi.mes.model.UpdateModel;
+import com.jichuangsi.mes.model.UserInfoForToken;
 import com.jichuangsi.mes.service.FileService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -99,9 +100,9 @@ public class FileController {
     @ApiOperation("文件管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveFile")
-    public ResponseModel saveFile(@RequestBody FileTable fileTable){
+    public ResponseModel saveFile(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody FileTable fileTable){
         try {
-            fileService.saveFile(fileTable);
+            fileService.saveFile(userInfoForToken,fileTable);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -149,9 +150,9 @@ public class FileController {
     @ApiOperation("系统公告- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveSysAnnouncement")
-    public ResponseModel saveSysAnnouncement(@RequestBody SNotice sNotice){
+    public ResponseModel saveSysAnnouncement(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody SNotice sNotice){
         try {
-            fileService.saveSysAnnouncement(sNotice);
+            fileService.saveSysAnnouncement(userInfoForToken,sNotice);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

@@ -213,9 +213,9 @@ public class BasicSettingController {
     @ApiOperation("设备管理-检修页面-新增检修")
     @ApiImplicitParams({})
     @PostMapping("/saveEquipmentOverhaulRecord")
-    public ResponseModel saveEquipmentOverhaulRecord(@RequestBody EquipmentModel equipmentModel){
+    public ResponseModel saveEquipmentOverhaulRecord(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody EquipmentModel equipmentModel){
         try {
-            bsService.saveEquipmentOverhaulRecord(equipmentModel);
+            bsService.saveEquipmentOverhaulRecord(userInfoForToken,equipmentModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

@@ -129,9 +129,7 @@ public class UserService {
         }
 
         //记录用户信息
-        HttpSession session = request.getSession();
-        Integer userId = (Integer) session.getAttribute("userId");
-        SStaff user=userRepository.findByid(userId);
+        SStaff user=userRepository.findByid(Integer.valueOf(userInfoForToken.getUserId()));
 
         if(StringUtils.isEmpty(user)){
             throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);

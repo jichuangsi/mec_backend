@@ -2,10 +2,7 @@ package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.entity.TFinishedproducecheck;
 import com.jichuangsi.mes.exception.PassportException;
-import com.jichuangsi.mes.model.ResponseModel;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.TMouldModel;
-import com.jichuangsi.mes.model.UpdateModel;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.MouldService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -118,9 +115,9 @@ public class MouldController {
     @ApiOperation("模具管理-成套模具维护-新增维护")
     @ApiImplicitParams({})
     @PostMapping("/savecuffingCheck")
-    public ResponseModel savecuffingCheck(@RequestBody TMouldModel mouldModel){
+    public ResponseModel savecuffingCheck(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody TMouldModel mouldModel){
         try {
-            mouldService.savecuffingCheck(mouldModel);
+            mouldService.savecuffingCheck(userInfoForToken,mouldModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -166,9 +163,9 @@ public class MouldController {
     @ApiOperation("模具管理-成品模具维护-新增维护")
     @ApiImplicitParams({})
     @PostMapping("/saveFinishedproducecheck")
-    public ResponseModel saveFinishedproducecheck(@RequestBody TFinishedproducecheck tFinishedproducecheck){
+    public ResponseModel saveFinishedproducecheck(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody TFinishedproducecheck tFinishedproducecheck){
         try {
-            mouldService.saveFinishedproducecheck(tFinishedproducecheck);
+            mouldService.saveFinishedproducecheck(userInfoForToken,tFinishedproducecheck);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -228,9 +225,9 @@ public class MouldController {
     @ApiOperation("套模管理-新增/修改")
     @ApiImplicitParams({})
     @PostMapping("/saveTSuit")
-    public ResponseModel saveTSuit(@RequestBody TMouldModel tMouldModel){
+    public ResponseModel saveTSuit(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody TMouldModel tMouldModel){
         try {
-            mouldService.saveTSuit(tMouldModel);
+            mouldService.saveTSuit(userInfoForToken,tMouldModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

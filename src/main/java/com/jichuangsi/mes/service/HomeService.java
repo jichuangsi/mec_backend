@@ -2,6 +2,7 @@ package com.jichuangsi.mes.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.jichuangsi.mes.exception.PassportException;
+import com.jichuangsi.mes.model.UserInfoForToken;
 import com.jichuangsi.mes.repository.MattersRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,10 @@ public class HomeService {
      * @param
      * @throws PassportException
      */
-    public JSONObject findMyMatters(HttpSession session)throws PassportException {
+    public JSONObject findMyMatters(UserInfoForToken userInfoForToken)throws PassportException {
         JSONObject job = new JSONObject();
 
-        job.put("myMatter",mattersRepository.findByStaffIdAndFinishedNo((Integer) session.getAttribute("userId"),0) );//原材料下拉框
+        job.put("myMatter",mattersRepository.findByStaffIdAndFinishedNo(Integer.valueOf(userInfoForToken.getUserId()),0) );//原材料下拉框
 
         return job;
     }

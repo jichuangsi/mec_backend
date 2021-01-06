@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -239,13 +240,13 @@ public class MouldService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void savecuffingCheck(TMouldModel mouldModel)throws PassportException {
+    public void savecuffingCheck(UserInfoForToken userInfoForToken,TMouldModel mouldModel)throws PassportException {
         TCuffingcheck cuffingcheck=mouldModel.gettCuffingcheck();
 
         if(StringUtils.isEmpty(cuffingcheck.getMouldid()) || StringUtils.isEmpty(cuffingcheck.getJudgeresult())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        cuffingcheck.setStaffid(1);//暂时
+        cuffingcheck.setStaffid(Integer.valueOf(userInfoForToken.getUserId()));
         cuffingcheck.setCreateTime(new Date());
         cuffingcheck.setDeleteno(0);
         TCuffingcheck tCuffingcheck1 = cuffingcheckRepository.save(cuffingcheck);
@@ -330,7 +331,7 @@ public class MouldService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void saveFinishedproducecheck(TFinishedproducecheck tFinishedproducecheck)throws PassportException {
+    public void saveFinishedproducecheck(UserInfoForToken userInfoForToken,TFinishedproducecheck tFinishedproducecheck)throws PassportException {
 
         if(StringUtils.isEmpty(tFinishedproducecheck.getMouldId()) || StringUtils.isEmpty(tFinishedproducecheck.getLengthM()) ||StringUtils.isEmpty(tFinishedproducecheck.getDensity())
                 ||StringUtils.isEmpty(tFinishedproducecheck.getWeightMg1()) ||StringUtils.isEmpty(tFinishedproducecheck.getWeightMg2()) ||StringUtils.isEmpty(tFinishedproducecheck.getWeightMg3())
@@ -339,7 +340,7 @@ public class MouldService {
                 ||StringUtils.isEmpty(tFinishedproducecheck.getWeightMg0()) ||StringUtils.isEmpty(tFinishedproducecheck.getWeightavageMg())||StringUtils.isEmpty(tFinishedproducecheck.getMeasureddiamUm())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        tFinishedproducecheck.setStaffId(1);//暂时
+        tFinishedproducecheck.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         tFinishedproducecheck.setDeleteNo(0);
         tFinishedproducecheck.setCreateTime(new Date());
 
@@ -476,7 +477,7 @@ public class MouldService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void  saveTSuit(TMouldModel tMouldModel)throws PassportException{
+    public void  saveTSuit(UserInfoForToken userInfoForToken, TMouldModel tMouldModel)throws PassportException{
         TSuit suit =  tMouldModel.gettSuit();
 
         if(StringUtils.isEmpty(suit.getConstituteName()) ||StringUtils.isEmpty(suit.getLineTypeId())){
@@ -484,7 +485,7 @@ public class MouldService {
         }
 
         suit.setConstituteNumber("MJ-"+basicSettingService.getEquipmentNumber());
-        suit.setStaffId(1);//暂时
+        suit.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         suit.setScrapNo(0);
         suit.setDeleteNo(0);
         TSuit suit1 = suitRepository.save(suit);

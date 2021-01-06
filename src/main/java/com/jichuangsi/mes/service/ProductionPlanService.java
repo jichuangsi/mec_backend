@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
@@ -133,7 +134,7 @@ public class ProductionPlanService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void saveProductPlan(ProductPlanModel productPlanModel)throws PassportException {
+    public void saveProductPlan(UserInfoForToken userInfoForToken,ProductPlanModel productPlanModel)throws PassportException {
         ProductPlan productPlan = productPlanModel.getProductPlan();
         if (StringUtil.isEmpty(productPlan.getPpName()) || StringUtils.isEmpty(productPlan.getRelationNo())|| StringUtils.isEmpty(productPlan.getPpPlanState())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -205,7 +206,7 @@ public class ProductionPlanService {
             auditPocess.setAuditSetting(PPStateChange.getPPState(productPlan.getPpPlanState()));
             auditPocess.setAuditSettingId(0);
             auditPocess.setRemark("创建计划单");
-            auditPocess.setStaffId(1);//暂时
+            auditPocess.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
             auditPocess.setDeleteNo(0);
             auditPocess.setCreateTime(new Date());
             ppAuditPocessRepository.save(auditPocess);//新增生产计划单-审核流程
@@ -370,7 +371,7 @@ public class ProductionPlanService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updatePPStateByid(UpdateModel model, HttpSession session)throws PassportException {
+    public void updatePPStateByid(UserInfoForToken userInfoForToken, UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())|| StringUtils.isEmpty(model.getUpdateType())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -412,7 +413,7 @@ public class ProductionPlanService {
         auditPocess.setAuditSettingId(orderAuditPocessId);//处理的单子Id
         auditPocess.setAuditSetting(levelName);
         auditPocess.setRemark(model.getUpdateRemark());
-        auditPocess.setStaffId(1);//暂时
+        auditPocess.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         auditPocess.setDeleteNo(0);
         auditPocess.setCreateTime(new Date());
         ppAuditPocessRepository.save(auditPocess);//新增审核流程

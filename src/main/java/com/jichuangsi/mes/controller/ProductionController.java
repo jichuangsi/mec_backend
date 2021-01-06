@@ -1,10 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.exception.PassportException;
-import com.jichuangsi.mes.model.PPProductionModel;
-import com.jichuangsi.mes.model.ResponseModel;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UpdateModel;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.ProductionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -107,9 +104,9 @@ public class ProductionController {
     @ApiOperation("生产管理- 草稿/转下班操作(-熔炼)-新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/savesmeltingProductsList")
-    public ResponseModel savesmeltingProductsList(@RequestBody PPProductionModel ppProductionModel){
+    public ResponseModel savesmeltingProductsList(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody PPProductionModel ppProductionModel){
         try {
-            productionService.savesmeltingProductsList(ppProductionModel);
+            productionService.savesmeltingProductsList(userInfoForToken,ppProductionModel);
 
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
@@ -173,9 +170,9 @@ public class ProductionController {
     @ApiOperation("生产管理- 退火-转上班操作-新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/transferToPPProduction")
-    public ResponseModel transferToPPProduction(@RequestBody SelectModel selectModel) {
+    public ResponseModel transferToPPProduction(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SelectModel selectModel) {
         try {
-            productionService.transferToPPProduction(selectModel);
+            productionService.transferToPPProduction(userInfoForToken,selectModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
