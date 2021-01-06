@@ -392,8 +392,6 @@ public interface IProductionMapper {
     List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 
 
-
-
 //    ===========生产数据===============
     //    生产数据--批号回溯-根据生产批号查询生产工序
     @Select(value = "<script>SELECT id as MapKey,gx_name as MapValue," +
@@ -409,9 +407,138 @@ public interface IProductionMapper {
             "\tWHEN 70 THEN 9\n" +
             "END) as MapValue2 \n" +
             "FROM pp_production\n" +
-            "WHERE pp_production.production_number = #{name}</script>")
+            "WHERE production_number = #{name} and delete_no = 0</script>")
     List<MapVo> findAllProductionInfoByNumber(@Param("name")String name);
 
 
+//    改绕-新增待改绕信息
+    @Transactional
+    @Modifying
+    @Select(value = "<script>INSERT INTO ppp_products_detour(pppid,slip,bobbin_detail_id,create_time,delete_no,gross_weight,gx_id,lengthm,lossg,net_weightg,net_weightg_sum," +
+            "paying_off,straight_line,surface,take_up_speed,total_length,traction_speed,wastageg,wire_diameter_um,numbers,flat_cable,tension,oddmentsG,state,fid) values \n" +
+            "<foreach collection='list' item='item' separator=','>"+
+//            "(<if test=\"item.id != null\">#{item.id},</if>"+
+            " (<if test=\"item.PPPId != null\">#{item.PPPId},</if>"+
+            " #{item.Slip},"+
+            " #{item.bobbinDetailId},"+
+            " NOW(),"+
+            " 0,"+
+            " #{item.grossWeight},"+
+            " #{item.gxId},"+
+            " #{item.lengthM},"+
+            " #{item.lossg},"+
+            " #{item.netWeightg},"+
+            " #{item.netWeightgSum},"+
+            " #{item.payingOff},"+
+            " #{item.straightLine},"+
+            " #{item.surface},"+
+            " #{item.takeUpSpeed},"+
+            " #{item.totalLength},"+
+            " #{item.tractionSpeed},"+
+            " #{item.wastageg},"+
+            " #{item.wireDiameterUm}," +
 
+            " #{item.numbers},"+
+            " #{item.flatCable},"+
+            " #{item.tension},"+
+            " #{item.oddmentsG},"+
+            " #{item.state},"+
+            " #{item.Fid}"+
+            ")"+
+            "</foreach>" +
+            "ON DUPLICATE KEY UPDATE\n" +
+            "id = values(id),pppid = values(pppid),slip = values(slip),bobbin_detail_id = values(bobbin_detail_id)," +
+            "create_time = NOW(),delete_no = 0," +
+            "gross_weight = values(gross_weight),gx_id = values(gx_id),lengthm = values(lengthm),lossg = values(lossg)," +
+            "net_weightg = values(net_weightg),net_weightg_sum = values(net_weightg_sum)," +
+            "paying_off = values(paying_off),straight_line = values(straight_line),surface = values(surface),take_up_speed = values(take_up_speed)," +
+            "total_length = values(total_length),traction_speed = values(traction_speed),wastageg = values(wastageg),wire_diameter_um = values(wire_diameter_um)," +
+            "numbers = values(numbers),flat_cable = values(flat_cable),tension = values(tension),oddmentsg = values(oddmentsg),state = values(state),fid = values(fid)" +
+            "</script>")
+    void insertPDetourroducts(@Param("list")List<PPPProducts0> pppProducts0List);
+
+
+    //改绕-查询待改绕信息
+    @Select(value = "<script>SELECT pp.id as id,pp.pppid as PPPId,pp.gx_id as gxId,\n" +
+            "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId,tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
+            "pp.wire_diameter_um as wireDiameterUm,pp.lengthm as lengthM," +
+            "pp.gross_weight as grossWeight,pp.net_weightg as netWeightg,\n" +
+            "pp.wastageg as wastageg,pp.lossg as lossg," +
+            "pp.slip as Slip,pp.traction_speed as tractionSpeed," +
+            "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
+            "pp.surface as surface,pp.paying_off as payingOff," +
+            "pp.total_length as totalLength,\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,\n" +
+            "pw.straight_line as straightLine\n" +
+            "FROM ppp_products_detour pp\n" +
+            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
+            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
+            "</script>")
+    List<ProductsVo> findDetourProductsVoByPPPId(@Param("deId")Integer deId);
+
+    //改绕查询-根据产物id查询改绕详情
+    @Select(value = "<script>" +
+            "SELECT pp.id as id,pp.pppid as PPPId,pp.slip as Slip,pp.create_time as createTime," +
+            "ts.standards,tb.bobbin_name,pp.wire_diameter_um as wireDiameterUm, " +
+            "pp.lengthm as lengthM,pp.gross_weight as grossWeight,pp.net_weightg as netWeightg," +
+            "pp.surface as surface,pp.paying_off as payingOff,pp.straight_line as straightLine," +
+            "pp.numbers as numbers\n" +
+            "FROM  ppp_products_detour pp\n" +
+            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "WHERE pp.pppid = #{deId} and pp.id = #{id}"+
+            "</script>")
+    ProductsVo findBypppDetourProducts(@Param("deId")Integer deId,@Param("id")Integer id);
+
+
+
+
+    //    抽检-查询全部
+    @Select(value = "<script>SELECT ts.id as id,ppp.production_number as pppNumbers,\n" +
+            "ts.report_name as reportName,ts.create_time as createTime,\n" +
+            "ts.inspection_sum as inspectionSum,ts.samples_nums as samplesNums,\n" +
+            "ts.qualified_num as qualifiedNum,ts.unqualified_num as unqualifiedNum,\n" +
+            "ts.state as state,ts.delete_no as deleteNo\n" +
+            "FROM t_sampling_report ts\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
+            "WHERE ts.delete_no = 0 \n" +
+            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "LIMIT #{pageNum},#{pageSize}" +
+            "</script>")
+    List<TSamplingReportVo> findAllTSamplingReport(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+    //    抽检-查询全部
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM t_sampling_report ts\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
+            "WHERE ts.delete_no = 0 \n" +
+            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "</script>")
+    Integer countByTSamplingReport(@Param("name")String name);
+
+
+    //    质量证书-查询全部
+    @Select(value = "<script>SELECT ts.id as id,ppp.production_number as pppNumbers,\n" +
+            "ts.report_name as reportName,ts.create_time as createTime,\n" +
+            "ts.inspection_sum as inspectionSum,ts.samples_nums as samplesNums,\n" +
+            "ts.qualified_num as qualifiedNum,ts.unqualified_num as unqualifiedNum,\n" +
+            "ts.state as state,ts.delete_no as deleteNo\n" +
+            "FROM t_sampling_report ts\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
+            "WHERE ts.delete_no = 0 \n" +
+            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "LIMIT #{pageNum},#{pageSize}" +
+            "</script>")
+    List<TSamplingReportVo> findAllTCertificateReport(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+    //    质量证书-查询全部
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM t_sampling_report ts\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
+            "WHERE ts.delete_no = 0 \n" +
+            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "</script>")
+    Integer countByTCertificateReport(@Param("name")String name);
 }

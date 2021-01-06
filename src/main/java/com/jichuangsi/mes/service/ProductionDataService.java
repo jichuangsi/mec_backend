@@ -9,10 +9,7 @@ import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IProductionMapper;
 import com.jichuangsi.mes.model.MapVo;
 import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.repository.PPProductRepository;
-import com.jichuangsi.mes.repository.PPProductionRepository;
-import com.jichuangsi.mes.repository.ProductPlanRepository;
-import com.jichuangsi.mes.repository.TSuitRepository;
+import com.jichuangsi.mes.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -34,6 +31,8 @@ public class ProductionDataService {
     private TSuitRepository suitRepository;
     @Resource
     private PPProductionRepository ppProductionRepository;
+    @Resource
+    private PPAnnealingInfoRepository ppAnnealingInfoRepository;
 
 
     /**
@@ -76,6 +75,7 @@ public class ProductionDataService {
         jsonObject.put("OperationInfo",iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ppProduction.getGXId(),ppProduction.getStaffId()));//操作信息
 
         jsonObject.put("PPProductionInfo", ppProduction);//熔炼信息
+        jsonObject.put("ppAnnealingInfo", ppAnnealingInfoRepository.findByPppId(ppProduction.getId()));//退火信息
 
         Integer id = ppProduction.getId()%10;
 
@@ -112,6 +112,7 @@ public class ProductionDataService {
         jsonObject.put("OperationInfo",iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ppProduction.getGXId(),ppProduction.getStaffId()));//操作信息
 
         jsonObject.put("PPProductionInfo", ppProduction);//熔炼信息
+        jsonObject.put("ppAnnealingInfo", ppAnnealingInfoRepository.findByPppId(ppProduction.getId()));//退火信息
 
         Integer id = ppProduction.getId()%10;
 

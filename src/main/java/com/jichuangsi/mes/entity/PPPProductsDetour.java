@@ -1,15 +1,13 @@
 package com.jichuangsi.mes.entity;
 
-
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
-//改绕本班产物
+//待改绕的数据
 @Entity
-@Table(name = "pp_detourProducts")
-public class PPDetourProducts {
-
+@Table(name = "ppp_ProductsDetour")
+public class PPPProductsDetour {
     @Id
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//熔炼产物ID
@@ -49,6 +47,54 @@ public class PPDetourProducts {
 
     private Integer deleteNo;//删除否
 
+    public Integer getFid() {
+        return Fid;
+    }
+
+    public void setFid(Integer fid) {
+        Fid = fid;
+    }
+
+    public Integer getFlatCable() {
+        return flatCable;
+    }
+
+    public void setFlatCable(Integer flatCable) {
+        this.flatCable = flatCable;
+    }
+
+    public Integer getTension() {
+        return tension;
+    }
+
+    public void setTension(Integer tension) {
+        this.tension = tension;
+    }
+
+    public BigDecimal getOddmentsG() {
+        return oddmentsG;
+    }
+
+    public void setOddmentsG(BigDecimal oddmentsG) {
+        this.oddmentsG = oddmentsG;
+    }
+
+    public Integer getState() {
+        return state;
+    }
+
+    public void setState(Integer state) {
+        this.state = state;
+    }
+
+    public Integer getNumbers() {
+        return numbers;
+    }
+
+    public void setNumbers(Integer numbers) {
+        this.numbers = numbers;
+    }
+
     public Integer getId() {
         return id;
     }
@@ -71,14 +117,6 @@ public class PPDetourProducts {
 
     public void setGxId(Integer gxId) {
         this.gxId = gxId;
-    }
-
-    public Integer getFid() {
-        return Fid;
-    }
-
-    public void setFid(Integer fid) {
-        Fid = fid;
     }
 
     public Date getCreateTime() {
@@ -193,38 +231,6 @@ public class PPDetourProducts {
         this.straightLine = straightLine;
     }
 
-    public Integer getNumbers() {
-        return numbers;
-    }
-
-    public void setNumbers(Integer numbers) {
-        this.numbers = numbers;
-    }
-
-    public Integer getFlatCable() {
-        return flatCable;
-    }
-
-    public void setFlatCable(Integer flatCable) {
-        this.flatCable = flatCable;
-    }
-
-    public Integer getTension() {
-        return tension;
-    }
-
-    public void setTension(Integer tension) {
-        this.tension = tension;
-    }
-
-    public BigDecimal getOddmentsG() {
-        return oddmentsG;
-    }
-
-    public void setOddmentsG(BigDecimal oddmentsG) {
-        this.oddmentsG = oddmentsG;
-    }
-
     public BigDecimal getTotalLength() {
         return totalLength;
     }
@@ -239,14 +245,6 @@ public class PPDetourProducts {
 
     public void setNetWeightgSum(BigDecimal netWeightgSum) {
         this.netWeightgSum = netWeightgSum;
-    }
-
-    public Integer getState() {
-        return state;
-    }
-
-    public void setState(Integer state) {
-        this.state = state;
     }
 
     public Integer getDeleteNo() {
