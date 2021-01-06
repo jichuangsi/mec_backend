@@ -502,7 +502,7 @@ public class ProductionService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void savePPProduction(@ModelAttribute UserInfoForToken userInfoForToken,PPProductionModel ppProductionModel)throws PassportException {
+    public void savePPProduction(UserInfoForToken userInfoForToken,PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();
         if (StringUtils.isEmpty(ppProduction.getProductionNumber()) || StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) ||StringUtils.isEmpty(ppProduction.getEquipmentId())|| StringUtils.isEmpty(ppProduction.getSuitId())|| StringUtils.isEmpty(ppProduction.getStaffId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);

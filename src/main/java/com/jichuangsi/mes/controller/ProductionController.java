@@ -117,9 +117,9 @@ public class ProductionController {
     @ApiOperation("生产管理- 转下班操作（熔炼、粗拉、中拉、细拉、超细拉、绕线、改绕等）-新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/savePPProduction")
-    public ResponseModel savePPProduction(@RequestBody PPProductionModel ppProductionModel){
+    public ResponseModel savePPProduction(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody PPProductionModel ppProductionModel){
         try {
-            productionService.savePPProduction(ppProductionModel);
+            productionService.savePPProduction(userInfoForToken,ppProductionModel);
 
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
