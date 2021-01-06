@@ -14,4 +14,5 @@ public interface UserRepository extends JpaRepository<SStaff,Integer> {
     @Query(value = "SELECT count(1) FROM s_staff",nativeQuery = true)
     Integer countByid();
 
+    SStaff findByStaffNum(String account);
 }

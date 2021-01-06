@@ -1,37 +1,31 @@
-package com.jichuangsi.mes.entity;
+package com.jichuangsi.mes.model;
 
 
 import javax.persistence.*;
 import java.util.Date;
 
-@Entity
-@Table(name = "s_systemlog")
-public class SSystemlog {
+public class SSystemlogModel {
 
-    @Id
-    @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;
     private Integer staffId;//用户ID
     private String operates;//用户操作
     private String requestURL;//请求路径
     private String requestMode;//请求方式
-    @Column(columnDefinition = "text default null comment '请求参数'")
     private String requestParam;//请求参数
     private String requestTime;//请求时长
     private long createTime= new Date().getTime();//时间
     private Integer loginState;//状态1成功2失败
+    private String loginStateName;//状态1成功2失败
     private String operaterIp;//操作IP
     private Integer deleteNo;
     private String userAgent;
     private String exceptionName;
-    @Column(columnDefinition = "text default null comment '异常信息'")
     private String exceptionMessage;
     private Integer logType;//日志类型 登陆1 操作2 异常3
     private String operModel;//操作模块
     private String userName;//用户名称
-    @Column(columnDefinition = "text default null comment '失败原因'")
     private String failMessage;
-    @Column(columnDefinition = "text default null comment '结果集'")
+    private String date;
     private String resultSet;
 
 
@@ -177,6 +171,22 @@ public class SSystemlog {
 
     public void setFailMessage(String failMessage) {
         this.failMessage = failMessage;
+    }
+
+    public String getLoginStateName() {
+        return loginStateName;
+    }
+
+    public void setLoginStateName(String loginStateName) {
+        this.loginStateName = loginStateName;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public String getResultSet() {

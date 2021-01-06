@@ -110,7 +110,7 @@ public class UserService {
         String user=JSONObject.toJSONString(MappingEntityModelCoverter.CONVERTERFROMBACKUSERINFO(backUser));
         try {
 
-            logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
+            //logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
             //记录用户信息
             session.setAttribute("userId", backUser.getId());
 

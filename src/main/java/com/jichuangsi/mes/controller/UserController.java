@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.UserService;
@@ -36,6 +37,7 @@ public class UserController {
     @ApiOperation("后台用户登录")
     @ApiImplicitParams({})
     @PostMapping("/loginUser")
+    @OperLog(operModul = "登录",operType = "1",operDesc = "后台用户登录")
     public ResponseModel loginUser(@RequestBody BackUserLoginModel model,HttpServletRequest request,InputStream inputStream,HttpSession session){
         try {
             return ResponseModel.sucess("",userService.loginBackUser(model,request,inputStream,session));
@@ -47,6 +49,7 @@ public class UserController {
     @ApiOperation("后台修改密码")
     @ApiImplicitParams({})
     @PostMapping("/updateUserPwd")
+    @OperLog(operModul = "修改密码",operType = "2",operDesc = "后台修改密码")
     public ResponseModel updateUserPwd(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdatePwdModel model){
         try {
             userService.updateBackUserPwd(userInfoForToken,model);
