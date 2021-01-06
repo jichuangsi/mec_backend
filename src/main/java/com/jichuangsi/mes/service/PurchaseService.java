@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
@@ -362,7 +363,7 @@ public class PurchaseService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updatePurchaseOrderAuditByid(UpdateModel model, HttpSession session)throws PassportException {
+    public void updatePurchaseOrderAuditByid(UserInfoForToken userInfoForToken, UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -429,7 +430,7 @@ public class PurchaseService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateOrderStateByid(UpdateModel model, HttpSession session)throws PassportException {
+    public void updateOrderStateByid(UserInfoForToken userInfoForToken,UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())|| StringUtils.isEmpty(model.getUpdateType())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -550,7 +551,7 @@ public class PurchaseService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateMaterialEnter(UpdateModel model, HttpSession session)throws PassportException {
+    public void updateMaterialEnter(UserInfoForToken userInfoForToken,UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }

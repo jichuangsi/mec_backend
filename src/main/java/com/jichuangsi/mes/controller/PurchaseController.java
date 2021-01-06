@@ -1,10 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.exception.PassportException;
-import com.jichuangsi.mes.model.OrderModel;
-import com.jichuangsi.mes.model.ResponseModel;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UpdateModel;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.PurchaseService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -108,9 +105,9 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-修改订单状态(审核流程点击的通过/驳回)")
     @ApiImplicitParams({})
     @PostMapping("/updatePurchaseOrderAuditByid")
-    public ResponseModel updatePurchaseOrderAuditByid(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updatePurchaseOrderAuditByid(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdateModel smodel){
         try {
-            purchaseService.updatePurchaseOrderAuditByid(smodel,session);
+            purchaseService.updatePurchaseOrderAuditByid(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -121,9 +118,9 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-修改订单状态(订单审核撤回、结束采购、采购退回、结束退回)")
     @ApiImplicitParams({})
     @PostMapping("/updateOrderStateByid")
-    public ResponseModel updateOrderStateByid(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updateOrderStateByid(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
-            purchaseService.updateOrderStateByid(smodel,session);
+            purchaseService.updateOrderStateByid(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -157,9 +154,9 @@ public class PurchaseController {
     @ApiOperation("采购入库-新增采购入库")
     @ApiImplicitParams({})
     @PostMapping("/updateMaterialEnter")
-    public ResponseModel updateMaterialEnter(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updateMaterialEnter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
-            purchaseService.updateMaterialEnter(smodel,session);
+            purchaseService.updateMaterialEnter(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

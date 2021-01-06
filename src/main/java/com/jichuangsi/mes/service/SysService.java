@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -418,7 +419,7 @@ public class SysService {
      * @param
      * @throws PassportException
      */
-    public void saveCustomer(ClientModel client,HttpSession session)throws PassportException {
+    public void saveCustomer(UserInfoForToken userInfoForToken,ClientModel client)throws PassportException {
         SCustomer sc =client.getSclient();
         if (StringUtil.isEmpty(sc.getCustomerNumber()) || StringUtils.isEmpty(sc.getCustomerName())|| StringUtils.isEmpty(sc.getClientNo())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -431,7 +432,7 @@ public class SysService {
                 clientDetailRepository.saveAll(client.getCustomerDetails());
             }
         }else{
-            Integer sessionstaffId =(Integer) session.getAttribute("userId");//获取session中的用户ID
+            Integer sessionstaffId =Integer.valueOf(userInfoForToken.getUserId());
             sc.setDeleteNo(0);
             sc.setStaffId(sessionstaffId == null ? 1 : sessionstaffId);
             clientRepository.save(sc);
@@ -531,14 +532,14 @@ public class SysService {
      * @param
      * @throws PassportException
      */
-    public void saveComplaint(complaint clienttousu,HttpSession session)throws PassportException {
+    public void saveComplaint(UserInfoForToken userInfoForToken,complaint clienttousu)throws PassportException {
         if (StringUtil.isEmpty(clienttousu.getComplaintContent()) || StringUtils.isEmpty(clienttousu.getComplaintTitle())|| clienttousu.getCustomerId() <=0 ){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
         //如果存在Id且Id大于0 则说明是修改。否则就是新增
         if(StringUtils.isEmpty(clienttousu.getId())){
-            Integer sessionstaffId =(Integer) session.getAttribute("userId");//获取session中的用户ID
+            Integer sessionstaffId =Integer.valueOf(userInfoForToken.getUserId());
             clienttousu.setDeleteNo(0);
             clienttousu.setStaff_id(sessionstaffId == null ? 1 : sessionstaffId);
 
@@ -643,8 +644,8 @@ public class SysService {
      * @param
      * @throws PassportException
      */
-    public void saveDictionary(SDictionarier sDictionarier,HttpSession session)throws PassportException {
-        if (StringUtil.isEmpty(sDictionarier.getName()) ){//|| StringUtils.isEmpty(session.getAttribute("userId"))
+    public void saveDictionary(UserInfoForToken userInfoForToken, SDictionarier sDictionarier)throws PassportException {
+        if (StringUtil.isEmpty(sDictionarier.getName()) ){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
@@ -653,7 +654,7 @@ public class SysService {
         }
         sDictionarier.setDeleteNo(0);
         sDictionarier.setCreateTime(new Date());
-        sDictionarier.setStaffId(1);//暂定
+        sDictionarier.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         sDictionarier.setState(0);
         sdictionarierRepository.save(sDictionarier);
 

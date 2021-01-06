@@ -104,9 +104,6 @@ public class UserService {
         try {
 
             logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
-            //记录用户信息
-            HttpSession session = request.getSession();
-            session.setAttribute("userId", backUser.getId());
 
             return backTokenService.createdToken(user);
         }catch (UnsupportedEncodingException e){

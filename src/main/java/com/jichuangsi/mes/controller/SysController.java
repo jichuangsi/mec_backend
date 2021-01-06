@@ -166,9 +166,9 @@ public class SysController {
     @ApiOperation("客户管理-新增/编辑(客户/供应商)")
     @ApiImplicitParams({})
     @PostMapping("/saveCustomer")
-    public ResponseModel saveCustomer(@RequestBody ClientModel client,HttpSession session){
+    public ResponseModel saveCustomer(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody ClientModel client){
         try {
-            sysService.saveCustomer(client,session);
+            sysService.saveCustomer(userInfoForToken,client);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -223,9 +223,9 @@ public class SysController {
     @ApiOperation("客户投诉管理-新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveComplaint")
-    public ResponseModel saveComplaint(@RequestBody complaint clienttousu,HttpSession session){
+    public ResponseModel saveComplaint(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody complaint clienttousu){
         try {
-            sysService.saveComplaint(clienttousu,session);
+            sysService.saveComplaint(userInfoForToken,clienttousu);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -291,9 +291,9 @@ public class SysController {
     @ApiOperation("字典管理-新增字典明细")
     @ApiImplicitParams({})
     @PostMapping("/saveDictionary")
-    public ResponseModel saveDictionary(@RequestBody SDictionarier sDictionarier,HttpSession session){
+    public ResponseModel saveDictionary(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SDictionarier sDictionarier){
         try {
-            sysService.saveDictionary(sDictionarier,session);
+            sysService.saveDictionary(userInfoForToken,sDictionarier);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
