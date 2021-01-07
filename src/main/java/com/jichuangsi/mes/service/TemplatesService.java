@@ -7,12 +7,14 @@ import com.jichuangsi.mes.common.ProductionStateChange;
 import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.*;
 import com.jichuangsi.mes.exception.PassportException;
+import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.mapper.IProductionMapper;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -27,6 +29,8 @@ public class TemplatesService {
     @Resource
     private SDictionarierRepository sdRepository;
 
+    @Resource
+    private IMesMapper iMesMapper;
     @Resource
     private IProductionMapper iProductionMapper;
     @Resource
@@ -65,7 +69,7 @@ public class TemplatesService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)
-    public void addTemplate(Templates templates) throws PassportException{
+    public void addTemplate(UserInfoForToken userInfoForToken,Templates templates) throws PassportException{
         if(StringUtils.isEmpty(templates.getType()) || StringUtils.isEmpty(templates.getFileRoute())
                 || StringUtils.isEmpty(templates.getXB()) || StringUtils.isEmpty(templates.getName())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -78,6 +82,7 @@ public class TemplatesService {
             long mbNum =templatesRepository.count();
             String strnum = "MB000"+mbNum;
             templates.setNumber(strnum);
+            templates.setUserId(Integer.valueOf(userInfoForToken.getUserId()));//赋值用户id
         }
         templatesRepository.save(templates);
     }
@@ -181,12 +186,12 @@ public class TemplatesService {
         TSamplingReport tSamplingReport = new TSamplingReport();
         tSamplingReport.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         tSamplingReport.setReportName(selectModel.getFindName());//报告名称
-        tSamplingReport.setInspectionSum(selectModel.getPageNum());//进检轴数
-        tSamplingReport.setSamplesNums(selectModel.getPageSize());//抽检轴数
+        tSamplingReport.setInspectionSum(selectModel.getPageSize());//进检轴数
+        tSamplingReport.setSamplesNums(selectModel.getPageNum());//抽检轴数
         tSamplingReport.setPppId(selectModel.getFindById());//生产id
         tSamplingReport.setPpppId(selectModel.getFindIdOne());//生产产物id
 
-        jsonObject.put("TSamplingReport",tSamplingReport);//抽样检验数据
+        jsonObject.put("tSamplingReport",tSamplingReport);//抽样检验数据
 
 //        抽样检验报告明细
         ProductsVo productsVo = iProductionMapper.findBypppProducts(selectModel.getFindById()%10,selectModel.getFindIdOne());//根据产物id查询详情
@@ -197,7 +202,11 @@ public class TemplatesService {
             tSamplingReportDetail.setLengthM(productsVo.getLengthM().toString());
             tSamplingReportDetailList.add(tSamplingReportDetail);
         }
-        jsonObject.put("twoList",tSamplingReportDetailList);//抽样检验数据list：根据传过来的数量生成具体数据
+        jsonObject.put("samplingReportDetailList",tSamplingReportDetailList);//抽样检验数据list：根据传过来的数量生成具体数据
+
+
+        jsonObject.put("tempXiaLa",iMesMapper.findAllTemplatesXiaLa(1));//检验报告模板下拉框
+        jsonObject.put("staffXiaLa",iMesMapper.findStaffAllXiaLa());//抽样检验数据list：根据传过来的数量生成具体数据
 
         return jsonObject;
     }
@@ -212,11 +221,13 @@ public class TemplatesService {
     public void saveTSamplingReport(TSamplingReportModel model)throws PassportException {
         TSamplingReport tSamplingReport = model.gettSamplingReport();
 
-        List<TSamplingReportDetail> samplingReportDetailList = new ArrayList<>();
-        if(StringUtils.isEmpty(tSamplingReport.getReportName()) ||StringUtils.isEmpty(tSamplingReport.getStaffId())||StringUtils.isEmpty(tSamplingReport.getTempId())||samplingReportDetailList.size() == 0){
+        List<TSamplingReportDetail> samplingReportDetailList = model.getSamplingReportDetailList();
+        if(StringUtils.isEmpty(tSamplingReport.getReportName()) ||StringUtils.isEmpty(tSamplingReport.getStaffId())||StringUtils.isEmpty(tSamplingReport.getTempId())|| samplingReportDetailList.size() == 0){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
+        tSamplingReport.setState(0);
+        tSamplingReport.setDeleteNo(0);
         TSamplingReport tSamplingReport1=tSamplingReportRepository.save(tSamplingReport);//保存报告基本信息
 
         for(int i = 0; i < samplingReportDetailList.size(); i++){
@@ -295,6 +306,9 @@ public class TemplatesService {
 
         jsonObject.put("TSamplingReport",tSamplingReport);
         jsonObject.put("twoList",tSamplingReportDetailRepository.findBySamplingRId(model.getFindById()));
+
+        jsonObject.put("tempXiaLa",iMesMapper.findAllTemplatesXiaLa(1));//检验报告模板下拉框
+        jsonObject.put("staffXiaLa",iMesMapper.findStaffAllXiaLa());//抽样检验数据list：根据传过来的数量生成具体数据
         return jsonObject;
     }
 
@@ -321,17 +335,23 @@ public class TemplatesService {
 
         if(productPlan.getRelationNo() == 0){
             jsonObject.put("BasicInfo",iProductionMapper.findMeltingBasicInfoByNoSaleId(ppProduct.getId()));//基本信息：不关联销售订单 根据生产计划单产物id
+            jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioByNoSaleId(ppProduct.getProductDetailId()));// 原料比例： 根据产品明细id RawMaterialRatio
         }else{
             jsonObject.put("BasicInfo",iProductionMapper.findMeltingBasicInfoById(ppProduct.getId()));//基本信息：关联销售订单 根据生产计划单产物id
+            jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioBySaleId(ppProduct.getProductDetailId()));// 原料比例： 根据产品明细id RawMaterialRatio
         }
 
-        jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioById(ppProduct.getProductDetailId()));// 原料比例： 根据产品明细id RawMaterialRatio
+//        jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioById(ppProduct.getProductDetailId()));// 原料比例： 根据产品明细id RawMaterialRatio
 
         // 质量证书
         TCertificateReport tCertificateReport = new TCertificateReport();
         tCertificateReport.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
+        tCertificateReport.setPppId(selectModel.getFindById());//pppid
 
-        jsonObject.put("TCertificateReport",tCertificateReport);//抽样检验数据
+        jsonObject.put("tCertificateReport",tCertificateReport);//抽样检验数据
+
+        jsonObject.put("tempXiaLa",iMesMapper.findAllTemplatesXiaLa(2));//检验报告模板下拉框
+        jsonObject.put("staffXiaLa",iMesMapper.findStaffAllXiaLa());//抽样检验数据list：根据传过来的数量生成具体数据
 
         return jsonObject;
     }
@@ -349,6 +369,8 @@ public class TemplatesService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
+        tCertificateReport.setDeleteNo(0);
+        tCertificateReport.setState(0);
         tCertificateReportRepository.save(tCertificateReport);//保存list
     }
 
@@ -415,11 +437,16 @@ public class TemplatesService {
 
         if(productPlan.getRelationNo() == 0){
             jsonObject.put("BasicInfo",iProductionMapper.findMeltingBasicInfoByNoSaleId(ppProduct.getId()));//基本信息：不关联销售订单 根据生产计划单产物id
+            jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioByNoSaleId(ppProduct.getProductDetailId()));// 原料比例： 根据产品明细id RawMaterialRatio
         }else{
             jsonObject.put("BasicInfo",iProductionMapper.findMeltingBasicInfoById(ppProduct.getId()));//基本信息：关联销售订单 根据生产计划单产物id
+            jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioBySaleId(ppProduct.getProductDetailId()));// 原料比例： 根据产品明细id RawMaterialRatio
         }
 
         jsonObject.put("tCertificateReport",tCertificateReport);
+
+        jsonObject.put("tempXiaLa",iMesMapper.findAllTemplatesXiaLa(2));//检验报告模板下拉框
+        jsonObject.put("staffXiaLa",iMesMapper.findStaffAllXiaLa());//抽样检验数据list：根据传过来的数量生成具体数据
         return jsonObject;
     }
 

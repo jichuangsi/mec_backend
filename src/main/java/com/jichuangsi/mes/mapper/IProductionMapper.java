@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Select;
 import org.springframework.data.jpa.repository.Modifying;
 
 import javax.transaction.Transactional;
+import java.util.Date;
 import java.util.List;
 
 @Mapper
@@ -36,6 +37,7 @@ public interface IProductionMapper {
             "</script>")
     List<PPProductVo> findSaleMeltingInfoById(@Param("deId")Integer deId);
 
+//    不关联销售订单时的原料配比信息
     @Select(value = "<script>SELECT raw.ratiostart as ratiostart,\n" +
             "raw.ratioend as ratioend,\n" +
             "sd.`name` as stockName\n" +
@@ -45,7 +47,16 @@ public interface IProductionMapper {
             "LEFT JOIN s_dictionarier sd ON sd.id = raw.stock_id\n" +
             "WHERE tr.id = #{deId}" +
             "</script>")
-    List<RawMaterialRatioVo> findRawMaterialRatioById(@Param("deId")Integer deId);
+    List<RawMaterialRatioVo> findRawMaterialRatioByNoSaleId(@Param("deId")Integer deId);
+
+    //    关联销售订单时的原料配比信息
+    @Select(value = "<script>SELECT raw.ratiostart as ratiostart, raw.ratioend as ratioend, sd.`name` as stockName \n" +
+            "FROM t_saleorderdetail ts \n" +
+            "LEFT JOIN rawmaterial_ratio raw ON raw.product_id = ts.product_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = raw.stock_id\n" +
+            "WHERE ts.id = #{deId}" +
+            "</script>")
+    List<RawMaterialRatioVo> findRawMaterialRatioBySaleId(@Param("deId")Integer deId);
 
     //    关联销售订单的基本信息
     @Select(value = "<script>SELECT ppp.id as id,pp.pp_number as ppNumber," +
@@ -504,7 +515,8 @@ public interface IProductionMapper {
             "FROM t_sampling_report ts\n" +
             "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
             "WHERE ts.delete_no = 0 \n" +
-            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n" +
+            "ORDER BY ts.id DESC \n"+
             "LIMIT #{pageNum},#{pageSize}" +
             "</script>")
     List<TSamplingReportVo> findAllTSamplingReport(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
@@ -520,25 +532,48 @@ public interface IProductionMapper {
 
 
     //    质量证书-查询全部
-    @Select(value = "<script>SELECT ts.id as id,ppp.production_number as pppNumbers,\n" +
-            "ts.report_name as reportName,ts.create_time as createTime,\n" +
-            "ts.inspection_sum as inspectionSum,ts.samples_nums as samplesNums,\n" +
-            "ts.qualified_num as qualifiedNum,ts.unqualified_num as unqualifiedNum,\n" +
-            "ts.state as state,ts.delete_no as deleteNo\n" +
-            "FROM t_sampling_report ts\n" +
-            "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
-            "WHERE ts.delete_no = 0 \n" +
-            "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+    @Select(value = "<script>SELECT tc.id as id,ppp.production_number as pppNumbers, \n" +
+            "tc.report_name as reportName, tc.state as state,tc.create_time as createTime\n" +
+            "FROM t_certificate_report tc \n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = tc.ppp_id \n" +
+            "WHERE tc.delete_no = 0\n" +
+            "<if test='name != null'>AND tc.report_name LIKE CONCAT('%', #{name},'%')</if>\n" +
+            "ORDER BY tc.id DESC \n"+
             "LIMIT #{pageNum},#{pageSize}" +
             "</script>")
     List<TSamplingReportVo> findAllTCertificateReport(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
     //    质量证书-查询全部
     @Select(value = "<script>SELECT count(1)\n" +
-            "FROM t_sampling_report ts\n" +
+            "FROM t_certificate_report ts\n" +
             "LEFT JOIN pp_production ppp ON ppp.id = ts.ppp_id\n" +
             "WHERE ts.delete_no = 0 \n" +
             "<if test='name != null'>AND ts.report_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "</script>")
     Integer countByTCertificateReport(@Param("name")String name);
+
+
+
+
+
+//    =========================首页-工作台=================================
+
+    //    生产任务-根据情况查询 （待开始、进行中、已完成、预警等）
+    @Select(value = "<script>SELECT ppp.id as id,ppp.gxid as GXId, \n" +
+            "ppp.gx_name as GXName,\n" +
+            "pp.create_time as createTime,pp.finished_time as finishedTime,\n" +
+            "tt.team_name as teamName\n" +
+            "FROM pp_production ppp\n" +
+            "LEFT JOIN pp_product ppr ON ppr.id = ppp.pproduct_id\n" +
+            "LEFT JOIN product_plan pp ON pp.id = ppr.pp_id\n" +
+            "LEFT JOIN t_team tt ON tt.id = ppp.team_id\n" +
+            "WHERE ppp.delete_no = 0 \n" +
+            "AND ppp.create_time BETWEEN #{createTime} AND #{finishedTime} \n" +
+            "<if test='state != null and state == 0'>AND ppp.state =  0 AND ppp.gxid = #{gxid}</if>\n"+
+            "<if test='state != null and state == 1'>AND ppp.state =  0 AND ppp.gxid != #{gxid}</if>\n"+
+            "<if test='state != null and state == 2'>AND ppp.state =  1 </if>\n"+
+//            "<if test='gxid != null'>AND ppp.gxid = #{gxid}</if>\n"+
+            "</script>")
+    List<PPPVo> findByStateOrGxId(@Param("state")Integer state, @Param("gxid")Integer gxid, @Param("createTime")Date createTime, @Param("finishedTime")Date finishedTime);
+
 }

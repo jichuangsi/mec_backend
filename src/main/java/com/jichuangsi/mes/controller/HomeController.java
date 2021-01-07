@@ -2,6 +2,7 @@ package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.ResponseModel;
+import com.jichuangsi.mes.model.SelectModel;
 import com.jichuangsi.mes.model.UserInfoForToken;
 import com.jichuangsi.mes.service.HomeService;
 import io.swagger.annotations.Api;
@@ -22,7 +23,7 @@ public class HomeController {
     @Resource
     private HomeService homeService;
 
-    @ApiOperation("首页- 查询我的办事项")
+    @ApiOperation("首页-查询数据")
     @ApiImplicitParams({})
     @PostMapping("/findMyMatters")
     public ResponseModel findMyMatters(@ModelAttribute UserInfoForToken userInfoForToken){
@@ -32,4 +33,28 @@ public class HomeController {
             return ResponseModel.fail("",e.getMessage());
         }
     }
+
+    @ApiOperation("工作台-查询今日生产任务")
+    @ApiImplicitParams({})
+    @PostMapping("/findProductionTask")
+    public ResponseModel findProductionTask(@ModelAttribute UserInfoForToken userInfoForToken){
+        try {
+            return ResponseModel.sucess("",homeService.findProductionTask(userInfoForToken));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("待办事项-（待办事项（未读未完成）、进行事项（已读未完成）、完成事项（已完成））")
+    @ApiImplicitParams({})
+    @PostMapping("/findMattersByState")
+    public ResponseModel findMattersByState(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",homeService.findMattersByState(userInfoForToken,selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
 }

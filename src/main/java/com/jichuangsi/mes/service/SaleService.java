@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
@@ -119,7 +120,7 @@ public class SaleService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void saveSale(SaleModel saleModel)throws PassportException {
+    public void saveSale(UserInfoForToken userInfoForToken,SaleModel saleModel)throws PassportException {
         TSaleorder tSaleorder = saleModel.getTsaleorder();
         if (StringUtil.isEmpty(tSaleorder.getSaleOrder()) || StringUtils.isEmpty(tSaleorder.getOrderStateId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -172,6 +173,7 @@ public class SaleService {
             auditPocess.setAuditSettingId(0);
             auditPocess.setRemark(tSaleorder.getRemark());
             auditPocess.setDeleteNo(0);
+            auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
             auditPocessRepository.save(auditPocess);//新增审核流程
         }
     }
@@ -429,7 +431,7 @@ public class SaleService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateSaleOrderStateByid(UpdateModel model, HttpSession session)throws PassportException {
+    public void updateSaleOrderStateByid(UserInfoForToken userInfoForToken,UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())|| StringUtils.isEmpty(model.getUpdateType())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -490,6 +492,7 @@ public class SaleService {
         auditPocess.setAuditSetting(straudtiSetting);
         auditPocess.setRemark(model.getUpdateRemark());
         auditPocess.setDeleteNo(0);
+        auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);//新增审核流程
 
         tSaleorder.setOrderStateId(newstateId);
@@ -508,7 +511,7 @@ public class SaleService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateSaleAuditStateByid(UpdateModel model, HttpSession session)throws PassportException {
+    public void updateSaleAuditStateByid(UserInfoForToken userInfoForToken,UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())|| StringUtils.isEmpty(model.getUpdateType())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -557,6 +560,7 @@ public class SaleService {
         auditPocess.setAuditSetting(OrderStateChange.getSaleOrderState(tSaleorder.getOrderStateId()).get("orderstate") +"("+ levelName+")");
         auditPocess.setRemark(model.getUpdateRemark());
         auditPocess.setDeleteNo(0);
+        auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);//新增审核流程
 
         tSaleorder.setOrderStateId(newstateId);
@@ -571,7 +575,7 @@ public class SaleService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateMaterialOuter(UpdateModel model, HttpSession session)throws PassportException {
+    public void updateMaterialOuter(UserInfoForToken userInfoForToken, UpdateModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -585,6 +589,7 @@ public class SaleService {
         auditPocess.setAuditSetting("出库");
         auditPocess.setRemark(model.getUpdateRemark());
         auditPocess.setDeleteNo(0);
+        auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);
     }
 

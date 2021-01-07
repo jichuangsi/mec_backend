@@ -3,6 +3,7 @@ package com.jichuangsi.mes.mapper;
 import com.jichuangsi.mes.entity.Equipment;
 import com.jichuangsi.mes.entity.EquipmentItems;
 import com.jichuangsi.mes.entity.GXScheduling;
+import com.jichuangsi.mes.entity.Matters;
 import com.jichuangsi.mes.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -27,6 +28,7 @@ public interface IMesMapper {
             "WHERE sf.delete_no = 0" +
             "<if test='name != null'>AND sf.`staff_name` LIKE CONCAT('%', #{name},'%')</if>"+
             "<if test='deId != null'>AND sf.department_id=#{deId}</if>" +
+            "ORDER BY sf.id DESC\n " +
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<UserInfoModel> findAllUser(@Param("name")String name,@Param("deId")Integer deId,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -94,6 +96,10 @@ public interface IMesMapper {
     //    查询设备下拉框
     @Select(value = "<script>SELECT id as MapKey,equipment_number as MapValue,equipment_name as MapValue2  FROM t_equipment WHERE delete_no = 0 and state = 0 </script>")
     List<MapVo> findAllEquipmentByXiaLa();
+
+    //    查询检查报告模板下拉框
+    @Select(value = "<script>SELECT id as MapKey,number as MapValue,`name` as MapValue2 FROM templates WHERE type = #{type} AND delete_no = 0 AND closed = 0 </script>")
+    List<MapVo> findAllTemplatesXiaLa(@Param("type")Integer type);
 
     @Select(value = "<script>SELECT cm.id as id,cm.delete_no as deleteNo, cm.complaint_content as complaintContent,cm.complaint_title as complaintTitle,cm.create_time as createTime,\n" +
             "cm.customer_id as customerId,cm.remark as remark,cm.staff_id as staffId,sf.staff_name as staffName,sc.customer_name as customerName\n" +
@@ -419,6 +425,7 @@ public interface IMesMapper {
             "sc.customer_name as customerName,sf.staff_name as staffName,\n" +
             "tp.order_state as orderStateId,\n" +
             "tp.remark as remark,tp.delete_no as deleteNo,\n" +
+            "tp.create_time as createTime,\n" +
             "SUM(tpd.stock_unit_price*tpd.stock_amount) as orderSum\n" +
             "FROM t_purchase tp\n" +
             "LEFT JOIN s_customer sc ON sc.id = tp.customer_id\n" +
@@ -436,12 +443,13 @@ public interface IMesMapper {
             "sc.customer_name as customerName,sf.staff_name as staffName,\n" +
             "tp.order_state as orderStateId,\n" +
             "tp.remark as remark,tp.delete_no as deleteNo,\n" +
+            "tp.create_time as createTime,\n" +
             "SUM(tpd.stock_unit_price*tpd.stock_amount) as orderSum\n" +
             "FROM t_purchase tp\n" +
             "LEFT JOIN s_customer sc ON sc.id = tp.customer_id\n" +
             "LEFT JOIN s_staff sf ON sf.id = tp.staff_id\n" +
             "LEFT JOIN t_purchasedetail tpd ON tpd.purchase_id = tp.id\n" +
-            "WHERE tp.delete_no = 0 \n"+//and (order_state = 3 or order_state = 4)
+            "WHERE tp.delete_no = 0 and (order_state = 3 or order_state = 4) \n"+//and (order_state = 3 or order_state = 4)
             "<if test='name != null'>AND tp.purchase_order LIKE CONCAT('%', #{name},'%')</if>\n"+
             "GROUP BY tp.id\n" +
             "Order BY tp.id desc\n" +
@@ -579,8 +587,7 @@ public interface IMesMapper {
     @Select(value = "<script>SELECT FROM_UNIXTIME(ap.create_time/1000) as createTime,\n" +
             "ap.audit_setting as auditSetting,ap.remark as remark,sf.staff_name as staffName\n" +
             "FROM audit_pocess ap\n" +
-            "LEFT JOIN audit_setting aass ON aass.id = ap.audit_setting_id \n" +
-            "LEFT JOIN s_staff sf ON sf.id = aass.staff_id\n" +
+            "LEFT JOIN s_staff sf ON sf.id = ap.audit_staff_id\n" +
             "WHERE ap.audit_order_id = #{deId} AND (ap.audit_type = #{typeOne} or ap.audit_type = #{typeTwo})</script>")
     List<AuditPocessVo> findAuditListById(@Param("deId")Integer deId,@Param("typeOne")String typeOne,@Param("typeTwo")String typeTwo);
 
@@ -1311,4 +1318,14 @@ public interface IMesMapper {
             "LEFT JOIN s_staff sf ON sf.id = ap.staff_id\n" +
             "WHERE ap.audit_order_id = #{deId} </script>")
     List<AuditPocessVo> findPPAuditListById(@Param("deId")Integer deId);
+
+    //    查询待办事项
+    @Select(value = "<script>SELECT id as id,matter_news as matterNews," +
+            "create_time as createTime,type as type,order_id as orderId \n" +
+            "FROM matters \n" +
+            "WHERE staff_id = #{staffId} and finished_no = #{finishedNo}  " +
+            "<if test='readNo != null'>AND read_no = #{readNo}</if>\n"+
+            "<if test='name != null'>AND matter_news LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "</script>")
+    List<Matters> findAllMatters(@Param("name")String name, @Param("staffId")Integer staffId, @Param("finishedNo")Integer finishedNo, @Param("readNo")Integer readNo);
 }

@@ -56,9 +56,9 @@ public class PurchaseController {
     @ApiOperation("采购订单管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/savePurchase")
-    public ResponseModel savePurchase(@RequestBody OrderModel orderModel){
+    public ResponseModel savePurchase(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody OrderModel orderModel){
         try {
-            purchaseService.savePurchase(orderModel);
+            purchaseService.savePurchase(userInfoForToken,orderModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -81,9 +81,9 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-根据Id查询订单详情")
     @ApiImplicitParams({})
     @PostMapping("/getPurchaseById")
-    public ResponseModel getPurchaseById(@RequestBody SelectModel smodel){
+    public ResponseModel getPurchaseById(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SelectModel smodel){
         try {
-            return ResponseModel.sucess("",purchaseService.getPurchaseById(smodel));
+            return ResponseModel.sucess("",purchaseService.getPurchaseById(userInfoForToken,smodel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

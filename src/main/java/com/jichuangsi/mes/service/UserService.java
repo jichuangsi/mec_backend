@@ -42,8 +42,11 @@ public class UserService {
      * @throws PassportException
      */
     public void registBackUser(UserInfoModel usermodel)throws PassportException {
-        if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getLoginPassword())
-                || StringUtils.isEmpty(usermodel.getStaffName())){
+        if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        if (StringUtils.isEmpty(usermodel.getId()) && StringUtils.isEmpty(usermodel.getLoginPassword())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 //        if (userRepository.countByStaffNum(usermodel.getStaffNum())>0){
@@ -54,8 +57,11 @@ public class UserService {
         String strnum = "YG000"+staffcount;
 
         SStaff setstaff = new SStaff();
+
+        setstaff.setId(StringUtils.isEmpty(usermodel.getId()) ? null :usermodel.getId());
+
         setstaff.setDepartmentId(usermodel.getDepartmentId());
-        setstaff.setStaffNum(strnum);
+        setstaff.setStaffNum(StringUtils.isEmpty(usermodel.getId()) ? strnum : usermodel.getStaffNum());
         setstaff.setStaffName(usermodel.getStaffName());
         setstaff.setStaffAge(usermodel.getStaffAge());
         setstaff.setPostId(usermodel.getPostId().toString());
@@ -68,7 +74,10 @@ public class UserService {
         setstaff.setWorkshopId(usermodel.getWorkshopId());
         setstaff.setState(0);
         setstaff.setDeleteNo(0);
-        setstaff.setLoginPassword(Md5Util.encodeByMd5(usermodel.getLoginPassword()));
+
+        if(!StringUtils.isEmpty(usermodel.getLoginPassword())){
+            setstaff.setLoginPassword(Md5Util.encodeByMd5(usermodel.getLoginPassword()));
+        }
         userRepository.save(setstaff);//保存用户信息
 
         Integer staffid = setstaff.getId();
@@ -91,10 +100,11 @@ public class UserService {
      * @return
      * @throws PassportException
      */
-    public String loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
+    public JSONObject loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
         if (StringUtils.isEmpty(model.getAccount()) || StringUtils.isEmpty(model.getPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+        JSONObject jsonObject = new JSONObject();
         SStaff backUser=userRepository.findByStaffNumAndLoginPassword(model.getAccount(),Md5Util.encodeByMd5(model.getPwd()));
         if (backUser==null){
             throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);
@@ -105,7 +115,10 @@ public class UserService {
 
             logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
 
-            return backTokenService.createdToken(user);
+            jsonObject.put("accessToken",backTokenService.createdToken(user));
+            jsonObject.put("userId",backUser.getId());
+            jsonObject.put("userName",backUser.getStaffName());
+            return jsonObject;
         }catch (UnsupportedEncodingException e){
             throw new PassportException(e.getMessage());
         }

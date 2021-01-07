@@ -35,9 +35,9 @@ public class TemplatesController {
             @ApiImplicitParam(paramType = "body", name = "xb", value = "线别id", required = false, dataType = "int")*/
     })
     @PostMapping("/addTemplate")
-    public ResponseModel addTemplate(@RequestBody Templates templates)throws IOException,PassportException {
+    public ResponseModel addTemplate(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody Templates templates)throws IOException,PassportException {
         try {
-            templatesService.addTemplate(templates);
+            templatesService.addTemplate(userInfoForToken,templates);
             return ResponseModel.sucessWithEmptyData("");
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());

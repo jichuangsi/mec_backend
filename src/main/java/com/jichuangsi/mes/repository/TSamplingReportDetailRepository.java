@@ -1,6 +1,5 @@
 package com.jichuangsi.mes.repository;
 
-import com.jichuangsi.mes.entity.TSamplingReport;
 import com.jichuangsi.mes.entity.TSamplingReportDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
 

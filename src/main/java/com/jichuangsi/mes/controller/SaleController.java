@@ -1,10 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.exception.PassportException;
-import com.jichuangsi.mes.model.ResponseModel;
-import com.jichuangsi.mes.model.SaleModel;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UpdateModel;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.SaleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -59,9 +56,9 @@ public class SaleController  {
     @ApiOperation("销售订单管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveSale")
-    public ResponseModel saveSale(@RequestBody SaleModel saleModel){
+    public ResponseModel saveSale(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody SaleModel saleModel){
         try {
-            saleService.saveSale(saleModel);
+            saleService.saveSale(userInfoForToken,saleModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -118,9 +115,9 @@ public class SaleController  {
     @ApiOperation("销售订单管理-修改订单状态 （订单撤回，结束销售，销售退回等）")
     @ApiImplicitParams({})
     @PostMapping("/updateSaleOrderStateByid")
-    public ResponseModel updateSaleOrderStateByid(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updateSaleOrderStateByid(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
-            saleService.updateSaleOrderStateByid(smodel,session);
+            saleService.updateSaleOrderStateByid(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -131,9 +128,9 @@ public class SaleController  {
     @ApiOperation("销售订单管理-审核详情修改订单状态(审核流程点击的通过/驳回)")
     @ApiImplicitParams({})
     @PostMapping("/updateSaleAuditStateByid")
-    public ResponseModel updateSaleAuditStateByid(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updateSaleAuditStateByid(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
-            saleService.updateSaleAuditStateByid(smodel,session);
+            saleService.updateSaleAuditStateByid(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -144,9 +141,9 @@ public class SaleController  {
     @ApiOperation("销售出库-新增销售出库")
     @ApiImplicitParams({})
     @PostMapping("/updateMaterialOuter")
-    public ResponseModel updateMaterialOuter(@RequestBody UpdateModel smodel, HttpSession session){
+    public ResponseModel updateMaterialOuter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
-            saleService.updateMaterialOuter(smodel,session);
+            saleService.updateMaterialOuter(userInfoForToken,smodel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

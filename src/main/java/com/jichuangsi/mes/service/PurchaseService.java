@@ -11,6 +11,7 @@ import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.repository.*;
+import org.apache.xmlbeans.impl.xb.xsdschema.Public;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -117,7 +118,7 @@ public class PurchaseService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void savePurchase(OrderModel orderModel)throws PassportException {
+    public void savePurchase(UserInfoForToken userInfoForToken,OrderModel orderModel)throws PassportException {
         TPurchase tPurchase = orderModel.gettPurchase();
         if (StringUtil.isEmpty(tPurchase.getPurchaseOrder())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -161,6 +162,9 @@ public class PurchaseService {
             matters.setMatterNews("您有1个采购订单待审核");
             matters.setStaffId(auditSettingRepository.getstaffIdByauditTypeandLevel("CG","1"));
             matters.setOrderId(tPurchase.getId());
+            matters.setType(1);//进程类型（1 采购-订单审核  2 采购-来料检验）
+            matters.setFinishedNo(0);//完成否
+            matters.setReadNo(0);//阅读否
             matters.setDeleteNo(0);
             mattersRepository.save(matters);//新增待办事项
 
@@ -170,6 +174,7 @@ public class PurchaseService {
             auditPocess.setAuditSetting("创建采购订单");
             auditPocess.setAuditSettingId(0);
             auditPocess.setRemark(tPurchase.getRemark());
+            auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
             auditPocess.setDeleteNo(0);
             auditPocessRepository.save(auditPocess);//新增审核流程
         }
@@ -182,7 +187,6 @@ public class PurchaseService {
      * @throws PassportException
      */
     public PageInfo getAllPurchase(SelectModel smodel)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         List<PurchaseModel> listPurchase = mesMapper.findAllPurchase(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
@@ -201,10 +205,11 @@ public class PurchaseService {
 
     /**
      * 采购订单管理-根据Id查询订单详情
+     * 判断该采购单的审核阶段是否跟该员工符合，如果符合修改状态显示已读
      * @param
      * @throws PassportException
      */
-    public JSONObject getPurchaseById(SelectModel smodel)throws PassportException{
+    public JSONObject getPurchaseById(UserInfoForToken userInfoForToken,SelectModel smodel)throws PassportException{
         JSONObject jsonObject=new JSONObject();
         if(StringUtils.isEmpty(smodel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -212,6 +217,8 @@ public class PurchaseService {
         TPurchase purchase=  tpurchaseRepository.findByid(smodel.getFindById());
 
         if (StringUtils.isEmpty(purchase)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
+
+        updateMatterReadNo(Integer.valueOf(userInfoForToken.getUserId()),purchase.getOrderState(),purchase.getId());//修改状态
 
         Map<String,String> map =  OrderStateChange.getOrderState(purchase.getOrderState());
 
@@ -227,6 +234,31 @@ public class PurchaseService {
 
         jsonObject.put("auditDetail",mesMapper.findAuditListById(smodel.getFindById(),"CG","LL"));//加上审核详情 auditPocessRepository.findByAuditOrderId(smodel.getFindById())
         return jsonObject;
+    }
+
+    /**
+     * 待办事项-修改状态（已读否）
+     * @throws PassportException
+     */
+    public void updateMatterReadNo(Integer staffId,Integer orderState, Integer orderId)throws PassportException {
+
+        String str = "";
+        Integer type = 0;
+        if(orderState ==  OrderStateChange.Purchase_OrderAudit_NotAudit ||orderState ==  OrderStateChange.Purchase_OrderAudit_AuditING){
+            str ="CG";
+            type = 1;
+
+        }else if(orderState ==  OrderStateChange.Purchase_OrderCheckout_Checking ||orderState ==  OrderStateChange.Purchase_OrderCheckout_NotCheck){
+            str ="LL";
+            type = 2;
+        }
+
+        List<OrderAuditPocess> oldaudit = orderAuditPocessRepository.findByAuditTypeAndOrderId(str,orderId);
+
+        if(oldaudit.size() != 0 &&  staffId == oldaudit.get(0).getStaffId()){//对比两个操作的员工是否相同
+            mattersRepository.updateReadNoByStaffIdAndTypeAndOrderId(staffId,type,orderId);
+        }
+
     }
 
     /**
@@ -255,12 +287,16 @@ public class PurchaseService {
      * @param orderStateId 订单状态Id
      * @return
      */
-    public Map<String,String> showOrderState(Integer orderStateId,Integer orderId)throws PassportException {
+    public Map<String,String> showOrderState(Integer orderStateId,Integer orderId,Integer currentStaffId)throws PassportException {
         Map<String,String> map = new HashMap<>();
         Integer getint = 0;
         String str = "";
         String strAuditType = "";//审核类型
         Integer id = 0;
+
+        String matterNew = "";//待办事项文字
+        Integer newStaffId = 0;//下个staffId
+        Integer mattertype = 0;//待办事项类型
         switch (orderStateId){
             case 0://草稿-未审核
                 getint = 1;
@@ -269,55 +305,74 @@ public class PurchaseService {
             case 2://订单审核-审核中
                 getint = 2;
                 strAuditType = "CG";
+
+                mattertype = 1;
                 List<OrderAuditPocess> oldauditCG = orderAuditPocessRepository.findByAuditTypeAndOrderId("CG",orderId);
 
                 if(oldauditCG.size() != 0){
                     Integer oldstaffid = oldauditCG.get(0).getStaffId();
+
+                    if(currentStaffId != oldstaffid){//对比两个操作的员工是否相同
+                        throw new PassportException(ResultCode.NO_ACCESS);
+                    }
+
                     str = oldauditCG.get(0).getLevelName();//获取层级名称
                     id = oldauditCG.get(0).getId();//获取处理的单子Id
-                    Matters oldmatters = new Matters();
-                    oldmatters.setOrderId(orderId);
-                    oldmatters.setStaffId(oldstaffid);
-                    oldmatters.setFinishedNo(1);
-                    mattersRepository.save(oldmatters);
+
+                    //修改待办事项
+                    mattersRepository.updateByStaffIdAndTypeAndOrderId(oldstaffid,1,orderId);
 
                     //修改订单审核流程完成度
                     orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("CG",orderId,oldstaffid);
                 }
 
+
+
                 if(oldauditCG.size() >1){
                     Integer countId = oldauditCG.get(1).getStaffId() ;
 
                     if(!StringUtil.isEmpty(countId.toString()) && countId > 0){//如果有进程。则进入到下一个阶段。并且修改上一个人的完成状态
-                        Matters matters = new Matters();
-                        matters.setMatterNews("您有1个采购订单待审核");
-                        matters.setStaffId(countId);// 获取下一个阶段需要审核的员工Id
-                        matters.setOrderId(orderId);
-                        matters.setDeleteNo(0);
-                        matters.setFinishedNo(0);
-                        mattersRepository.save(matters);//新增待办事项
+                        newStaffId = countId;
+                        matterNew = "您有1个采购订单待审核";
+//                        Matters matters = new Matters();
+//                        matters.setMatterNews("您有1个采购订单待审核");
+//                        matters.setStaffId(countId);// 获取下一个阶段需要审核的员工Id
+//                        matters.setOrderId(orderId);
+//                        matters.setDeleteNo(0);
+//                        matters.setFinishedNo(0);
+//                        matters.setType(1);
+//                        matters.setReadNo(0);
+//                        mattersRepository.save(matters);//新增待办事项
                     }else{
+                        newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
+                        matterNew = "您有1个采购来料订单待审核";
                         getint = 3;
                     }
                 }else{
+                    newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
+                    matterNew = "您有1个采购来料订单待审核";
                     getint = 3;
                 }
-
                 break;
             case 3://来料检验-待检验
             case 4://来料检验-检验中
                 getint = 4;
                 strAuditType = "LL";
+
+                mattertype = 2;//待办事项类型
                 List<OrderAuditPocess> oldauditLL = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId);
                 if(oldauditLL.size() != 0){
                     Integer oldLLstaffid = oldauditLL.get(0).getStaffId();
+
+                    if(currentStaffId != oldLLstaffid){//对比两个操作的员工是否相同
+                        throw new PassportException(ResultCode.NO_ACCESS);
+                    }
+
                     str = oldauditLL.get(0).getLevelName();//获取层级名称
                     id = oldauditLL.get(0).getId();//获取处理的单子Id
-                    Matters oldLLmatters = new Matters();
-                    oldLLmatters.setOrderId(orderId);
-                    oldLLmatters.setStaffId(oldLLstaffid);
-                    oldLLmatters.setFinishedNo(1);
-                    mattersRepository.save(oldLLmatters);
+
+                    //修改待办事项
+                    mattersRepository.updateByStaffIdAndTypeAndOrderId(oldLLstaffid,2,orderId);
 
                     //修改订单审核流程完成度
                     orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("LL",orderId,oldLLstaffid);
@@ -327,17 +382,27 @@ public class PurchaseService {
                 if(oldauditLL.size() > 1){
                     Integer staffId =oldauditLL.get(1).getStaffId();
                     if(!StringUtils.isEmpty(staffId) && staffId > 0){//如果有进程。则进入到下一个阶段。并且修改上一个人的完成状态
-                        Matters matters = new Matters();
-                        matters.setMatterNews("您有1个采购来料订单待审核");
-                        matters.setStaffId(staffId);// 获取下一个阶段需要审核的员工Id
-                        matters.setOrderId(orderId);
-                        matters.setDeleteNo(0);
-                        matters.setFinishedNo(0);
-                        mattersRepository.save(matters);//新增待办事项
+                        newStaffId = staffId;
+                        matterNew = "您有1个采购订单待审核";
+//                        Matters matters = new Matters();
+//                        matters.setMatterNews("您有1个采购来料订单待审核");
+//                        matters.setStaffId(staffId);// 获取下一个阶段需要审核的员工Id
+//                        matters.setOrderId(orderId);
+//                        matters.setDeleteNo(0);
+//                        matters.setFinishedNo(0);
+//                        matters.setReadNo(0);
+//                        matters.setType(2);
+//                        mattersRepository.save(matters);//新增待办事项
                     }else{
+                        newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
+                        matterNew = "您有1个采购检验已通过-请前往确认";
+
                         getint =5;//检验已通过——待确认
                     }
                 }else{
+                    newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
+                    matterNew = "您有1个采购检验已通过-请前往确认";
+
                     getint =5;//检验已通过——待确认
                 }
 
@@ -349,13 +414,26 @@ public class PurchaseService {
         map.put("levelName",str);//获取层级名称
         map.put("id",id.toString());//获取处理的单子Id
         map.put("auditType",strAuditType);//获取审核的类型
+
+        if(!StringUtils.isEmpty(matterNew)){
+            Matters matters = new Matters();
+            matters.setMatterNews(matterNew);
+            matters.setStaffId(newStaffId);// 获取下一个阶段需要审核的员工Id
+            matters.setOrderId(orderId);
+            matters.setDeleteNo(0);
+            matters.setFinishedNo(0);
+            matters.setReadNo(0);
+            matters.setType(mattertype);
+            mattersRepository.save(matters);//新增待办事项
+        }
+
         return  map;
 
     }
 
     /**
      * 采购订单管理-修改订单状态(审核流程点击的通过/驳回)
-     *
+     * //先判断当前操作人员是否有权利操作该审核
      * 订单审核：任何一个审核不通过都是返回到未提交状态
      * 来料审核：任何一个审核不通过都是退回状态
      * @param
@@ -367,7 +445,6 @@ public class PurchaseService {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-
         TPurchase purchase = tpurchaseRepository.findByid(model.getUpdateID());
 
         if (StringUtils.isEmpty(purchase)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
@@ -378,7 +455,7 @@ public class PurchaseService {
         Integer orderAuditPocessId = 0 ;//获取审核流程的单子Id
 
 
-        Map<String,String> map = showOrderState(purchase.getOrderState(),model.getUpdateID());
+        Map<String,String> map = showOrderState(purchase.getOrderState(),model.getUpdateID(),Integer.valueOf(userInfoForToken.getUserId()));
         levelName =map.get("levelName");
         switch (model.getUpdateType()){
             case "T"://通过审核
@@ -411,6 +488,7 @@ public class PurchaseService {
         auditPocess.setAuditSetting(OrderStateChange.getOrderState(purchase.getOrderState()).get("orderstate") +"("+ levelName+")");
         auditPocess.setRemark(model.getUpdateRemark());
         auditPocess.setDeleteNo(0);
+        auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);//新增审核流程
 
         purchase.setOrderState(newstateId);
@@ -489,6 +567,7 @@ public class PurchaseService {
         auditPocess.setAuditSetting(straudtiSetting);
         auditPocess.setRemark(model.getUpdateRemark());
         auditPocess.setDeleteNo(0);
+        auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);//新增审核流程
 
         tPurchase.setOrderState(newstateId);
@@ -524,7 +603,6 @@ public class PurchaseService {
      * @throws PassportException
      */
     public PageInfo getAllPurchaseLLAudit(SelectModel smodel)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         List<PurchaseModel> listPurchase = mesMapper.findAllPurchaseLLAudit(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
@@ -607,6 +685,7 @@ public class PurchaseService {
         auditPocess.setAuditSetting("入库");
         auditPocess.setRemark(model.getUpdateRemark());
         auditPocess.setDeleteNo(0);
+        auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);
 
 

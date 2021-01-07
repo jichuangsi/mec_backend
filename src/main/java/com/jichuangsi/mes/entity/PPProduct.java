@@ -13,7 +13,7 @@ public class PPProduct {
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//计划产物id
     private Integer ppId;//生产计划ID
-    private Integer productDetailId;//产品规格ID
+    private Integer productDetailId;//产品规格ID （关联销售订单时用的是销售订单明细id  不关联时用的是产品规格id）
     private Double length;//长度
     private Integer quantum;//数量
     private Integer deleteNo;//删除否

@@ -16,10 +16,19 @@ public class AuditPocess {
     private Integer auditSettingId;//审核设置ID
     private String auditSetting;//审核设置(审核节点备注)
     private Integer auditOrderId;//审核单子ID
+    private Integer auditStaffId;//审核工作人员id
     private String auditType;//审核类型("CG","LL","XX","TH")
     private String remark;//审核过程备注
     private long createTime= new Date().getTime();//创建时间
     private Integer deleteNo;
+
+    public Integer getAuditStaffId() {
+        return auditStaffId;
+    }
+
+    public void setAuditStaffId(Integer auditStaffId) {
+        this.auditStaffId = auditStaffId;
+    }
 
     public String getAuditType() {
         return auditType;

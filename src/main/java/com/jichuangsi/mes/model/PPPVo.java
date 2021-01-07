@@ -16,7 +16,19 @@ public class PPPVo {
     private Integer state;//完成情况 (0未完成 1已完成)
     private String statestr;//完成情况 (0未完成 1已完成)
     private String createTime;//创建时间
+
+
+    private String finishedTime;//完工时间(生产计划单)
+
     private Integer deleteNo;//删除否
+
+    public String getFinishedTime() {
+        return finishedTime;
+    }
+
+    public void setFinishedTime(String finishedTime) {
+        this.finishedTime = finishedTime;
+    }
 
     public Integer getId() {
         return id;

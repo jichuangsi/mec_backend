@@ -134,11 +134,11 @@ public class ProductionService {
 
         if(productPlan.getRelationNo() == 0){
             job.put("BasicInfo",iProductionMapper.findMeltingBasicInfoByNoSaleId(selectModel.getFindById()));//基本信息：不关联销售订单 根据生产计划单产物id
+            job.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioByNoSaleId(pdetailId));// 原料比例： 根据产品明细id RawMaterialRatio
         }else{
             job.put("BasicInfo",iProductionMapper.findMeltingBasicInfoById(selectModel.getFindById()));//基本信息：关联销售订单 根据生产计划单产物id
+            job.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioBySaleId(pdetailId));// 原料比例： 根据产品明细id RawMaterialRatio
         }
-
-        job.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioById(pdetailId));// 原料比例： 根据产品明细id RawMaterialRatio
 
         job.put("ProcessTechnology",suitRepository.findByid(productPlan.getSuitId()));//工艺参数 根据套模id
         job.put("equipmentInfo",new EquipmentVo());//设备信息(初始都为null)
@@ -202,11 +202,11 @@ public class ProductionService {
 
         if(productPlan.getRelationNo() == 0){
             jsonObject.put("BasicInfo",iProductionMapper.findMeltingBasicInfoByNoSaleId(ppProduct.getId()));//基本信息：不关联销售订单 根据生产计划单产物id
+            jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioByNoSaleId(pdetailId));// 原料比例： 根据产品明细id RawMaterialRatio
         }else{
             jsonObject.put("BasicInfo",iProductionMapper.findMeltingBasicInfoById(ppProduct.getId()));//基本信息：关联销售订单 根据生产计划单产物id
+            jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioBySaleId(pdetailId));// 原料比例： 根据产品明细id RawMaterialRatio
         }
-
-        jsonObject.put("RawMaterialRatio",iProductionMapper.findRawMaterialRatioById(pdetailId));// 原料比例： 根据产品明细id RawMaterialRatio
 
         jsonObject.put("ProcessTechnology",suitRepository.findByid(productPlan.getSuitId()));//工艺参数 根据套模id
         jsonObject.put("equipmentInfo",iProductionMapper.findEquipmentByEquipmentId(ppProduction.getEquipmentId()));//设备信息
