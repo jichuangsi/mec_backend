@@ -295,7 +295,7 @@ public class PurchaseService {
         Integer id = 0;
 
         String matterNew = "";//待办事项文字
-        Integer newStaffId = 0;//下个staffId
+        Integer newStaffId = 0;//待办事项下个staffId
         Integer mattertype = 0;//待办事项类型
         switch (orderStateId){
             case 0://草稿-未审核
@@ -326,31 +326,24 @@ public class PurchaseService {
                     orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("CG",orderId,oldstaffid);
                 }
 
-
-
                 if(oldauditCG.size() >1){
                     Integer countId = oldauditCG.get(1).getStaffId() ;
 
                     if(!StringUtil.isEmpty(countId.toString()) && countId > 0){//如果有进程。则进入到下一个阶段。并且修改上一个人的完成状态
                         newStaffId = countId;
                         matterNew = "您有1个采购订单待审核";
-//                        Matters matters = new Matters();
-//                        matters.setMatterNews("您有1个采购订单待审核");
-//                        matters.setStaffId(countId);// 获取下一个阶段需要审核的员工Id
-//                        matters.setOrderId(orderId);
-//                        matters.setDeleteNo(0);
-//                        matters.setFinishedNo(0);
-//                        matters.setType(1);
-//                        matters.setReadNo(0);
-//                        mattersRepository.save(matters);//新增待办事项
                     }else{
                         newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
                         matterNew = "您有1个采购来料订单待审核";
+                        mattertype = 2;//待办事项类型来料检验
+
                         getint = 3;
                     }
                 }else{
                     newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
                     matterNew = "您有1个采购来料订单待审核";
+                    mattertype = 2;//待办事项类型来料检验类型2
+
                     getint = 3;
                 }
                 break;
@@ -383,24 +376,15 @@ public class PurchaseService {
                     Integer staffId =oldauditLL.get(1).getStaffId();
                     if(!StringUtils.isEmpty(staffId) && staffId > 0){//如果有进程。则进入到下一个阶段。并且修改上一个人的完成状态
                         newStaffId = staffId;
-                        matterNew = "您有1个采购订单待审核";
-//                        Matters matters = new Matters();
-//                        matters.setMatterNews("您有1个采购来料订单待审核");
-//                        matters.setStaffId(staffId);// 获取下一个阶段需要审核的员工Id
-//                        matters.setOrderId(orderId);
-//                        matters.setDeleteNo(0);
-//                        matters.setFinishedNo(0);
-//                        matters.setReadNo(0);
-//                        matters.setType(2);
-//                        mattersRepository.save(matters);//新增待办事项
+                        matterNew = "您有1个采购来料订单待审核";
                     }else{
-                        newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
+                        newStaffId = currentStaffId;
                         matterNew = "您有1个采购检验已通过-请前往确认";
 
                         getint =5;//检验已通过——待确认
                     }
                 }else{
-                    newStaffId = orderAuditPocessRepository.findByAuditTypeAndOrderId("LL",orderId).get(0).getStaffId();
+                    newStaffId = currentStaffId;
                     matterNew = "您有1个采购检验已通过-请前往确认";
 
                     getint =5;//检验已通过——待确认
@@ -580,7 +564,6 @@ public class PurchaseService {
      * @throws PassportException
      */
     public PageInfo getAllPurchaseOrderAudit(SelectModel smodel)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         List<PurchaseModel> listPurchase = mesMapper.findAllPurchaseOrderAudit(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
@@ -653,6 +636,12 @@ public class PurchaseService {
                 inventoryStatus.setInventoryType(InventoryRecordReturnCode.InventoryType_YL);//库存类型(1 原料 2 产品 )
                 surplusquantity = tPurchasedetailModel.getStockAmount();
                 inventoryStatus.setInventorysum(surplusquantity);
+
+                inventoryStatus.setStockName(tPurchasedetailModel.getStockName());
+                inventoryStatus.setStockModel(tPurchasedetailModel.getStockModel());
+                inventoryStatus.setStockNumber(tPurchasedetailModel.getStockNumber());
+                inventoryStatus.setStandards(tPurchasedetailModel.getStandards());
+                inventoryStatus.setUnitId(tPurchasedetailModel.getUnitId());
                 inventoryStatusList.add(inventoryStatus);
 
             }else{
@@ -672,6 +661,12 @@ public class PurchaseService {
             inventoryRecord.setInventoryType(InventoryRecordReturnCode.InventoryType_YL);//库存类型(1 原料 2 产品 )
             inventoryRecord.setRemark(model.getUpdateRemark());
             inventoryRecord.setWarehouseId(purchase.getWarehouseiId());
+
+            inventoryRecord.setStockName(tPurchasedetailModel.getStockName());
+            inventoryRecord.setStockNumber(tPurchasedetailModel.getStockNumber());
+            inventoryRecord.setStockModel(tPurchasedetailModel.getStockModel());
+            inventoryRecord.setStandards(tPurchasedetailModel.getStandards());
+            inventoryRecord.setUnitId(tPurchasedetailModel.getUnitId());
             inventoryRecordList.add(inventoryRecord);
         }
 
@@ -684,10 +679,10 @@ public class PurchaseService {
         auditPocess.setAuditSettingId(0);//处理的过程Id
         auditPocess.setAuditSetting("入库");
         auditPocess.setRemark(model.getUpdateRemark());
-        auditPocess.setDeleteNo(0);
         auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
+        auditPocess.setAuditType("CG");
+        auditPocess.setDeleteNo(0);
         auditPocessRepository.save(auditPocess);
-
 
         purchase.setOrderState(OrderStateChange.Purchase_OrderAudit_Delivered_Sured);
         tpurchaseRepository.save(purchase);//修改订单状态

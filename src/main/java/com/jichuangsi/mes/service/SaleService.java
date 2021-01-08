@@ -163,6 +163,9 @@ public class SaleService {
             matters.setMatterNews("您有1个销售订单待审核");
             matters.setStaffId(auditSettingRepository.getstaffIdByauditTypeandLevel("XX","1"));
             matters.setOrderId(tSaleorder.getId());
+            matters.setType(3);//进程类型（3销售-订单审核 4销售-退回审核）
+            matters.setFinishedNo(0);//完成否
+            matters.setReadNo(0);//阅读否
             matters.setDeleteNo(0);
             mattersRepository.save(matters);//新增待办事项
 
@@ -172,8 +175,8 @@ public class SaleService {
             auditPocess.setAuditSetting("创建销售订单");
             auditPocess.setAuditSettingId(0);
             auditPocess.setRemark(tSaleorder.getRemark());
-            auditPocess.setDeleteNo(0);
             auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
+            auditPocess.setDeleteNo(0);
             auditPocessRepository.save(auditPocess);//新增审核流程
         }
     }
@@ -184,7 +187,6 @@ public class SaleService {
      * @throws PassportException
      */
     public PageInfo getAllSale(SelectModel smodel)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         String starttime = null;
@@ -245,7 +247,7 @@ public class SaleService {
      * @param
      * @throws PassportException
      */
-    public JSONObject getSaleById(SelectModel smodel)throws PassportException{
+    public JSONObject getSaleById(UserInfoForToken userInfoForToken,SelectModel smodel)throws PassportException{
         JSONObject jsonObject=new JSONObject();
         if(StringUtils.isEmpty(smodel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -253,6 +255,8 @@ public class SaleService {
         TSaleorder tSaleorder=  tsaleorderRepository.findByid(smodel.getFindById());
 
         if (StringUtils.isEmpty(tSaleorder)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
+
+        updateMatterReadNo(Integer.valueOf(userInfoForToken.getUserId()),tSaleorder.getOrderStateId(),tSaleorder.getId());//修改状态
 
         Map<String,String> map =  OrderStateChange.getSaleOrderState(tSaleorder.getOrderStateId());
 
@@ -268,6 +272,31 @@ public class SaleService {
 
         jsonObject.put("auditDetail",mesMapper.findAuditListById(smodel.getFindById(),"XX","TH"));//加上审核详情
         return jsonObject;
+    }
+
+    /**
+     * 待办事项-修改状态（已读否）
+     * @throws PassportException
+     */
+    public void updateMatterReadNo(Integer staffId,Integer orderState, Integer orderId)throws PassportException {
+
+        String str = "";
+        Integer type = 0;
+        if(orderState ==  OrderStateChange.Sale_OrderAudit_NotAudit ||orderState ==  OrderStateChange.Sale_OrderAudit_AuditING){
+            str ="XX";
+            type = 3;
+
+        }else if(orderState ==  OrderStateChange.Sale_OrderAudit_Returning_NotAudit ||orderState ==  OrderStateChange.Sale_OrderAudit_Returning_AuditING){
+            str ="TH";
+            type = 4;
+        }
+
+        List<OrderAuditPocess> oldaudit = orderAuditPocessRepository.findByAuditTypeAndOrderId(str,orderId);
+
+        if(oldaudit.size() != 0 &&  staffId == oldaudit.get(0).getStaffId()){//对比两个操作的员工是否相同
+            mattersRepository.updateReadNoByStaffIdAndTypeAndOrderId(staffId,type,orderId);
+        }
+
     }
 
     /**
@@ -296,37 +325,39 @@ public class SaleService {
      * @param orderStateId 订单状态Id
      * @return
      */
-    public Map<String,String> showSaleOrderState(Integer orderStateId,Integer orderId)throws PassportException{
+    public Map<String,String> showSaleOrderState(Integer orderStateId,Integer orderId,Integer currentStaffId)throws PassportException{
         Map<String,String> map = new HashMap<>();
         Integer getint = 0;
         String str = "";
         Integer id = 0;
         String strAuditType = "";//审核类型
 
+        String matterNew = "";//待办事项文字
+        Integer newStaffId = 0;//待办事项下个staffId
+        Integer mattertype = 0;//待办事项类型
         switch (orderStateId){
-            case 0:
-//                str1 = "草稿";
-//                str2 = "未审核";
+            case 0://草稿-未审核
                 getint = 1;
                 break;
-            case 1://"订单审核";   "未审核";
-            case 2:
-//                str1 = "订单审核";
-//                str2 = "审核中";
-
+            case 1://订单审核-未审核
+            case 2://订单审核-审核中
                 getint = 2;
                 strAuditType = "XX";
+
+                mattertype = 3;
                 List<OrderAuditPocess> oldauditCG = orderAuditPocessRepository.findByAuditTypeAndOrderId("XX",orderId);
-                if(!StringUtils.isEmpty(oldauditCG)){
+                if(oldauditCG.size() != 0){
                     Integer oldstaffid = oldauditCG.get(0).getStaffId();
+
+                    if(currentStaffId != oldstaffid){//对比两个操作的员工是否相同
+                        throw new PassportException(ResultCode.NO_ACCESS);
+                    }
+
                     str = oldauditCG.get(0).getLevelName();//获取层级名称
                     id = oldauditCG.get(0).getId();//获取审核流程的单子Id
-                    Matters oldmatters = new Matters();
-                    oldmatters.setOrderId(orderId);
-                    oldmatters.setStaffId(oldstaffid);
-                    oldmatters.setFinishedNo(1);
-                    mattersRepository.save(oldmatters);
 
+                    //修改待办事项
+                    mattersRepository.updateByStaffIdAndTypeAndOrderId(oldstaffid,mattertype,orderId);
                     //修改订单审核流程完成度
                     orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("XX",orderId,oldstaffid);
                 }
@@ -334,13 +365,9 @@ public class SaleService {
                     Integer countId = oldauditCG.get(1).getStaffId() ;
 
                     if(!StringUtil.isEmpty(countId.toString()) && countId > 0){//如果有进程。则进入到下一个阶段。并且修改上一个人的完成状态
-                        Matters matters = new Matters();
-                        matters.setMatterNews("您有1个销售订单待审核");
-                        matters.setStaffId(countId);// 获取下一个阶段需要审核的员工Id
-                        matters.setOrderId(orderId);
-                        matters.setDeleteNo(0);
-                        matters.setFinishedNo(0);
-                        mattersRepository.save(matters);//新增待办事项
+                        newStaffId = countId;
+                        matterNew = "您有1个销售订单待审核";
+
                     }else{
                         getint = 3;
                     }
@@ -348,40 +375,29 @@ public class SaleService {
                     getint = 3;
                 }
                 break;
-            case 3://"待出库" "待确认"
-
+            case 3://待出库-待确认
                 getint =4;
                 break;
-            case 4:
-//                str1 = "已出库";
-//                str2 = "已确认";
-
+            case 4://已出库-已确认
                 getint =5;
                 break;
-            case 5:
-//                str1 = "已完成";
-//                str2 = "已通过";
+            case 5://已完成-已通过
                 getint = 5;//订单完成
                 break;
-            case 6:
-//                str1 = "退回中";
-//                str2 = "待审核";//就是退回审核那里。如果审核通过了，到最后一层就自动入库
-            case 7:
-//                str1 = "退回中";
-//                str2 = "审核中";
+            case 6://退回中-待审核 （就是退回审核那里。如果审核通过了，到最后一层就自动入库）
+            case 7://退回中-审核中
                 getint = 7;
                 strAuditType = "TH";
+
+                mattertype = 4;
                 List<OrderAuditPocess> oldauditLL = orderAuditPocessRepository.findByAuditTypeAndOrderId("TH",orderId);
                 if(oldauditLL.size() != 0){
                     Integer oldLLstaffid = oldauditLL.get(0).getStaffId();
                     str = oldauditLL.get(0).getLevelName();//获取层级名称
                     id = oldauditLL.get(0).getId();//获取处理的单子Id
-                    Matters oldLLmatters = new Matters();
-                    oldLLmatters.setOrderId(orderId);
-                    oldLLmatters.setStaffId(oldLLstaffid);
-                    oldLLmatters.setFinishedNo(1);
-                    mattersRepository.save(oldLLmatters);
 
+                    //修改待办事项
+                    mattersRepository.updateByStaffIdAndTypeAndOrderId(oldLLstaffid,mattertype,orderId);
                     //修改订单审核流程完成度
                     orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("TH",orderId,oldLLstaffid);
                 }
@@ -389,23 +405,17 @@ public class SaleService {
                 if(oldauditLL.size() > 1 && !StringUtils.isEmpty(oldauditLL.get(1).getStaffId()) && oldauditLL.get(1).getStaffId() > 0){//如果有进程。则进入到下一个阶段。并且修改上一个人的完成状态
                     Integer staffId =oldauditLL.get(1).getStaffId();
 
-                    Matters matters = new Matters();
-                    matters.setMatterNews("您有1个销售退回订单待审核");
-                    matters.setStaffId(staffId);// 获取下一个阶段需要审核的员工Id
-                    matters.setOrderId(orderId);
-                    matters.setDeleteNo(0);
-                    matters.setFinishedNo(0);
-                    mattersRepository.save(matters);//新增待办事项
-                }else{//1、状态改为8；2、入库操作
+                    newStaffId = staffId;
+                    matterNew = "您有1个销售退回订单待审核-请前往确认";
+
+                }else{//1、状态改为8；2、退货入库操作
                     getint = OrderStateChange.Sale_OrderAudit_Returned_Passed;
-                    //入库操作
+                    //退货入库操作
                     saleInventory(getint,6,2,orderId,"销售订单退货入库");
                 }
 
                 break;
-            case 8:
-//                str1 = "已退回";
-//                str2 = "已通过";
+            case 8://已退回-已通过
                 getint = 8;
                 break;
             default:
@@ -416,6 +426,19 @@ public class SaleService {
         map.put("levelName",str);
         map.put("id",id.toString());
         map.put("auditType",strAuditType);//获取审核的类型
+
+        if(!StringUtils.isEmpty(matterNew) && newStaffId != 0){
+            Matters matters = new Matters();
+            matters.setMatterNews(matterNew);
+            matters.setStaffId(newStaffId);// 获取下一个阶段需要审核的员工Id
+            matters.setOrderId(orderId);
+            matters.setType(mattertype);
+            matters.setDeleteNo(0);
+            matters.setFinishedNo(0);
+            matters.setReadNo(0);
+            mattersRepository.save(matters);//新增待办事项
+        }
+
         return  map;
     }
 
@@ -525,7 +548,7 @@ public class SaleService {
         Integer newstateId = 0;
         Integer orderAuditPocessId = 0 ;//获取审核流程的单子Id
 
-        Map<String,String> map = showSaleOrderState(tSaleorder.getOrderStateId(),model.getUpdateID());
+        Map<String,String> map = showSaleOrderState(tSaleorder.getOrderStateId(),model.getUpdateID(),Integer.valueOf(userInfoForToken.getUserId()));
         levelName =map.get("levelName");
 
         switch (model.getUpdateType()){
@@ -617,7 +640,6 @@ public class SaleService {
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(tsaleorderdetailVo.getProductId());//产品/原料明细Id
                 inventoryStatus.setWarehouseId(tSaleorder.getWarehouseId());//仓库Id
-//                inventoryStatus.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购 6销售退回==入库等)
                 inventoryStatus.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
                 surplusquantity = tsaleorderdetailVo.getProductNum();
                 inventoryStatus.setInventorysum(surplusquantity);

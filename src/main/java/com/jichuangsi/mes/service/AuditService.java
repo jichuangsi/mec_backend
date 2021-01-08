@@ -48,7 +48,7 @@ public class AuditService {
         if(StringUtils.isEmpty(auditSetting.getAuditLevel()) || StringUtils.isEmpty(auditSetting.getLevelName())|| StringUtils.isEmpty(auditSetting.getStaffId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        if(auditSettingRepository.countByAuditLevelAndAuditType(auditSetting.getAuditLevel(),auditSetting.getAuditType()) >0){//防止数据重复
+        if(StringUtils.isEmpty(auditSetting.getId()) && auditSettingRepository.countByAuditLevelAndAuditType(auditSetting.getAuditLevel(),auditSetting.getAuditType()) >0){//防止数据重复
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_MSG);
         }
 

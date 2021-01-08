@@ -15,6 +15,10 @@ public class StockModel {
     private Integer state;//启用否
     private Integer deleteNo;//删除否
 
+
+//    private Integer stockDetailId;//材料规格id
+//    private Integer warehouseId;//仓库id
+
     public Integer getId() {
         return id;
     }

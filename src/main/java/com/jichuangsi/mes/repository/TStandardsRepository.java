@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface TStandardsRepository   extends JpaRepository<TStandards,Integer> {
 
+    TStandards findByid(Integer id);
+
     List<TStandards> findByMaterialIdAndMaterialTypeAndDeleteNo(Integer materId,Integer materialType,Integer deleteNo);
 
     @Transactional

@@ -2,6 +2,7 @@ package com.jichuangsi.mes.service;
 
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.PageInfo;
 import com.jichuangsi.mes.common.ProductionStateChange;
 import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.Matters;
@@ -46,7 +47,7 @@ public class HomeService {
         job.put("productionOrderMatter",0);//生产订单量（生产计划单数量）
         job.put("purchaseAmount",0);//采购金额（采购支出的金额）
         job.put("salesAmount",0);//销售金额（销售收入的金额）
-        job.put("myMatter",iMesMapper.findAllMatters(null,Integer.valueOf(userInfoForToken.getUserId()),0, null));//待办事项
+        job.put("myMatter",iMesMapper.findAllMatters(null,Integer.valueOf(userInfoForToken.getUserId()),0, null,null,null));//待办事项
         job.put("noticeList",sNoticeRepository.findByIsshowAndDeleteNoOrderByCreateTimeDesc(1,0));//系统公告
 
         return job;
@@ -73,8 +74,8 @@ public class HomeService {
      * 待办事项-（待办事项（未读未完成）、进行事项（已读未完成）、完成事项（已完成））
      * @throws PassportException
      */
-    public List<Matters> findMattersByState(UserInfoForToken userInfoForToken, SelectModel selectModel)throws PassportException {
-
+    public PageInfo findMattersByState(UserInfoForToken userInfoForToken, SelectModel selectModel)throws PassportException {
+        PageInfo page=new PageInfo();
         if(StringUtils.isEmpty(selectModel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -98,8 +99,12 @@ public class HomeService {
                 break;
         }
 
-        List<Matters> list = iMesMapper.findAllMatters(selectModel.getFindName(),Integer.valueOf(userInfoForToken.getUserId()),finishedNo, readNo);
+        List<Matters> list = iMesMapper.findAllMatters(selectModel.getFindName(),Integer.valueOf(userInfoForToken.getUserId()),finishedNo, readNo,(selectModel.getPageNum()-1)*selectModel.getPageSize(),selectModel.getPageSize());
 
-        return list;
+        page.setList(list);
+        page.setTotal(iMesMapper.countByAllMatters(selectModel.getFindName(),Integer.valueOf(userInfoForToken.getUserId()),finishedNo, readNo));
+        page.setPageSize(selectModel.getPageSize());
+        page.setPageNum(selectModel.getPageNum());
+        return page;
     }
 }

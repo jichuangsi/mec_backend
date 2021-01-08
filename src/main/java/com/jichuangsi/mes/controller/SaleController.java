@@ -91,9 +91,9 @@ public class SaleController  {
     @ApiOperation("销售订单管理-根据Id查询订单详情")
     @ApiImplicitParams({})
     @PostMapping("/getSaleById")
-    public ResponseModel getSaleById(@RequestBody SelectModel smodel){
+    public ResponseModel getSaleById(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SelectModel smodel){
         try {
-            return ResponseModel.sucess("",saleService.getSaleById(smodel));
+            return ResponseModel.sucess("",saleService.getSaleById(userInfoForToken,smodel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

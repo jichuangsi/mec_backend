@@ -18,8 +18,16 @@ public class TPurchasedetailModel {
     private String stockName;//名称
     private String stockModel;//型号
     private String standards;//规格(1g2g等)
+    private Integer unitId;//单位id
     private String unitName;//单位名称
 
+    public Integer getUnitId() {
+        return unitId;
+    }
+
+    public void setUnitId(Integer unitId) {
+        this.unitId = unitId;
+    }
 
     public Integer getId() {
         return id;
