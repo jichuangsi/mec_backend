@@ -17,7 +17,7 @@ public class ClientModel {
     private TProduct tProduct;
 
     private List<TProstandard> tProstandards;
-    private List<GXLossBi> gxLossBislist;
+    private List<GXLossBiVo> gxLossBislist;
     private List<RawMaterialRatio> rawMaterialRatios;
 
     //新增原材料
@@ -37,11 +37,11 @@ public class ClientModel {
         this.updateids = updateids;
     }
 
-    public List<GXLossBi> getGxLossBislist() {
+    public List<GXLossBiVo> getGxLossBislist() {
         return gxLossBislist;
     }
 
-    public void setGxLossBislist(List<GXLossBi> gxLossBislist) {
+    public void setGxLossBislist(List<GXLossBiVo> gxLossBislist) {
         this.gxLossBislist = gxLossBislist;
     }
 

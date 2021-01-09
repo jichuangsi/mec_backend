@@ -13,6 +13,7 @@ public class PPOutputStatistics {
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//产量统计id
     private Integer ppId;//生产计划ID
+    private String ppNumber;//生产批号
     private Integer wireCompleteNum;//拉丝完成轴数
     private Integer wireNoCompleteNum;//拉丝未完成轴数
 
@@ -21,10 +22,17 @@ public class PPOutputStatistics {
     private Integer WindingCompleteNum;//绕线完成轴数
     private Integer WindingNoCompleteNum;//绕线未完成轴数
 
-
     private Integer CheckNum;//检验轴数
     private Integer CheckQualifiedNum;//检验合格轴数
     private Integer CheckNoQualifiedNum;//检验不合格轴数
+
+    public String getPpNumber() {
+        return ppNumber;
+    }
+
+    public void setPpNumber(String ppNumber) {
+        this.ppNumber = ppNumber;
+    }
 
     public Integer getId() {
         return id;

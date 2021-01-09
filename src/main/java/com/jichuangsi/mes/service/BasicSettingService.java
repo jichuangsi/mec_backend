@@ -81,7 +81,6 @@ public class BasicSettingService {
      * @throws PassportException
      */
     public PageInfo getAllBasicSettingByName(SelectModel smodel, HttpServletRequest request, InputStream inputStream)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         Integer pagenum = null;
@@ -99,7 +98,7 @@ public class BasicSettingService {
 
                 break;
             case "stock"://原材料管理-查询原材料
-                page.setList(mesMapper.findAllStock(smodel.getFindName(),1,pagenum,pagesize));
+                page.setList(mesMapper.findAllStock(smodel.getFindName(),smodel.getFindIdOne(),1,pagenum,pagesize));
                 page.setTotal(mesMapper.countByStock(smodel.getFindName(),1));
                 break;
             case "bobbin"://线轴管理-线轴
@@ -109,7 +108,7 @@ public class BasicSettingService {
                 page.setTotal(mesMapper.countBybobbin(smodel.getFindName(),smodel.getFindIdOne()));
                 break;
             case "elseother"://其他
-                page.setList(mesMapper.findAllStock(smodel.getFindName(),2,pagenum,pagesize));
+                page.setList(mesMapper.findAllStock(smodel.getFindName(),smodel.getFindIdOne(),2,pagenum,pagesize));
                 page.setTotal(mesMapper.countByStock(smodel.getFindName(),2));
                 break;
             default:
@@ -130,21 +129,19 @@ public class BasicSettingService {
 
         switch (smodel.getFindModelName()){
             case "product"://产品管理-查询产品
-                TProductModel model = mesMapper.findAllProductById(smodel.getFindById());
-                jsonObject.put("TProductModel",model);
+//                TProductModel model = mesMapper.findAllProductById(smodel.getFindById());
+                jsonObject.put("TProductModel",tpRepository.findByid(smodel.getFindById()));
 
                 //规格型号 TProstandard
                 jsonObject.put("listTProstandard",tprostRepository.findByProductIdAndDeleteNo(smodel.getFindById(),0));
-                // 工序损耗比 GXLossBi
-                jsonObject.put("listTProstandard",mesMapper.findAllGXLossBiVoById(smodel.getFindById()));
+//                // 工序损耗比 GXLossBi
+//                jsonObject.put("listGXLossBi",mesMapper.findAllGXLossBiVoById(smodel.getFindById()));
                 // 原料配比 RawMaterialRatio
                 jsonObject.put("listRawMaterialRatio",mesMapper.findAllRawMaterialRatioById(smodel.getFindById()));
                 break;
             case "stock"://原材料管理-查询原材料
-                StockModel stockModel = mesMapper.findAllStockById(smodel.getFindById(),1);
-                List<TStandards> lsitdetail = tStandardsRepository.findByMaterialIdAndMaterialTypeAndDeleteNo(smodel.getFindById(),1,0);
-                jsonObject.put("stockModel",stockModel);
-                jsonObject.put("listDetail",lsitdetail);
+                jsonObject.put("stockModel",stockRepository.findByid(smodel.getFindById()));
+                jsonObject.put("listDetail",tStandardsRepository.findByMaterialIdAndMaterialTypeAndDeleteNo(smodel.getFindById(),1,0));
                 break;
             case "bobbin"://线轴管理-线轴
                 TBobbin bobbin = tbobbinRepository.findByid(smodel.getFindById());
@@ -152,7 +149,7 @@ public class BasicSettingService {
                 jsonObject.put("listbobbinDetail",tStandardsRepository.findByMaterialIdAndMaterialTypeAndDeleteNo(smodel.getFindById(),2,0));
                 break;
             case "elseother"://其他
-                jsonObject.put("elseother",mesMapper.findAllStockById(smodel.getFindById(),2));
+                jsonObject.put("elseother",stockRepository.findByid(smodel.getFindById()));
                 jsonObject.put("listDetail",tStandardsRepository.findByMaterialIdAndMaterialTypeAndDeleteNo(smodel.getFindById(),3,0));
                 break;
             default:
@@ -166,7 +163,7 @@ public class BasicSettingService {
      * @param
      * @throws PassportException
      */
-    public JSONObject getProductBasicInfo()throws PassportException {
+    public JSONObject getProductBasicInfo(SelectModel selectModel)throws PassportException {
         JSONObject job = new JSONObject();
 
         job.put("XB",sdRepository.findByDicCode("XB"));//线别
@@ -175,10 +172,24 @@ public class BasicSettingService {
         job.put("SD",sdRepository.findByDicCode("SD"));//始端
         job.put("MD",sdRepository.findByDicCode("MD"));//末端
 
-
         job.put("YL",sdRepository.findByDicCode("YL"));//原料下拉框
 
-        job.put("GX",sdRepository.findByDicCode("GX"));//查询工序
+
+        if(StringUtils.isEmpty(selectModel.getFindById())){//判断是否为空。如果为空就是新增。查询对应的各工序损耗比
+            List<SDictionarier> sDictionarierList = sdRepository.findByDicCode("GX");
+            List<GXLossBiVo> gxLossBislist = new ArrayList<>();
+            for (int i = 0; i < sDictionarierList.size(); i++) {
+                GXLossBiVo gxLossBi = new GXLossBiVo();
+                gxLossBi.setGXid(sDictionarierList.get(i).getId());
+                gxLossBi.setName(sDictionarierList.get(i).getName());//工序名称
+                gxLossBislist.add(gxLossBi);
+            }
+
+            job.put("gxLossBislist",gxLossBislist);//查询工序
+        }else{
+            // 工序损耗比 GXLossBi
+            job.put("gxLossBislist",mesMapper.findAllGXLossBiVoById(selectModel.getFindById()));
+        }
 
         long tpNum =tpRepository.count();
         String strnum = "TP000"+tpNum;
@@ -254,12 +265,23 @@ public class BasicSettingService {
             tprostRepository.saveAll(model.gettProstandards());
 
             // 工序损耗比
+            List<GXLossBi> list = new ArrayList<>();
             for (int i = 0; i < model.getGxLossBislist().size(); i++) {
-                GXLossBi gxLossBi = model.getGxLossBislist().get(i);
-                gxLossBi.setDeleteNo(0);
+                GXLossBiVo gxLossBiVo =  model.getGxLossBislist().get(i);
+                GXLossBi gxLossBi = new GXLossBi();
+                gxLossBi.setGXid(gxLossBiVo.getGXid());
                 gxLossBi.setProductId(tpid);
+                gxLossBi.setCpstart(gxLossBiVo.getCpstart());
+                gxLossBi.setCpend(gxLossBiVo.getCpend());
+                gxLossBi.setFpstart(gxLossBiVo.getFpstart());
+                gxLossBi.setFpend(gxLossBiVo.getFpend());
+                gxLossBi.setLossstart(gxLossBiVo.getLossstart());
+                gxLossBi.setLossend(gxLossBiVo.getLossend());
+                gxLossBi.setDeleteNo(0);
+
+                list.add(gxLossBi);
             }
-            gxLossBiRepository.saveAll(model.getGxLossBislist());
+            gxLossBiRepository.saveAll(list);
 
             // 原料配比
             for (int i = 0; i < model.getRawMaterialRatios().size(); i++) {

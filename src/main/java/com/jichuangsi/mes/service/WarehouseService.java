@@ -163,33 +163,9 @@ public class WarehouseService {
             endtime = smodel.getFindDate() +" 23:59:59";
         }
 
-        List<InventoryRecordVo> listdata = mesMapper.findAllInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,null,null,starttime,endtime,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+        List<InventoryRecordVo> listdata = mesMapper.findAllInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,null,0,starttime,endtime,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
         page.setList(listdata);
         page.setTotal(mesMapper.countByInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,starttime,endtime));
-//        switch (smodel.getFindModelName()){
-//            case "stock"://原材料
-//            case "elseother"://其他
-//                List<InventoryRecordVo> listdata = mesMapper.findAllInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,null,null,starttime,endtime,(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
-//                page.setList(listdata);
-//                page.setTotal(mesMapper.countByInventoryRecord(getInventoryType(smodel.getFindModelName()),strfindName,starttime,endtime));
-//                break;
-//            case "nofinished"://半成品
-//
-//                break;
-//
-//            case "product"://成品
-//
-//
-//                break;
-//            case "bobbin"://线轴
-//                break;
-//            case "waste"://废料
-//
-//                break;
-//            default:
-//                break;
-//        }
-
 
         page.setPageSize(smodel.getPageSize());
         page.setPageNum(smodel.getPageNum());
@@ -419,16 +395,13 @@ public class WarehouseService {
             case "stock"://原材料
                 List<StockModel> listdata = mesMapper.findAllInventoryStateByCDData(strfindName,getInventoryType(smodel.getFindModelName()),smodel.getFindIdOne(),1);
                 jsonObject.put("LData",listdata.size() == 0 ? "":listdata);
-                jsonObject.put("RData",listdata.size() == 0 ? "":mesMapper.findAllInventoryStateByCDDataId(getInventoryType(smodel.getFindModelName()),listdata.get(0).getId(),smodel.getFindIdOne()));
                 break;
             case "product"://成品。查询库存里面的所有成品
 
                 break;
             case "bobbin"://线轴
-                List<StockModel> listbobbin = mesMapper.findAllWareHouseBobbin(smodel.getFindName());
+                List<StockModel> listbobbin = mesMapper.findAllInventoryStateByBobbin(smodel.getFindName(),smodel.getFindIdOne());
                 jsonObject.put("LData",listbobbin.size() == 0 ? "" : listbobbin);
-                jsonObject.put("RData",listbobbin.size() == 0 ? "" : mesMapper.findByMaterialIdAndMaterialType(listbobbin.get(0).getId(),2));
-
                 break;
             case "waste"://废料
 
@@ -436,7 +409,6 @@ public class WarehouseService {
             case "elseother"://其他
                 List<StockModel> listto = mesMapper.findAllInventoryStateByCDData(strfindName,getInventoryType(smodel.getFindModelName()),smodel.getFindIdOne(),2);
                 jsonObject.put("LData",listto.isEmpty() ? "":listto);
-                jsonObject.put("RData",listto.isEmpty() ? "":mesMapper.findAllInventoryStateByCDDataId(getInventoryType(smodel.getFindModelName()),listto.get(0).getId(),smodel.getFindIdOne()));
                 break;
             default:
                 break;
@@ -459,22 +431,15 @@ public class WarehouseService {
 
         switch (smodel.getFindModelName()){
             case "elseother"://其他
-            case "stock":
-
-                jsonObject.put("listdataDetail",mesMapper.findAllInventoryStateByCDDataId(getInventoryType(smodel.getFindModelName()),smodel.getFindById(),smodel.getFindIdOne()));
-                break;
-
-            case "product":
-                break;
             case "bobbin"://线轴
-
-
+            case "stock":
+                jsonObject.put("RData",mesMapper.findAllInventoryStateByCDDataId(getInventoryType(smodel.getFindModelName()),smodel.getFindById(),smodel.getFindIdOne()));
+                break;
+            case "product":
                 break;
             default:
                 break;
         }
-
-
         return jsonObject;
     }
 
@@ -620,8 +585,6 @@ public class WarehouseService {
         inventoryRecordRepository.saveAll(inventoryRecordList);//批量保存
     }
 
-
-
 //            -------------------------------------- 以上是库存管理-出入库管理 -----------------------------------------------------------------------------
 
 
@@ -687,26 +650,38 @@ public class WarehouseService {
     public JSONObject getwarehouseInventoryStatesBasicInfo(SelectModel smodel)throws PassportException {
         JSONObject job = new JSONObject();
 
-//        job.put("warehouseXiaLa",mesMapper.findAllWarehouseByXiaLa());//仓库下拉框
-//        switch (smodel.getFindModelName()){
-//            case "stock"://原材料
-//                job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(null,1));//原料规格下拉框
-//                break;
-//
-//            case "nofinished"://半成品
-//            case "waste"://废料
-//            case "product"://成品
-//                job.put("DetailXiaLa",mesMapper.findAllProductDetailByIdXiaLa(null));//产品规格下拉框
-//                break;
-//            case "bobbin"://线轴
-//                job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(null,2));//原料规格下拉框
-//                break;
-//            case "elseother"://其他
-//                job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(null,3));//原料规格下拉框
-//                break;
-//            default:
-//                break;
-//        }
+        Integer productid = 0;
+        if(!StringUtils.isEmpty(smodel.getFindById())){
+            InventoryStatus inventoryStatus = inventoryStatusRepository.findByid(smodel.getFindById());//保证有这个规格id
+            if(StringUtils.isEmpty(inventoryStatus)){
+                throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
+            }
+
+            productid = tStandardsRepository.findByid(inventoryStatus.getProductId()).getMaterialId();//规格id
+        }
+
+
+
+        job.put("warehouseXiaLa",mesMapper.findAllWarehouseByXiaLa());//仓库下拉框
+        switch (smodel.getFindModelName()){
+            case "stock"://原材料
+                job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(productid,1));//原料规格下拉框
+                break;
+
+            case "nofinished"://半成品
+            case "waste"://废料
+            case "product"://成品
+                job.put("DetailXiaLa",mesMapper.findAllProductDetailByIdXiaLa(null));//产品规格下拉框
+                break;
+            case "bobbin"://线轴
+                job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(productid,2));//原料规格下拉框
+                break;
+            case "elseother"://其他
+                job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(productid,3));//原料规格下拉框
+                break;
+            default:
+                break;
+        }
         return job;
     }
 
@@ -735,11 +710,13 @@ public class WarehouseService {
                 throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
             }
 
-            productDetailId = inventoryStatus.getProductId();//规格id
-            warehourseId = inventoryStatus.getWarehouseId();//仓库id
+            if(StringUtils.isEmpty(smodel.getPageNum()) || StringUtils.isEmpty(smodel.getPageSize())){
+                productDetailId = inventoryStatus.getProductId();//规格id
+                warehourseId = inventoryStatus.getWarehouseId();//仓库id
+            }
         }
 
-        if(!StringUtils.isEmpty(smodel.getPageNum()) ){//此处充当规格id
+        if(!StringUtils.isEmpty(smodel.getPageNum())){//此处充当规格id
             productDetailId = smodel.getPageNum();
         }
 
@@ -749,20 +726,14 @@ public class WarehouseService {
 
         Integer inventoryType = getInventoryType(smodel.getFindModelName());
 
-        jsonObject.put("warehouseXiaLa",mesMapper.findAllWarehouseByXiaLa());//仓库下拉框
-
         switch (smodel.getFindModelName()){
             case "stock"://原材料
             case "elseother"://其他
-                Integer mtype = smodel.getFindModelName().equals("stock") ? 1:3;//1原料 3其他
-
-                jsonObject.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(tStandardsRepository.findByid(productDetailId).getMaterialId(),mtype));//原料规格下拉框
-
                 jsonObject.put("stockDetail",mesMapper.findstockDetailById(productDetailId));//参数
                 jsonObject.put("currentInventory",mesMapper.findByStockInventoryDetailId(productDetailId,warehourseId,inventoryType));//当前库存
                 jsonObject.put("InventoryRecord",mesMapper.findAllInventoryRecord(inventoryType,null,productDetailId,warehourseId,null,null,null,null));//库存记录
                 jsonObject.put("currentInventoryNum",mesMapper.countByInventoryStatusSum(productDetailId,warehourseId));//当前库存数量
-                jsonObject.put("InventorySum",mesMapper.countByInventoryStatusSum(productDetailId,null));//总库存数量
+                jsonObject.put("InventorySum",mesMapper.countByInventoryStatusSum(productDetailId,0));//总库存数量
 
                 break;
             case "nofinished"://半成品
@@ -774,13 +745,11 @@ public class WarehouseService {
 
                 break;
             case "bobbin"://线轴
-                jsonObject.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(tStandardsRepository.findByid(productDetailId).getMaterialId(),2));//原料规格下拉框
-
-                jsonObject.put("stockDetail",mesMapper.findByBobbinDetailId(smodel.getFindById()));//参数
+                jsonObject.put("stockDetail",mesMapper.findByBobbinDetailId(productDetailId));//参数
                 jsonObject.put("currentInventory",mesMapper.findByBobbinInventoryDetailId(productDetailId,warehourseId));//当前库存
                 jsonObject.put("InventoryRecord",mesMapper.findAllInventoryRecordByBobbin(inventoryType,null,productDetailId,warehourseId,null,null,0,0));//库存记录
                 jsonObject.put("currentInventoryNum",mesMapper.countByInventoryStatusSum(productDetailId,warehourseId));//当前库存数量
-                jsonObject.put("InventorySum",mesMapper.countByInventoryStatusSum(productDetailId,null));//总库存数量
+                jsonObject.put("InventorySum",mesMapper.countByInventoryStatusSum(productDetailId,0));//总库存数量
 
                 break;
             case "waste"://废料
@@ -790,7 +759,7 @@ public class WarehouseService {
                 break;
         }
 
-        jsonObject.put("warehoureId",productDetailId);//仓库id
+        jsonObject.put("warehoureId",warehourseId);//仓库id
         jsonObject.put("productDetailId",productDetailId);//原材料规格id
         return jsonObject;
     }

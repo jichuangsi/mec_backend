@@ -47,9 +47,9 @@ public class BasicSettingController {
     @ApiOperation("产品管理- 新增/编辑产品页面获取下拉框数据")
     @ApiImplicitParams({})
     @PostMapping("/getProductBasicInfo")
-    public ResponseModel getProductBasicInfo(){
+    public ResponseModel getProductBasicInfo(@RequestBody SelectModel selectModel){
         try {
-            return ResponseModel.sucess("",bsService.getProductBasicInfo());
+            return ResponseModel.sucess("",bsService.getProductBasicInfo(selectModel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

@@ -114,9 +114,9 @@ public class FileController {
     @ApiOperation("文件管理-根据Id查询文件信息")
     @ApiImplicitParams({})
     @PostMapping("/getFileById")
-    public ResponseModel getFileById(@RequestBody SelectModel smodel, HttpSession session){
+    public ResponseModel getFileById(@RequestBody SelectModel smodel){
         try {
-            return ResponseModel.sucess("",fileService.getFileById(smodel,session));
+            return ResponseModel.sucess("",fileService.getFileById(smodel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

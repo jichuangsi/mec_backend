@@ -5,6 +5,7 @@ import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
+import com.jichuangsi.mes.common.PPStateChange;
 import com.jichuangsi.mes.common.ProductionStateChange;
 import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.*;
@@ -68,6 +69,10 @@ public class ProductionService {
     @Resource
     private PPPWindingInfoRepository pppWindingInfoRepository;
 
+
+    @Resource
+    private ProductionDiaryReportRepository productionDiaryReportRepository;//生产日报汇总表
+
     /**
      * 生产管理-熔炼- 新增/编辑页面获取生产计划单数据
      * @param
@@ -76,7 +81,7 @@ public class ProductionService {
     public JSONObject getMeltingInfo()throws PassportException {
         JSONObject job = new JSONObject();
 
-        List<ProductPlan> list = productPlanRepository.findAllByDeleteNo(0);
+        List<ProductPlan> list = productPlanRepository.findAllByDeleteNoAndPpPlanState(0, PPStateChange.PP_OrderAudit_Audited);//审核通过的生产单
         job.put("LData",list.size() == 0 ? "": list);
 
         if(list.size() != 0){
@@ -291,11 +296,14 @@ public class ProductionService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
+        String productModel = ppProduction.getProductionNumber();//产品模型
         if(ppProduction.getGXId() == ProductionStateChange.Production_Smelting && StringUtils.isEmpty(ppProduction.getId())){//判断是否为熔炼阶段并且是否已经有提交过
             Date d = new Date();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
             String dateNowStr = sdf.format(d);
-            String strnum =dateNowStr+"00"+ppProductionRepository.countByCreateTimeIsBetween(DateUtil.beginOfDay(d),DateUtil.endOfDay(d))+ppProduction.getProductionNumber();
+
+            Integer productionSize = ppProductionRepository.findByCreateTimeIsBetweenAndGXId(DateUtil.beginOfDay(d),DateUtil.endOfDay(d),ProductionStateChange.PSmelting).size()+1;
+            String strnum =dateNowStr+"00"+productionSize+ppProduction.getProductionNumber();
             ppProduction.setProductionNumber(strnum);//避免同时有人在操作。这边直接获取编号。
         }
         Integer inggxid = StringUtils.isEmpty(ppProduction.getId()) ? ProductionStateChange.getGXIdByGXType(ppProduction.getGXId()) :ppProduction.getGXId();//工序id
@@ -337,10 +345,9 @@ public class ProductionService {
         savepppproducts(ppProductionModel.getTwoList(),pid,ppProduction.getState(),upd);//保存产物信息
 
         if(ppProduction.getState() == 1){//转下班操作
-            //转下班操作：1、原料出库操作 2、新增粗拉批次
+            //转下班操作：1、原料出库操作 2、新增粗拉批次 3、新增日报
             updateWarehouseProductOut(productionStockList,upd);//原料出库操作
 
-//            PPProduct ppProduct = ppProductRepository.findByid(ppProduction.getPproductId());
             GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing),1);//粗拉
 
             PPProduction ppProductionnew = new PPProduction();
@@ -361,7 +368,26 @@ public class ProductionService {
             ppProductionnew.setDeleteNo(0);
             ppProductionRepository.save(ppProductionnew);
 
+            // 3、新增日报
+            saveProductionDiary(ppProductionModel,productModel,productPlan.getPpNumber());
         }
+    }
+
+    //新增日报
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public  void saveProductionDiary(PPProductionModel ppProductionModel,String productModel,String ppnumber)throws PassportException {
+        ProductionDiaryReport productionDiaryReport = new ProductionDiaryReport();
+        productionDiaryReport.setProductDate(DateUtil.today());//当天日期
+        productionDiaryReport.setPpNumber(ppnumber);
+        productionDiaryReport.setProductionNumber(ppProductionModel.getPpProduction().getProductionNumber());
+        productionDiaryReport.setProductModel(productModel);//产品型号
+        productionDiaryReport.setIncomeHeavy(ppProductionModel.getOneList().stream().mapToInt(ProductionStock::getTotalNet).sum());//来料重
+        productionDiaryReport.setNoFinishEdP(ppProductionModel.getTwoList().stream().map(PPPProducts0::getNetWeightg).reduce(BigDecimal.ZERO, BigDecimal::add));//半成品g
+        productionDiaryReport.setFinishEdP(BigDecimal.ZERO);
+        productionDiaryReport.setLoss(ppProductionModel.getTwoList().stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add));//损耗
+        productionDiaryReport.setWaste(ppProductionModel.getTwoList().stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add));//废料
+
+        productionDiaryReportRepository.save(productionDiaryReport);
     }
 
     /**
@@ -574,6 +600,11 @@ public class ProductionService {
         if(ppProduction.getState() == 3){//转退火
             annealingPPProduction(Integer.valueOf(userInfoForToken.getUserId()),ppProductionModel);//直接到转退火工序
         }
+
+        //查找生产日报数据。添加数据
+        ProductionDiaryReport productionDiaryReport = productionDiaryReportRepository.findByProductionNumberAndProductDate(ppProductions.getProductionNumber(),DateUtil.today());
+
+
     }
 
 //    保存退火基本数据

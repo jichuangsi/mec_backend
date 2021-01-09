@@ -180,6 +180,7 @@ public class ProductionPlanService {
             //新增产量统计
             PPOutputStatistics ppOutputStatistics = new PPOutputStatistics();
             ppOutputStatistics.setPpId(pid);
+            ppOutputStatistics.setPpNumber(productPlan1.getPpNumber());//生产批号（独一无二的生产批号）
             ppOutputStatistics.setWireCompleteNum(0);
             ppOutputStatistics.setWireNoCompleteNum(0);
             ppOutputStatistics.setAnnealingCompleteNum(0);
@@ -198,6 +199,9 @@ public class ProductionPlanService {
             matters.setMatterNews("您有1个报修单待处理");
             matters.setStaffId(auditSettingRepository.getstaffIdByauditTypeandLevel("PP","1"));
             matters.setOrderId(pid);
+            matters.setType(5);//进程类型（1 采购-订单审核  2 采购-来料检验 3销售-订单审核 4销售-退回审核 5生产计划单-审核）
+            matters.setFinishedNo(0);//完成否
+            matters.setReadNo(0);//阅读否
             matters.setDeleteNo(0);
             mattersRepository.save(matters);//新增待办事项
 
@@ -206,7 +210,7 @@ public class ProductionPlanService {
             auditPocess.setAuditSetting(PPStateChange.getPPState(productPlan.getPpPlanState()));
             auditPocess.setAuditSettingId(0);
             auditPocess.setRemark("创建计划单");
-            auditPocess.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
+            auditPocess.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
             auditPocess.setDeleteNo(0);
             auditPocess.setCreateTime(new Date());
             ppAuditPocessRepository.save(auditPocess);//新增生产计划单-审核流程
@@ -306,7 +310,7 @@ public class ProductionPlanService {
      * @param orderStateId 订单状态Id
      * @return
      */
-    public Map<String,String> showPPOrderState(Integer orderStateId,Integer orderId)throws PassportException{
+    public Map<String,String> showPPOrderState(Integer orderStateId,Integer orderId,Integer currentStaffId)throws PassportException{
         Map<String,String> map = new HashMap<>();
         Integer getint = 0;
         String str = "";
@@ -320,14 +324,15 @@ public class ProductionPlanService {
                 List<PPOrderAuditPocess> oldauditCG = ppOrderAuditPocessRepository.findByOrderId(orderId);
                 if(!StringUtils.isEmpty(oldauditCG)){
                     Integer oldstaffid = oldauditCG.get(0).getStaffId();
+
+                    if(currentStaffId != oldstaffid){//对比两个操作的员工是否相同
+                        throw new PassportException(ResultCode.NO_ACCESS);
+                    }
                     str = oldauditCG.get(0).getLevelName();//获取层级名称
                     id = oldauditCG.get(0).getId();//获取审核流程的单子Id
-                    Matters oldmatters = new Matters();
-                    oldmatters.setOrderId(orderId);
-                    oldmatters.setStaffId(oldstaffid);
-                    oldmatters.setFinishedNo(1);
-                    mattersRepository.save(oldmatters);
 
+                    //修改待办事项
+                    mattersRepository.updateByStaffIdAndTypeAndOrderId(oldstaffid,5,orderId);
                     //修改订单审核流程完成度
                     ppOrderAuditPocessRepository.updateByOrderIdAndStaffId(orderId,oldstaffid);
                 }
@@ -341,6 +346,8 @@ public class ProductionPlanService {
                         matters.setOrderId(orderId);
                         matters.setDeleteNo(0);
                         matters.setFinishedNo(0);
+                        matters.setReadNo(0);
+                        matters.setType(5);
                         mattersRepository.save(matters);//新增待办事项
                     }else{
                         getint = 3;
@@ -388,7 +395,7 @@ public class ProductionPlanService {
         Integer newstateId = 0;
         Integer orderAuditPocessId = 0 ;//获取审核流程的单子Id
 
-        Map<String,String> map = showPPOrderState(productPlan.getPpPlanState(),model.getUpdateID());
+        Map<String,String> map = showPPOrderState(productPlan.getPpPlanState(),model.getUpdateID(),Integer.valueOf(userInfoForToken.getUserId()));
         levelName =map.get("levelName");
 
         switch (model.getUpdateType()){

@@ -425,26 +425,19 @@ public class SysService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(!StringUtils.isEmpty(sc) && !StringUtils.isEmpty(sc.getId()) && sc.getId() > 0){//是修改还是新增。在于Id值，存在Id值则修改
-            clientRepository.save(sc);
+        sc.setDeleteNo(0);
+        sc.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
+        SCustomer sCustomer =  clientRepository.save(sc);
 
-            if(!StringUtils.isEmpty(client.getCustomerDetails())){
-                clientDetailRepository.saveAll(client.getCustomerDetails());
+        Integer cliid = sCustomer.getId();
+        if(sc.getClientNo() == 1){
+            clientDetailRepository.updateByClientId(cliid);//先把之前的删除
+            for (int i = 0; i < client.getCustomerDetails().size(); i++) {
+                CustomerDetail cd = client.getCustomerDetails().get(i);
+                cd.setCustomerId(cliid);
+                cd.setDeleteNo(0);
             }
-        }else{
-            Integer sessionstaffId =Integer.valueOf(userInfoForToken.getUserId());
-            sc.setDeleteNo(0);
-            sc.setStaffId(sessionstaffId == null ? 1 : sessionstaffId);
-            clientRepository.save(sc);
-            Integer cliid = sc.getId();
-            if(sc.getClientNo() == 1){
-                for (int i = 0; i < client.getCustomerDetails().size(); i++) {
-                    CustomerDetail cd = client.getCustomerDetails().get(i);
-                    cd.setCustomerId(cliid);
-                    cd.setDeleteNo(0);
-                }
-                clientDetailRepository.saveAll(client.getCustomerDetails());
-            }
+            clientDetailRepository.saveAll(client.getCustomerDetails());
         }
     }
 

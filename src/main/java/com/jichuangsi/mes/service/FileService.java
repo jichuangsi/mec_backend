@@ -198,13 +198,12 @@ public class FileService {
      * @throws PassportException
      */
     public PageInfo getAllFile(SelectModel smodel)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         List<fileTableVo> listfile = mesMapper.findAllFile(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
         for (fileTableVo modes: listfile) {
-            modes.setIsEncryption(modes.getFilePassword() == null ? 0:1);
-            modes.setIsEncryptionstr(modes.getFilePassword() == null ? "未加密":"已加密");
+            modes.setIsEncryption(StringUtils.isEmpty(modes.getFilePassword()) ? 0:1);
+            modes.setIsEncryptionstr(StringUtils.isEmpty(modes.getFilePassword()) ? "未加密":"已加密");
         }
         page.setList(listfile);
         page.setTotal(mesMapper.countByFile(smodel.getFindName()));
@@ -221,21 +220,27 @@ public class FileService {
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
     public void saveFile(UserInfoForToken userInfoForToken,FileTable fileTable)throws PassportException {
-        if (StringUtil.isEmpty(fileTable.getFileName())||StringUtil.isEmpty(fileTable.getFileRoute())||StringUtil.isEmpty(fileTable.getFilePassword())){
+        if (StringUtil.isEmpty(fileTable.getFileName())||StringUtil.isEmpty(fileTable.getFileRoute())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(fileTable.getFilePassword().length() < 5){
+        if(!StringUtils.isEmpty(fileTable.getFilePassword()) && fileTable.getFilePassword().length() < 5){
             throw new PassportException(ResultCode.PWD_LIMIT);
         }
 
-        if(StringUtils.isEmpty(fileTable.getId()) || fileTable.getId() == 0){
+        if(StringUtils.isEmpty(fileTable.getId()) || fileTable.getId() == 0){//新增
             long t4=System.currentTimeMillis();
             fileTable.setCreateTime(t4);
+
+            fileTable.setFilePassword(StringUtils.isEmpty(fileTable.getFilePassword()) ? "": Md5Util.encodeByMd5(fileTable.getFilePassword()));
+        }else{//修改
+            if(!StringUtils.isEmpty(fileTable.getFilePassword())){
+                fileTable.setFilePassword(Md5Util.encodeByMd5(fileTable.getFilePassword()));
+            }
         }
 
         fileTable.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
-        fileTable.setFilePassword(Md5Util.encodeByMd5(fileTable.getFilePassword()));
+//        fileTable.setFilePassword(StringUtils.isEmpty(fileTable.getFilePassword()) ? "": Md5Util.encodeByMd5(fileTable.getFilePassword()));
         fileTable.setDeleteNo(0);
         fileTableRepository.save(fileTable);
     }
@@ -248,7 +253,7 @@ public class FileService {
      * @param
      * @throws PassportException
      */
-    public JSONObject getFileById(SelectModel smodel, HttpSession session)throws PassportException{
+    public JSONObject getFileById(SelectModel smodel)throws PassportException{
         JSONObject jsonObject=new JSONObject();
 
 //        if((Integer)session.getAttribute("userId") != 1){
@@ -293,19 +298,17 @@ public class FileService {
     }
 
     /**
-     * 文件管理-查询
+     * 系统公告-查询
      * @param
      * @throws PassportException
      */
     public PageInfo getAllNotice(SelectModel smodel)throws PassportException{
-        int total=0;
         PageInfo page=new PageInfo();
 
         List<NoticeVo> list = mesMapper.findAllNotice(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
 
         page.setList(list);
         page.setTotal(mesMapper.countByNotice(smodel.getFindName()));
-
         page.setPageSize(smodel.getPageSize());
         page.setPageNum(smodel.getPageNum());
         return page;
@@ -325,10 +328,11 @@ public class FileService {
         if(StringUtils.isEmpty(sNotice.getId()) || sNotice.getId() == 0){
             long t4=System.currentTimeMillis();
             sNotice.setCreateTime(t4);
+
+            sNotice.setIsshow(0);
         }
 
         sNotice.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
-        sNotice.setIsshow(0);
         sNotice.setDeleteNo(0);
         sNoticeRepository.save(sNotice);
     }

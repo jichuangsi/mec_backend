@@ -8,5 +8,5 @@ import java.util.List;
 public interface ProductPlanRepository  extends JpaRepository<ProductPlan,Integer> {
     ProductPlan findByid(Integer id);
 
-    List<ProductPlan> findAllByDeleteNo(Integer deleteNo);
+    List<ProductPlan> findAllByDeleteNoAndPpPlanState(Integer deleteNo,Integer pppstate);
 }
