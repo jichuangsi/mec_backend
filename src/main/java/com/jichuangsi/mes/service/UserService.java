@@ -42,7 +42,7 @@ public class UserService {
      * @throws PassportException
      */
     public void registBackUser(UserInfoModel usermodel)throws PassportException {
-        //if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName())){
+        if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
         //if (userRepository.countByStaffNum(usermodel.getStaffNum())>0){
@@ -106,7 +106,7 @@ public class UserService {
      * @return
      * @throws PassportException
      */
-    //public JSONObject loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
+    public JSONObject loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
         if (StringUtils.isEmpty(model.getAccount()) || StringUtils.isEmpty(model.getPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -136,8 +136,7 @@ public class UserService {
      * @param model
      * @throws PassportException
      */
-    //public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model)throws PassportException {
-    public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model,HttpServletRequest request)throws PassportException {
+    public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getOldPwd()) ||StringUtils.isEmpty(model.getFirstPwd()) || StringUtils.isEmpty(model.getSecondPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
