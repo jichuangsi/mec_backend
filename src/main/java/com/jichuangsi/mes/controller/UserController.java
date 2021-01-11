@@ -46,6 +46,7 @@ public class UserController {
     @ApiOperation("后台修改密码")
     @ApiImplicitParams({})
     @PostMapping("/updateUserPwd")
+    @OperLog(operModul = "修改密码",operType = "2",operDesc = "后台修改密码")
     public ResponseModel updateUserPwd(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdatePwdModel model){
         try {
             userService.updateBackUserPwd(userInfoForToken,model);

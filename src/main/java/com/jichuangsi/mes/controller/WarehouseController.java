@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.entity.TWarehouse;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.ResponseModel;
@@ -37,6 +38,7 @@ public class WarehouseController {
     @ApiOperation("仓库管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveWarehouse")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "仓库管理- 新增/编辑")
     public ResponseModel saveWarehouse(@RequestBody TWarehouse tWarehouse){
         try {
             warehouseService.saveWarehouse(tWarehouse);
@@ -72,6 +74,7 @@ public class WarehouseController {
     @ApiOperation("仓库管理-修改状态(state or  delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateWarehouseByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "仓库管理-修改状态(state or  delete_no)")
     public ResponseModel updateWarehouseByid(@RequestBody UpdateModel smodel){
         try {
             warehouseService.updateWarehouseByid(smodel);
@@ -130,6 +133,7 @@ public class WarehouseController {
     @ApiOperation("库存管理-出入库管理-入库操作")
     @ApiImplicitParams({})
     @PostMapping("/updateWarehouseIn")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "库存管理-出入库管理-入库操作")
     public ResponseModel updateWarehouseIn(@RequestBody List<UpdateModel> smodel){//List<UpdateModel> smodel
         try {
             warehouseService.updateWarehouseIn(smodel);
@@ -165,6 +169,7 @@ public class WarehouseController {
     @ApiOperation("库存管理-出入库管理-调拨操作")
     @ApiImplicitParams({})
     @PostMapping("/updateWarehouseAllocation")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "库存管理-出入库管理-调拨操作")
     public ResponseModel updateWarehouseAllocation(@RequestBody List<UpdateModel> smodel){
         try {
             warehouseService.updateWarehouseAllocation(smodel);
@@ -178,6 +183,7 @@ public class WarehouseController {
     @ApiOperation("库存管理-出入库管理-出库操作")
     @ApiImplicitParams({})
     @PostMapping("/updateWarehouseOut")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "库存管理-出入库管理-出库操作")
     public ResponseModel updateWarehouseOut(@RequestBody List<UpdateModel> updateModels){
         try {
             warehouseService.updateWarehouseOut(updateModels);
@@ -226,6 +232,7 @@ public class WarehouseController {
     @ApiOperation("库存管理-库存状况-盘点库存操作")
     @ApiImplicitParams({})
     @PostMapping("/updateInventoryStateSum")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "库存管理-库存状况-盘点库存操作")
     public ResponseModel updateInventoryStateSum(@RequestBody UpdateModel smodel){
         try {
             warehouseService.updateInventoryStateSum(smodel);
