@@ -172,8 +172,13 @@ public class OperLogAspect {
                         //System.out.println(jsonObject.get("account"));
                         if(account!=null){
                             SStaff staff=userRepository.findByStaffNum(account.toString());
-                            operlog.setStaffId(Integer.valueOf(staff.getId())); // 请求用户ID
-                            operlog.setUserName(staff.getStaffName());
+                            if(staff!=null){
+                                operlog.setStaffId(Integer.valueOf(staff.getId())); // 请求用户ID
+                                operlog.setUserName(staff.getStaffName());
+                            }else {
+                                operlog.setStaffId(0); // 请求用户ID
+                                operlog.setUserName("暂无此用户："+account.toString());
+                            }
                         }
                     }
                 }
