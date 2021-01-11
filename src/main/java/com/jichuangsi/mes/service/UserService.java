@@ -42,9 +42,11 @@ public class UserService {
      * @throws PassportException
      */
     public void registBackUser(UserInfoModel usermodel)throws PassportException {
-        if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName())){
+        //if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+        //if (userRepository.countByStaffNum(usermodel.getStaffNum())>0){
+            //throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
 
         if (StringUtils.isEmpty(usermodel.getId()) && StringUtils.isEmpty(usermodel.getLoginPassword())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -61,6 +63,7 @@ public class UserService {
         setstaff.setId(StringUtils.isEmpty(usermodel.getId()) ? null :usermodel.getId());
 
         setstaff.setDepartmentId(usermodel.getDepartmentId());
+        //setstaff.setStaffNum(usermodel.getStaffNum());
         setstaff.setStaffNum(StringUtils.isEmpty(usermodel.getId()) ? strnum : usermodel.getStaffNum());
         setstaff.setStaffName(usermodel.getStaffName());
         setstaff.setStaffAge(usermodel.getStaffAge());
@@ -74,6 +77,7 @@ public class UserService {
         setstaff.setWorkshopId(usermodel.getWorkshopId());
         setstaff.setState(0);
         setstaff.setDeleteNo(0);
+        //setstaff.setLoginPassword(Md5Util.encodeByMd5(usermodel.getLoginPassword()));
 
         if(!StringUtils.isEmpty(usermodel.getLoginPassword())){
             setstaff.setLoginPassword(Md5Util.encodeByMd5(usermodel.getLoginPassword()));
@@ -84,6 +88,8 @@ public class UserService {
         //用户角色批量存进数据库
         String str = usermodel.getRoleId();
         String[] strArr = str.split("\\,");
+        /*for (int i = 0; i < strArr.length; i++) {
+            sstaffRoleRepository.save(sr);*/
         if(strArr.length != 0){
             for (int i = 0; i < strArr.length; i++) {
                 SStaffRole sr = new SStaffRole();
@@ -100,7 +106,7 @@ public class UserService {
      * @return
      * @throws PassportException
      */
-    public JSONObject loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
+    //public JSONObject loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
         if (StringUtils.isEmpty(model.getAccount()) || StringUtils.isEmpty(model.getPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -113,7 +119,7 @@ public class UserService {
         String user=JSONObject.toJSONString(MappingEntityModelCoverter.CONVERTERFROMBACKUSERINFO(backUser));
         try {
 
-            logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
+            //logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
 
             jsonObject.put("accessToken",backTokenService.createdToken(user));
             jsonObject.put("userId",backUser.getId());
@@ -130,6 +136,7 @@ public class UserService {
      * @param model
      * @throws PassportException
      */
+    //public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model)throws PassportException {
     public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model,HttpServletRequest request)throws PassportException {
         if(StringUtils.isEmpty(model.getOldPwd()) ||StringUtils.isEmpty(model.getFirstPwd()) || StringUtils.isEmpty(model.getSecondPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
