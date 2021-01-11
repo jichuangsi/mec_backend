@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.PageInfo;
 import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.PPProduct;
 import com.jichuangsi.mes.entity.PPProduction;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -120,5 +122,30 @@ public class ProductionDataService {
         jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id));//本班产物
 
         return jsonObject;
+    }
+
+
+    /**
+     * 生产数据-生产日报汇总
+     * @param
+     * @throws PassportException
+     */
+    public PageInfo getProductionDiaryReport(SelectModel selectModel)throws PassportException {
+        PageInfo page = new PageInfo();
+
+        String beginTime = null;
+        String endTime = null;
+        if(!StringUtils.isEmpty(selectModel.getFindDate())){
+            beginTime = selectModel.getFindDate() +"00:00:00";
+            endTime = selectModel.getFindDate() +"23:59:59";
+        }
+
+
+        page.setList(iProductionMapper.findAllByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),beginTime,endTime,(selectModel.getPageNum()-1)*selectModel.getPageSize(),selectModel.getPageSize()));
+        page.setTotal(iProductionMapper.countByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),beginTime,endTime));
+
+        page.setPageSize(selectModel.getPageSize());
+        page.setPageNum(selectModel.getPageNum());
+        return page;
     }
 }

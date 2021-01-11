@@ -42,4 +42,15 @@ public class ProductionDataController {
         }
     }
 
+    @ApiOperation("生产数据-生产日报汇总")
+    @ApiImplicitParams({})
+    @PostMapping("/getProductionDiaryReport")
+    public ResponseModel getProductionDiaryReport(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",productionDataService.getProductionDiaryReport(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
 }

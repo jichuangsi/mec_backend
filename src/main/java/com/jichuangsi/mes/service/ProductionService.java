@@ -373,21 +373,67 @@ public class ProductionService {
         }
     }
 
-    //新增日报
+    /**
+     * 新增日报
+     * @param ppProductionModel 产物
+     * @param productModel 产品型号
+     * @param ppnumber  生产计划单号
+     * @throws PassportException
+     */
     @Transactional(rollbackFor = Exception.class)//回滚标志
     public  void saveProductionDiary(PPProductionModel ppProductionModel,String productModel,String ppnumber)throws PassportException {
-        ProductionDiaryReport productionDiaryReport = new ProductionDiaryReport();
-        productionDiaryReport.setProductDate(DateUtil.today());//当天日期
-        productionDiaryReport.setPpNumber(ppnumber);
-        productionDiaryReport.setProductionNumber(ppProductionModel.getPpProduction().getProductionNumber());
-        productionDiaryReport.setProductModel(productModel);//产品型号
-        productionDiaryReport.setIncomeHeavy(ppProductionModel.getOneList().stream().mapToInt(ProductionStock::getTotalNet).sum());//来料重
-        productionDiaryReport.setNoFinishEdP(ppProductionModel.getTwoList().stream().map(PPPProducts0::getNetWeightg).reduce(BigDecimal.ZERO, BigDecimal::add));//半成品g
-        productionDiaryReport.setFinishEdP(BigDecimal.ZERO);
-        productionDiaryReport.setLoss(ppProductionModel.getTwoList().stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add));//损耗
-        productionDiaryReport.setWaste(ppProductionModel.getTwoList().stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add));//废料
+        String productionNumber = ppProductionModel.getPpProduction().getProductionNumber();//生产批号
 
-        productionDiaryReportRepository.save(productionDiaryReport);
+        List<PPPProducts0> getTwoList = ppProductionModel.getTwoList();
+
+        //查找生产日报数据。添加数据（添加这一环节产生的成品/半成品、废料、损耗等） getTwoList
+        ProductionDiaryReport productionDiaryReport = productionDiaryReportRepository.findByProductionNumberAndProductDate(productionNumber,DateUtil.today());//查询一下当天这个批号有没有数据
+
+        BigDecimal netWeightg = getTwoList.stream().map(PPPProducts0::getNetWeightg).reduce(BigDecimal.ZERO, BigDecimal::add);//净重
+
+        if(StringUtils.isEmpty(productionDiaryReport)){//新增分两种情况：1、熔炼新增。2、当天新增
+            ProductionDiaryReport productionDiaryReport1 = new ProductionDiaryReport();
+            Integer incomeHeavy = 0;
+            if(StringUtils.isEmpty(productModel) || StringUtils.isEmpty(ppnumber)){
+                List<ProductionDiaryReport> productionDiaryReportList = productionDiaryReportRepository.findByProductionNumber(productionNumber);
+                productModel = productionDiaryReportList.get(0).getProductModel();
+                ppnumber = productionDiaryReportList.get(0).getPpNumber();
+                incomeHeavy = productionDiaryReportList.get(0).getIncomeHeavy();
+            }else{
+                incomeHeavy = ppProductionModel.getOneList().stream().mapToInt(ProductionStock::getTotalNet).sum();//来料重
+            }
+
+            productionDiaryReport1.setProductDate(DateUtil.today());//当天日期
+            productionDiaryReport1.setPpNumber(ppnumber);
+            productionDiaryReport1.setProductionNumber(productionNumber);
+            productionDiaryReport1.setProductModel(productModel);//产品型号
+            productionDiaryReport1.setIncomeHeavy(incomeHeavy);//来料重
+
+            if(ppProductionModel.getPpProduction().getState() == 4){//完成生产。
+                productionDiaryReport1.setNoFinishEdP(BigDecimal.ZERO);//半成品
+                productionDiaryReport1.setFinishEdP(netWeightg);
+            }else{
+                productionDiaryReport1.setNoFinishEdP(netWeightg);//半成品
+                productionDiaryReport1.setFinishEdP(BigDecimal.ZERO);
+            }
+
+            productionDiaryReport1.setWaste(getTwoList.stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add));//废料g
+            productionDiaryReport1.setLoss(getTwoList.stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add));//损耗g
+
+            productionDiaryReportRepository.save(productionDiaryReport1);
+        }else{//修改
+            if(ppProductionModel.getPpProduction().getState() == 4){//完成生产。
+                productionDiaryReport.setFinishEdP(netWeightg);//成品
+                productionDiaryReport.setNoFinishEdP(BigDecimal.ZERO);//半成品
+            }else{
+                productionDiaryReport.setNoFinishEdP(netWeightg);//半成品
+                productionDiaryReport.setFinishEdP(BigDecimal.ZERO);//成品
+            }
+            productionDiaryReport.setWaste(productionDiaryReport.getWaste().add(getTwoList.stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//废料g
+            productionDiaryReport.setLoss(productionDiaryReport.getLoss().add(getTwoList.stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//损耗g
+
+            productionDiaryReportRepository.save(productionDiaryReport);
+        }
     }
 
     /**
@@ -530,6 +576,8 @@ public class ProductionService {
     @Transactional(rollbackFor = Exception.class)//回滚标志
     public void savePPProduction(UserInfoForToken userInfoForToken,PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();
+
+        List<PPPProducts0> getTwoList = ppProductionModel.getTwoList();
         if (StringUtils.isEmpty(ppProduction.getProductionNumber()) || StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) ||StringUtils.isEmpty(ppProduction.getEquipmentId())|| StringUtils.isEmpty(ppProduction.getSuitId())|| StringUtils.isEmpty(ppProduction.getStaffId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
@@ -557,7 +605,7 @@ public class ProductionService {
             upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
         }
 //        准备转下班操作的工序id
-        savepppproducts(ppProductionModel.getTwoList(),pid,ppProduction.getState(),upd);//保存
+        savepppproducts(getTwoList,pid,ppProduction.getState(),upd);//保存
 
         if(ppProduction.getState() == 1 || ppProduction.getState() == 2|| ppProduction.getState() == 4){//如果是转下班/重复当前工序/完成生产操作。就新增下班操作
             Integer newGXid =ppProduction.getState() == 1?  ProductionStateChange.getGXIdByGXType(ProductionStateChange.getGXStateChangeone(ProductionStateChange.getGXIdByGXTypeDesc(ppProduction.getGXId()))) : ppProduction.getGXId();
@@ -601,10 +649,9 @@ public class ProductionService {
             annealingPPProduction(Integer.valueOf(userInfoForToken.getUserId()),ppProductionModel);//直接到转退火工序
         }
 
-        //查找生产日报数据。添加数据
-        ProductionDiaryReport productionDiaryReport = productionDiaryReportRepository.findByProductionNumberAndProductDate(ppProductions.getProductionNumber(),DateUtil.today());
-
-
+        if(ppProduction.getState() != 0 || ppProduction.getState() != 2){//只有 转下班、转退火、完成生产才能记录数据
+            saveProductionDiary(ppProductionModel,null,null);//新增日报
+        }
     }
 
 //    保存退火基本数据
@@ -691,6 +738,7 @@ public class ProductionService {
      * 生产管理- 撤回上班工序==修改上班工序的数据（熔炼、粗拉、中拉、细拉、超细拉、绕线、改绕等）
      * 1、把当前状态的数据物理删掉
      * 2、上班工序状态改为待重复
+     * 3、记录日报要把上班产生的数据给清除掉
      * @param
      * @throws PassportException
      */
@@ -713,6 +761,33 @@ public class ProductionService {
         ppProductionRepository.save(ppProductions);//保存原来的
         ppProductionRepository.save(ppProductionsF);//保存上班工序
 
+        //找到上班的上班产物的数据并复原
+        saveBackToPPProductionProductionDiary(ppProductionsF);
+
+    }
+
+    /**
+     * 撤回上班的新增日报
+     * @param production
+     * @throws PassportException
+     */
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public  void saveBackToPPProductionProductionDiary(PPProduction production)throws PassportException {
+        String productionNumber = production.getProductionNumber();//生产批号
+
+        //查找生产日报数据。添加数据（添加这一环节产生的成品/半成品、废料、损耗等） getTwoList
+        ProductionDiaryReport productionDiaryReport = productionDiaryReportRepository.findByProductionNumberAndProductDate(productionNumber,DateUtil.today());//查询一下当天这个批号有没有数据
+
+        List<PPPProducts0> getTwoList = iProductionMapper.findProductsIdByPPPId(production.getId(),production.getId()%10);
+        BigDecimal netWeightg = getTwoList.stream().map(PPPProducts0::getNetWeightg).reduce(BigDecimal.ZERO, BigDecimal::add);//净重
+
+        if(!StringUtils.isEmpty(productionDiaryReport)){
+            productionDiaryReport.setNoFinishEdP(netWeightg);//半成品
+            productionDiaryReport.setWaste(productionDiaryReport.getWaste().subtract(getTwoList.stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//废料g
+            productionDiaryReport.setLoss(productionDiaryReport.getLoss().subtract(getTwoList.stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//损耗g
+
+            productionDiaryReportRepository.save(productionDiaryReport);
+        }
     }
 
     /**
@@ -957,13 +1032,14 @@ public class ProductionService {
     public void savePWindingDetail(PPProductionModel ppProductionModel)throws PassportException {
         PPProduction ppProduction = ppProductionModel.getPpProduction();
         PPPWindingInfo pppWindingInfo = ppProductionModel.getPppWindingInfo();//绕线基本信息
-        if (StringUtils.isEmpty(ppProduction.getId()) ||StringUtils.isEmpty(pppWindingInfo.getEquipmentId()) ||StringUtils.isEmpty(pppWindingInfo.getPPPPId())||StringUtils.isEmpty(pppWindingInfo.getPPPId())){
+        if (StringUtils.isEmpty(ppProduction.getId()) ||StringUtils.isEmpty(pppWindingInfo.getEquipmentId()) ||StringUtils.isEmpty(pppWindingInfo.getPPPPId())){//||StringUtils.isEmpty(pppWindingInfo.getPPPId())
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
         Integer pppid = ppProduction.getId();
         Integer LId = pppid%10;
 
+        pppWindingInfo.setPPPId(pppid);
         List<PPPProducts0> list = ppProductionModel.getTwoList();
 
         //1、先把该生产管理该工序所有改变掉状态

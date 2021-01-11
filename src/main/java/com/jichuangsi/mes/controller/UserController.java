@@ -46,9 +46,9 @@ public class UserController {
     @ApiOperation("后台修改密码")
     @ApiImplicitParams({})
     @PostMapping("/updateUserPwd")
-    public ResponseModel updateUserPwd(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdatePwdModel model,HttpServletRequest request){
+    public ResponseModel updateUserPwd(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdatePwdModel model){
         try {
-            userService.updateBackUserPwd(userInfoForToken,model,request);
+            userService.updateBackUserPwd(userInfoForToken,model);
             return ResponseModel.sucessWithEmptyData("");
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());

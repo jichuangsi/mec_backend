@@ -2,6 +2,7 @@ package com.jichuangsi.mes.mapper;
 
 import com.jichuangsi.mes.entity.GXScheduling;
 import com.jichuangsi.mes.entity.PPPProducts0;
+import com.jichuangsi.mes.entity.ProductionDiaryReport;
 import com.jichuangsi.mes.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -243,7 +244,7 @@ public interface IProductionMapper {
 
 
     //工序-新增产物成功后查询自增的id
-    @Select(value = "<script>SELECT id as id,net_weightg as netWeightg,wastageg as wastageg\n" +
+    @Select(value = "<script>SELECT id as id,net_weightg as netWeightg,wastageg as wastageg,lossg as lossg\n" +
             "FROM ppp_products#{id} pp\n" +
             "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
             "</script>")
@@ -575,5 +576,34 @@ public interface IProductionMapper {
 //            "<if test='gxid != null'>AND ppp.gxid = #{gxid}</if>\n"+
             "</script>")
     List<PPPVo> findByStateOrGxId(@Param("state")Integer state, @Param("gxid")Integer gxid, @Param("createTime")Date createTime, @Param("finishedTime")Date finishedTime);
+
+
+
+
+    //    生产数据-生产日报汇总查询
+        @Select(value = "<script>SELECT finish_edp as finishEdP,income_heavy as incomeHeavy,loss as loss,no_finish_edp as noFinishEdP," +
+                "pp_number as ppNumber,product_date as productDate,product_model as productModel,production_number as productionNumber," +
+                "total_net as totalNet,waste as waste\n" +
+                "FROM pp_production_diary_report\n" +
+                "WHERE id != 0 \n" +
+                "<if test='ppnumber != null'>AND pp_number LIKE CONCAT('%', #{ppnumber},'%') </if>\n"+
+                "<if test='productionNumber != null'>AND production_number  LIKE CONCAT('%', #{productionNumber},'%')</if>\n"+
+                "<if test='createTime != null and finishedTime != null'>AND  product_date BETWEEN #{createTime} AND #{finishedTime} </if>\n"+
+                "ORDER BY id DESC\n " +
+                "LIMIT #{pageNum},#{pageSize}" +
+                "</script>")
+    List<ProductionDiaryReport> findAllByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime, @Param("finishedTime")String finishedTime,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+
+    //    生产数据-生产日报汇总查询-总数
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM pp_production_diary_report\n" +
+            "WHERE id != 0 \n" +
+            "<if test='ppnumber != null'>AND pp_number LIKE CONCAT('%', #{ppnumber},'%') </if>\n"+
+            "<if test='productionNumber != null'>AND production_number  LIKE CONCAT('%', #{productionNumber},'%')</if>\n"+
+            "<if test='createTime != null and finishedTime != null'>AND  product_date BETWEEN #{createTime} AND #{finishedTime} </if>\n"+
+            "</script>")
+    Integer countByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime, @Param("finishedTime")String finishedTime);
+
 
 }

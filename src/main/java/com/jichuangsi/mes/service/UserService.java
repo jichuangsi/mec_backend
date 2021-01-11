@@ -113,7 +113,7 @@ public class UserService {
         String user=JSONObject.toJSONString(MappingEntityModelCoverter.CONVERTERFROMBACKUSERINFO(backUser));
         try {
 
-            logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
+//            logService.addLog(backUser.getId(),"登录",request,inputStream);//新增一条日志
 
             jsonObject.put("accessToken",backTokenService.createdToken(user));
             jsonObject.put("userId",backUser.getId());
@@ -130,7 +130,7 @@ public class UserService {
      * @param model
      * @throws PassportException
      */
-    public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model,HttpServletRequest request)throws PassportException {
+    public void updateBackUserPwd(UserInfoForToken userInfoForToken, UpdatePwdModel model)throws PassportException {
         if(StringUtils.isEmpty(model.getOldPwd()) ||StringUtils.isEmpty(model.getFirstPwd()) || StringUtils.isEmpty(model.getSecondPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }

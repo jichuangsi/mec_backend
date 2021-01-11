@@ -20,6 +20,7 @@ public class ProductionDiaryReport {
 
     private String productModel;//产品型号
     private Integer incomeHeavy;//来料重g （在新增熔炼的时候产生）
+
     private BigDecimal noFinishEdP;//半成品g
     private BigDecimal finishEdP;//成品g
     private BigDecimal loss;//损耗g
