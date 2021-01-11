@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.ProductionPlanService;
@@ -58,6 +59,7 @@ public class ProductionPlanController {
     @ApiOperation("生产计划单- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveProductPlan")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "生产计划单- 保存操作")
     public ResponseModel saveProductPlan(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody ProductPlanModel productPlanModel){
         try {
             productionPlanService.saveProductPlan(userInfoForToken,productPlanModel);
@@ -83,6 +85,7 @@ public class ProductionPlanController {
     @ApiOperation("生产计划单-修改状态(state or  delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateProductPlanByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "生产计划单-修改状态(state or  delete_no)")
     public ResponseModel updateProductPlanByid(@RequestBody UpdateModel updateModel){
         try {
             productionPlanService.updateProductPlanByid(updateModel);
@@ -107,6 +110,7 @@ public class ProductionPlanController {
     @ApiOperation("生产计划单-审核详情修改生产计划单状态(审核流程点击的通过/驳回)")
     @ApiImplicitParams({})
     @PostMapping("/updatePPStateByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "生产计划单-审核详情修改生产计划单状态(审核流程点击的通过/驳回)")
     public ResponseModel updatePPStateByid(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdateModel smodel){
         try {
             productionPlanService.updatePPStateByid(userInfoForToken,smodel);

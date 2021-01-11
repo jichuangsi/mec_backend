@@ -588,11 +588,11 @@ public interface IProductionMapper {
                 "WHERE id != 0 \n" +
                 "<if test='ppnumber != null'>AND pp_number LIKE CONCAT('%', #{ppnumber},'%') </if>\n"+
                 "<if test='productionNumber != null'>AND production_number  LIKE CONCAT('%', #{productionNumber},'%')</if>\n"+
-                "<if test='createTime != null and finishedTime != null'>AND  product_date BETWEEN #{createTime} AND #{finishedTime} </if>\n"+
+                "<if test='createTime != null '>AND  product_date = #{createTime}  </if>\n"+
                 "ORDER BY id DESC\n " +
                 "LIMIT #{pageNum},#{pageSize}" +
                 "</script>")
-    List<ProductionDiaryReport> findAllByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime, @Param("finishedTime")String finishedTime,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+    List<ProductionDiaryReport> findAllByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
 
     //    生产数据-生产日报汇总查询-总数
@@ -601,9 +601,9 @@ public interface IProductionMapper {
             "WHERE id != 0 \n" +
             "<if test='ppnumber != null'>AND pp_number LIKE CONCAT('%', #{ppnumber},'%') </if>\n"+
             "<if test='productionNumber != null'>AND production_number  LIKE CONCAT('%', #{productionNumber},'%')</if>\n"+
-            "<if test='createTime != null and finishedTime != null'>AND  product_date BETWEEN #{createTime} AND #{finishedTime} </if>\n"+
+            "<if test='createTime != null'>AND  product_date = #{createTime} </if>\n"+
             "</script>")
-    Integer countByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime, @Param("finishedTime")String finishedTime);
+    Integer countByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime);
 
 
 }

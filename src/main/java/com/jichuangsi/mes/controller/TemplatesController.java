@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.entity.TCertificateReport;
 import com.jichuangsi.mes.entity.Templates;
 import com.jichuangsi.mes.exception.PassportException;
@@ -35,6 +36,7 @@ public class TemplatesController {
             @ApiImplicitParam(paramType = "body", name = "xb", value = "线别id", required = false, dataType = "int")*/
     })
     @PostMapping("/addTemplate")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "新增/修改模板")
     public ResponseModel addTemplate(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody Templates templates)throws IOException,PassportException {
         try {
             templatesService.addTemplate(userInfoForToken,templates);
@@ -81,6 +83,7 @@ public class TemplatesController {
     @ApiOperation("模板-修改状态 修改的类型    是Delete_no “D”还是state \"S\"")
     @ApiImplicitParams({})
     @PostMapping("/updateTemplateStatus")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "模板-修改状态（state or delete_no）")
     public ResponseModel updateTemplateStatus(@RequestBody UpdateModel model){
         try {
             templatesService.updateTemplateById(model);
@@ -104,6 +107,7 @@ public class TemplatesController {
     @ApiOperation("模板(抽样检验)- 新增/修改")
     @ApiImplicitParams({})
     @PostMapping("/saveTSamplingReport")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "模板(抽样检验)- 新增/修改")
     public ResponseModel saveTSamplingReport(@RequestBody TSamplingReportModel model) {
         try {
             templatesService.saveTSamplingReport(model);
@@ -117,6 +121,7 @@ public class TemplatesController {
     @ApiOperation("抽样检验-修改状态 （state or delete_no状态）")
     @ApiImplicitParams({})
     @PostMapping("/updateTSamplingReportById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "抽样检验-修改状态 （state or delete_no状态）")
     public ResponseModel updateTSamplingReportById(@RequestBody UpdateModel model) {
         try {
             templatesService.updateTSamplingReportById(model);
@@ -153,6 +158,7 @@ public class TemplatesController {
     @ApiOperation("质量证书- 新增/修改")
     @ApiImplicitParams({})
     @PostMapping("/saveTCertificateReport")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "质量证书- 新增/修改")
     public ResponseModel saveTCertificateReport(@RequestBody TCertificateReport tCertificateReport) {
         try {
             templatesService.saveTCertificateReport(tCertificateReport);
@@ -166,6 +172,7 @@ public class TemplatesController {
     @ApiOperation("质量证书-修改状态 （state or delete_no状态）")
     @ApiImplicitParams({})
     @PostMapping("/updateTCertificateReportById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "质量证书-修改状态 （state or delete_no状态）")
     public ResponseModel updateTCertificateReportById(@RequestBody UpdateModel model) {
         try {
             templatesService.updateTCertificateReportById(model);

@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.entity.*;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
@@ -49,6 +50,7 @@ public class SysController {
     @ApiOperation("系统管理-用户修改状态 （state或者delete_no状态）(员工管理，部门管理，职称管理，班组管理，角色管理) ")
     @ApiImplicitParams({})
     @PostMapping("/updateSysStateById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "（state或者delete_no状态）(员工管理，部门管理，职称管理，班组管理，角色管理)")
     public ResponseModel updateSysStateById(@RequestBody UpdateModel model){
         try {
             sysService.updateSysStateById(model);
@@ -94,6 +96,7 @@ public class SysController {
     @ApiOperation("部门管理-新增部门")
     @ApiImplicitParams({})
     @PostMapping("/addDepartment")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "部门管理-新增部门")
     public ResponseModel addDepartment(@RequestBody Department department,HttpServletRequest request,InputStream inputStream){
         try {
             sysService.addDepartment(department,request,inputStream);
@@ -106,6 +109,7 @@ public class SysController {
     @ApiOperation("职称管理-新增职称")
     @ApiImplicitParams({})
     @PostMapping("/addMesPost")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "职称管理-新增职称")
     public ResponseModel addMesPost(@RequestBody MesPost mesPost,HttpServletRequest request,InputStream inputStream){
         try {
             sysService.addMesPost(mesPost,request,inputStream);
@@ -118,6 +122,7 @@ public class SysController {
     @ApiOperation("班组管理-新增班组")
     @ApiImplicitParams({})
     @PostMapping("/addTeam")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "班组管理-新增班组")
     public ResponseModel addTeam(@RequestBody TTeam tteam){
         try {
             sysService.addTeam(tteam);
@@ -130,6 +135,7 @@ public class SysController {
     @ApiOperation("角色管理-新增角色")
     @ApiImplicitParams({})
     @PostMapping("/addRole")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "角色管理-新增角色")
     public ResponseModel addRole(@RequestBody SRole srole){
         try {
             sysService.addRole(srole);
@@ -142,6 +148,7 @@ public class SysController {
     @ApiOperation(value = "厂房管理-上传图片", notes = "")
     @ApiImplicitParams({ })
     @PostMapping("/localUploadPic")
+    @OperLog(operModul = "上传",operType = "2",operDesc = "厂房管理-上传图片")
     public ResponseModel localUploadPic(@RequestParam MultipartFile file){
         try {
             return ResponseModel.sucess("",sysService.localUploadPic(file));
@@ -154,6 +161,7 @@ public class SysController {
     @ApiImplicitParams({
     })
     @PostMapping("/addWorkShop")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "厂房管理-新增")
     public ResponseModel addWorkShop(@RequestBody Workshop workshop){
         try {
             sysService.addWorkShop(workshop);
@@ -166,6 +174,7 @@ public class SysController {
     @ApiOperation("客户管理-新增/编辑(客户/供应商)")
     @ApiImplicitParams({})
     @PostMapping("/saveCustomer")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "客户管理-新增/编辑(客户/供应商)")
     public ResponseModel saveCustomer(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody ClientModel client){
         try {
             sysService.saveCustomer(userInfoForToken,client);
@@ -178,6 +187,7 @@ public class SysController {
     @ApiOperation("客户管理-修改客户/供应商状态 （state或者delete_no状态）")
     @ApiImplicitParams({})
     @PostMapping("/updateCustomerById")
+    @OperLog(operModul = "修改客户/供应商状态",operType = "2",operDesc = "客户管理-修改客户/供应商状态 （state或者delete_no状态）")
     public ResponseModel updateCustomerById(@RequestBody UpdateModel smodel){
         try {
             sysService.updateCustomerById(smodel);
@@ -223,6 +233,7 @@ public class SysController {
     @ApiOperation("客户投诉管理-新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveComplaint")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "客户投诉管理-新增/编辑")
     public ResponseModel saveComplaint(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody complaint clienttousu){
         try {
             sysService.saveComplaint(userInfoForToken,clienttousu);
@@ -235,6 +246,7 @@ public class SysController {
     @ApiOperation("客户投诉管理-修改状态 （delete_no状态）")
     @ApiImplicitParams({})
     @PostMapping("/updateComplaintById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "客户投诉管理-修改状态 （delete_no状态）")
     public ResponseModel updateComplaintById(@RequestBody UpdateModel smodel){
         try {
             sysService.updateComplaintById(smodel);
@@ -291,6 +303,7 @@ public class SysController {
     @ApiOperation("字典管理-新增字典明细")
     @ApiImplicitParams({})
     @PostMapping("/saveDictionary")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "字典管理-新增字典明细")
     public ResponseModel saveDictionary(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SDictionarier sDictionarier){
         try {
             sysService.saveDictionary(userInfoForToken,sDictionarier);
@@ -303,6 +316,7 @@ public class SysController {
     @ApiOperation("字典管理-根据Id修改状态 （state ‘S’或deleteno 'D'）")
     @ApiImplicitParams({})
     @PostMapping("/updateStateById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "字典管理-根据Id修改状态 （state ‘S’或deleteno 'D'）")
     public ResponseModel updateStateById(@RequestBody UpdateModel model){
         try {
             sysService.updateStateById(model);

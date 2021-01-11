@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.SaleService;
@@ -56,6 +57,7 @@ public class SaleController  {
     @ApiOperation("销售订单管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveSale")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "销售订单管理- 新增/编辑")
     public ResponseModel saveSale(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody SaleModel saleModel){
         try {
             saleService.saveSale(userInfoForToken,saleModel);
@@ -102,6 +104,7 @@ public class SaleController  {
     @ApiOperation("销售订单管理-修改状态(delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateSaleByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "销售订单管理-修改状态(delete_no)")
     public ResponseModel updateSaleByid(@RequestBody UpdateModel smodel){
         try {
             saleService.updateSaleByid(smodel);
@@ -115,6 +118,7 @@ public class SaleController  {
     @ApiOperation("销售订单管理-修改订单状态 （订单撤回，结束销售，销售退回等）")
     @ApiImplicitParams({})
     @PostMapping("/updateSaleOrderStateByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "销售订单管理-修改订单状态 （订单撤回，结束销售，销售退回等）")
     public ResponseModel updateSaleOrderStateByid(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
             saleService.updateSaleOrderStateByid(userInfoForToken,smodel);
@@ -128,6 +132,7 @@ public class SaleController  {
     @ApiOperation("销售订单管理-审核详情修改订单状态(审核流程点击的通过/驳回)")
     @ApiImplicitParams({})
     @PostMapping("/updateSaleAuditStateByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "销售订单管理-审核详情修改订单状态(审核流程点击的通过/驳回)")
     public ResponseModel updateSaleAuditStateByid(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
             saleService.updateSaleAuditStateByid(userInfoForToken,smodel);
@@ -141,6 +146,7 @@ public class SaleController  {
     @ApiOperation("销售出库-新增销售出库")
     @ApiImplicitParams({})
     @PostMapping("/updateMaterialOuter")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "销售出库-新增销售出库")
     public ResponseModel updateMaterialOuter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
             saleService.updateMaterialOuter(userInfoForToken,smodel);

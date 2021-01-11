@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.entity.TFinishedproducecheck;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
@@ -69,6 +70,7 @@ public class MouldController {
     @ApiOperation("模具管理-新增/修改 成套/成品模型")
     @ApiImplicitParams({})
     @PostMapping("/saveCompleteSet")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "模具管理-成套/成品页面-新增/修改")
     public ResponseModel saveCompleteSet(@RequestBody TMouldModel mouldModel){
         try {
             mouldService.saveCompleteSet(mouldModel);
@@ -81,6 +83,7 @@ public class MouldController {
     @ApiOperation("模具管理-修改状态(state or  delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateTmouldByid")
+    @OperLog(operModul = "修改",operType = "2",operDesc = "模具管理-修改状态(state or  delete_no)")
     public ResponseModel updateTmouldByid(@RequestBody UpdateModel updateModel){
         try {
             mouldService.updateTmouldByid(updateModel);
@@ -115,6 +118,7 @@ public class MouldController {
     @ApiOperation("模具管理-成套模具维护-新增维护")
     @ApiImplicitParams({})
     @PostMapping("/savecuffingCheck")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "模具管理-成套模具维护-新增维护")
     public ResponseModel savecuffingCheck(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody TMouldModel mouldModel){
         try {
             mouldService.savecuffingCheck(userInfoForToken,mouldModel);
@@ -127,6 +131,7 @@ public class MouldController {
     @ApiOperation("模具管理-成套模具维护-历史检查数据-修改状态(delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateTCuffingcheckByid")
+    @OperLog(operModul = "删除",operType = "2",operDesc = "模具管理-成套模具维护-历史检查数据-修改状态(delete_no)")
     public ResponseModel updateTCuffingcheckByid(@RequestBody UpdateModel updateModel){
         try {
             mouldService.updateTCuffingcheckByid(updateModel);
@@ -163,6 +168,7 @@ public class MouldController {
     @ApiOperation("模具管理-成品模具维护-新增维护")
     @ApiImplicitParams({})
     @PostMapping("/saveFinishedproducecheck")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "模具管理-成品模具维护-新增维护")
     public ResponseModel saveFinishedproducecheck(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody TFinishedproducecheck tFinishedproducecheck){
         try {
             mouldService.saveFinishedproducecheck(userInfoForToken,tFinishedproducecheck);
@@ -176,6 +182,7 @@ public class MouldController {
     @ApiOperation("模具管理-成品模具维护-历史检查数据-修改状态(delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateFinishedproducecheckByid")
+    @OperLog(operModul = "删除",operType = "2",operDesc = "模具管理-成品模具维护-历史检查数据-修改状态(delete_no)")
     public ResponseModel updateFinishedproducecheckByid(@RequestBody UpdateModel updateModel){
         try {
             mouldService.updateFinishedproducecheckByid(updateModel);
@@ -225,6 +232,7 @@ public class MouldController {
     @ApiOperation("套模管理-新增/修改")
     @ApiImplicitParams({})
     @PostMapping("/saveTSuit")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "套模管理-新增/修改")
     public ResponseModel saveTSuit(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody TMouldModel tMouldModel){
         try {
             mouldService.saveTSuit(userInfoForToken,tMouldModel);
@@ -260,6 +268,7 @@ public class MouldController {
     @ApiOperation("套模管理-修改状态(state or  delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateTsuitByid")
+    @OperLog(operModul = "修改/删除",operType = "2",operDesc = "套模管理-修改状态(state or  delete_no)")
     public ResponseModel updateTsuitByid(@RequestBody UpdateModel updateModel){
         try {
             mouldService.updateTsuitByid(updateModel);

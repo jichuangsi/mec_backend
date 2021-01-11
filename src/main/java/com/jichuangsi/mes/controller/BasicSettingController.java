@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.BasicSettingService;
@@ -69,6 +70,7 @@ public class BasicSettingController {
     @ApiOperation("产品管理-新增产品")
     @ApiImplicitParams({})
     @PostMapping("/saveProduct")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "产品- 新增/编辑")
     public ResponseModel saveProduct(@RequestBody ClientModel model){
         try {
             bsService.saveProduct(model);
@@ -81,6 +83,7 @@ public class BasicSettingController {
     @ApiOperation("原材料规格型号维护-新增原材料")
     @ApiImplicitParams({})
     @PostMapping("/saveRawStock")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "原材料- 新增/编辑")
     public ResponseModel saveRawStock(@RequestBody ClientModel model){
         try {
             bsService.saveRawStock(model);
@@ -93,6 +96,7 @@ public class BasicSettingController {
     @ApiOperation("线轴型号规格维护-新增线轴")
     @ApiImplicitParams({})
     @PostMapping("/saveBobbin")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "线轴型号规格维护- 新增/编辑")
     public ResponseModel saveBobbin(@RequestBody ClientModel model){
         try {
             bsService.saveBobbin(model);
@@ -105,6 +109,7 @@ public class BasicSettingController {
     @ApiOperation("其他规格型号维护-新增其他东西")
     @ApiImplicitParams({})
     @PostMapping("/saveElseOther")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "其他规格型号维护- 新增/编辑")
     public ResponseModel saveElseOther(@RequestBody ClientModel model){
         try {
             bsService.saveElseOther(model);
@@ -118,6 +123,7 @@ public class BasicSettingController {
     @ApiOperation("基础设置-根据Id修改订单状态 （state ‘S’或deleteno 'D'）(产品型号规格，原材料型号规格，线轴型号规格，其他型号规格等)")
     @ApiImplicitParams({})
     @PostMapping("/updateStateById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "基础设置-根据Id修改订单状态")
     public ResponseModel updateStateById(@RequestBody UpdateModel model){
         try {
             bsService.updateStateById(model);
@@ -144,6 +150,7 @@ public class BasicSettingController {
     @ApiOperation("设备管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveEquipment")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "设备管理-新增/编辑")
     public ResponseModel saveEquipment(@RequestBody EquipmentModel model){
         try {
             bsService.saveEquipment(model);
@@ -178,6 +185,7 @@ public class BasicSettingController {
     @ApiOperation("设备管理-根据Id修改设备状态 （state ‘S’或deleteno 'D'）")
     @ApiImplicitParams({})
     @PostMapping("/updateEquipmentStateById")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "设备管理-根据Id修改设备状态")
     public ResponseModel updateEquipmentStateById(@RequestBody UpdateModel updateModel){
         try {
             bsService.updateEquipmentStateById(updateModel);
@@ -190,6 +198,7 @@ public class BasicSettingController {
     @ApiOperation("设备管理-检修页面- 检修-新增(年月)")
     @ApiImplicitParams({})
     @PostMapping("/saveOverhaulYM")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "设备管理-检修页面- 检修-新增(年月)")
     public ResponseModel saveOverhaulYM(@RequestBody SelectModel selectModel){
         try {
             return ResponseModel.sucess("",bsService.saveOverhaulYM(selectModel));
@@ -213,6 +222,7 @@ public class BasicSettingController {
     @ApiOperation("设备管理-检修页面-新增检修")
     @ApiImplicitParams({})
     @PostMapping("/saveEquipmentOverhaulRecord")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "设备管理-检修页面- 新增检修")
     public ResponseModel saveEquipmentOverhaulRecord(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody EquipmentModel equipmentModel){
         try {
             bsService.saveEquipmentOverhaulRecord(userInfoForToken,equipmentModel);
@@ -260,6 +270,7 @@ public class BasicSettingController {
     @ApiOperation("设备管理-历史报修页面-新增报修操作")
     @ApiImplicitParams({})
     @PostMapping("/saveRepairReport")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "设备管理-历史报修页面-新增报修操作")
     public ResponseModel saveRepairReport(@RequestBody UpdateModel updateModel){
         try {
             bsService.saveRepairReport(updateModel);

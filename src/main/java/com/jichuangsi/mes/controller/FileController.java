@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.entity.FileTable;
 import com.jichuangsi.mes.entity.SNotice;
 import com.jichuangsi.mes.exception.PassportException;
@@ -37,6 +38,7 @@ public class FileController {
     @ApiOperation("文件管理-上传文件")
     @ApiImplicitParams({})
     @PostMapping("/upload")
+    @OperLog(operModul = "上传",operType = "2",operDesc = "文件管理-上传文件")
     public ResponseModel upload(@RequestParam("file") MultipartFile file,SelectModel selectModel)throws IOException,PassportException{
         try {
             return ResponseModel.sucess("",fileService.upload(file,selectModel));
@@ -48,6 +50,7 @@ public class FileController {
     @ApiOperation("文件管理-下载文件")
     @ApiImplicitParams({})
     @PostMapping("/downloadFile")
+    @OperLog(operModul = "下载",operType = "2",operDesc = "文件管理-下载文件")
     public ResponseModel downloadFile(@RequestBody SelectModel selectModel) {
         try {
             return ResponseModel.sucess("",fileService.downloadFile(selectModel));
@@ -100,6 +103,7 @@ public class FileController {
     @ApiOperation("文件管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveFile")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "文件管理-新增/编辑")
     public ResponseModel saveFile(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody FileTable fileTable){
         try {
             fileService.saveFile(userInfoForToken,fileTable);
@@ -125,6 +129,7 @@ public class FileController {
     @ApiOperation("文件管理-修改状态(delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateFileByid")
+    @OperLog(operModul = "删除",operType = "2",operDesc = "文件管理-删除")
     public ResponseModel updateFileByid(@RequestBody UpdateModel smodel){
         try {
             fileService.updateFileByid(smodel);
@@ -150,6 +155,7 @@ public class FileController {
     @ApiOperation("系统公告- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveSysAnnouncement")
+    @OperLog(operModul = "新增/修改",operType = "2",operDesc = "系统公告-新增/修改")
     public ResponseModel saveSysAnnouncement(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody SNotice sNotice){
         try {
             fileService.saveSysAnnouncement(userInfoForToken,sNotice);
@@ -174,6 +180,7 @@ public class FileController {
     @ApiOperation("系统公告-修改状态(isshow or delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updateNoticeByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "系统公告-修改状态(isshow or delete_no)")
     public ResponseModel updateNoticeByid(@RequestBody UpdateModel smodel){
         try {
             fileService.updateNoticeByid(smodel);

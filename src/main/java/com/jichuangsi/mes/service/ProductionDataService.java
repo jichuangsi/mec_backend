@@ -133,16 +133,13 @@ public class ProductionDataService {
     public PageInfo getProductionDiaryReport(SelectModel selectModel)throws PassportException {
         PageInfo page = new PageInfo();
 
-        String beginTime = null;
-        String endTime = null;
+        String createTime = null;
         if(!StringUtils.isEmpty(selectModel.getFindDate())){
-            beginTime = selectModel.getFindDate() +"00:00:00";
-            endTime = selectModel.getFindDate() +"23:59:59";
+            createTime = selectModel.getFindDate();
         }
 
-
-        page.setList(iProductionMapper.findAllByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),beginTime,endTime,(selectModel.getPageNum()-1)*selectModel.getPageSize(),selectModel.getPageSize()));
-        page.setTotal(iProductionMapper.countByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),beginTime,endTime));
+        page.setList(iProductionMapper.findAllByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),createTime,(selectModel.getPageNum()-1)*selectModel.getPageSize(),selectModel.getPageSize()));
+        page.setTotal(iProductionMapper.countByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),createTime));
 
         page.setPageSize(selectModel.getPageSize());
         page.setPageNum(selectModel.getPageNum());

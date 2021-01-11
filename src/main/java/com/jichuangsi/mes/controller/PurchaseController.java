@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.PurchaseService;
@@ -56,6 +57,7 @@ public class PurchaseController {
     @ApiOperation("采购订单管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/savePurchase")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "采购订单管理-新增/编辑")
     public ResponseModel savePurchase(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody OrderModel orderModel){
         try {
             purchaseService.savePurchase(userInfoForToken,orderModel);
@@ -92,6 +94,7 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-修改状态(delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updatePurchaseByid")
+    @OperLog(operModul = "修改状态",operType = "2",operDesc = "采购订单管理-修改状态(delete_no)")
     public ResponseModel updatePurchaseByid(@RequestBody UpdateModel smodel){
         try {
             purchaseService.updatePurchaseByid(smodel);
@@ -105,6 +108,7 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-修改订单状态(审核流程点击的通过/驳回)")
     @ApiImplicitParams({})
     @PostMapping("/updatePurchaseOrderAuditByid")
+    @OperLog(operModul = "修改订单状态",operType = "2",operDesc = "采购订单管理-修改订单状态(审核流程点击的通过/驳回)")
     public ResponseModel updatePurchaseOrderAuditByid(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody UpdateModel smodel){
         try {
             purchaseService.updatePurchaseOrderAuditByid(userInfoForToken,smodel);
@@ -118,6 +122,7 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-修改订单状态(订单审核撤回、结束采购、采购退回、结束退回)")
     @ApiImplicitParams({})
     @PostMapping("/updateOrderStateByid")
+    @OperLog(operModul = "修改订单状态",operType = "2",operDesc = "采购订单管理-修改订单状态(订单审核撤回、结束采购、采购退回、结束退回)")
     public ResponseModel updateOrderStateByid(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
             purchaseService.updateOrderStateByid(userInfoForToken,smodel);
@@ -154,6 +159,7 @@ public class PurchaseController {
     @ApiOperation("采购入库-新增采购入库")
     @ApiImplicitParams({})
     @PostMapping("/updateMaterialEnter")
+    @OperLog(operModul = "新增采购入库",operType = "2",operDesc = "采购入库-新增采购入库")
     public ResponseModel updateMaterialEnter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
         try {
             purchaseService.updateMaterialEnter(userInfoForToken,smodel);

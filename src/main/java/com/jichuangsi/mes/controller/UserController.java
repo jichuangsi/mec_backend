@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.UserService;
@@ -23,6 +24,7 @@ public class UserController {
     @ApiOperation("后台用户注册")
     @ApiImplicitParams({})
     @PostMapping("/registUser")
+    @OperLog(operModul = "新增",operType = "2",operDesc = "后台用户注册")
     public ResponseModel registUser(@RequestBody UserInfoModel user){
         try {
             userService.registBackUser(user);
@@ -35,6 +37,7 @@ public class UserController {
     @ApiOperation("后台用户登录")
     @ApiImplicitParams({})
     @PostMapping("/loginUser")
+    @OperLog(operModul = "登录",operType = "1",operDesc = "登录")
     public ResponseModel loginUser(@RequestBody BackUserLoginModel model,HttpServletRequest request,InputStream inputStream){
         try {
             return ResponseModel.sucess("",userService.loginBackUser(model,request,inputStream));

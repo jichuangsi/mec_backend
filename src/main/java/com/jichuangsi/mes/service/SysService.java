@@ -116,7 +116,6 @@ public class SysService {
             default:
 
         }
-        logService.addLog(1,"查询",request,inputStream);//新增一条日志
         page.setPageSize(smodel.getPageSize());
         page.setPageNum(smodel.getPageNum());
         return page;
@@ -318,8 +317,6 @@ public class SysService {
 
         adddepartment.setDeleteNo(0);
         deRepository.save(adddepartment);
-
-        logService.addLog(1,"新增",request,inputStream);//新增一条日志
     }
 
     /**
@@ -334,8 +331,6 @@ public class SysService {
 
         mesPost.setDeleteNo(0);
         mesPostRepository.save(mesPost);
-
-        logService.addLog(1,"新增",request,inputStream);//新增一条日志
     }
 
     /**

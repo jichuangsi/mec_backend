@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.controller;
 
+import com.jichuangsi.mes.advice.OperLog;
 import com.jichuangsi.mes.entity.AuditSetting;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.ResponseModel;
@@ -35,6 +36,7 @@ public class AuditController {
     @ApiOperation("审核管理- 新增/编辑")
     @ApiImplicitParams({})
     @PostMapping("/saveAudit")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "审核管理- 新增/编辑")
     public ResponseModel saveAudit(@RequestBody AuditSetting auditSetting){
         try {
             auditService.saveAudit(auditSetting);
