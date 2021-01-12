@@ -12,7 +12,7 @@ public class SaleModel {
     private TSaleorder tsaleorder;
 
 //    新增销售订单明细
-    private List<TSaleorderdetail> tsaleorderdetail;
+    private List<TSaleorderdetailVo> tsaleorderdetail;
 
     public TSaleorder getTsaleorder() {
         return tsaleorder;
@@ -22,11 +22,11 @@ public class SaleModel {
         this.tsaleorder = tsaleorder;
     }
 
-    public List<TSaleorderdetail> getTsaleorderdetail() {
+    public List<TSaleorderdetailVo> getTsaleorderdetail() {
         return tsaleorderdetail;
     }
 
-    public void setTsaleorderdetail(List<TSaleorderdetail> tsaleorderdetail) {
+    public void setTsaleorderdetail(List<TSaleorderdetailVo> tsaleorderdetail) {
         this.tsaleorderdetail = tsaleorderdetail;
     }
 }

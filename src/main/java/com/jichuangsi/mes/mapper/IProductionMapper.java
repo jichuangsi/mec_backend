@@ -383,11 +383,20 @@ public interface IProductionMapper {
 
 
     //    改绕--查询改绕的信息
-    @Select(value = "<script>SELECT ins.ppp_id as id,ins.stock_model as productModel, ppp.production_number as ppNumber\n" +
+//    @Select(value = "<script>SELECT ins.ppp_id as id,ins.stock_model as productModel, ppp.production_number as ppNumber\n" +
+//            "FROM inventory_status ins\n" +
+//            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
+//            "WHERE inventory_type =2\n" +
+//            "GROUP BY ppp_id</script>")
+    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as ppNumber,\n" +
+            "ins.stock_model as productModel,ins.standards as stockName,\n" +
+            "sd.`name` as stockRemarks\n" +
             "FROM inventory_status ins\n" +
             "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
-            "WHERE inventory_type =2\n" +
-            "GROUP BY ppp_id</script>")
+            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
+            "WHERE ins.inventory_type = 2 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "GROUP BY ppp.production_number\n"+
+            "ORDER BY ppp.id DESC</script>")
     List<PPProductionVo> findAllFinished();
 
 
@@ -396,10 +405,10 @@ public interface IProductionMapper {
             "pp.lengthm as lengthM,ins.inventorynumbers as numbers\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
-            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.pppid = #{deId} AND ins.ppp_id = #{deId} AND pp.delete_no = 0\n" +
+            "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = 2 \n" +
+            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
             "</script>")
     List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 

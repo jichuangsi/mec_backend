@@ -11,4 +11,6 @@ public interface ProductionDiaryReportRepository extends JpaRepository<Productio
     ProductionDiaryReport findByProductionNumberAndProductDate(String productionNumber,String productTime);
 
     List<ProductionDiaryReport> findByProductionNumber(String productionNumber);
+
+    List<ProductionDiaryReport> findByProductDate(String productTime);
 }

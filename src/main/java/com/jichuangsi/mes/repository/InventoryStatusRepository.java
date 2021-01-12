@@ -19,9 +19,14 @@ public interface InventoryStatusRepository extends JpaRepository<InventoryStatus
     List<InventoryStatus> findAllByProductIdAndWarehouseIdAndInventoryType(Integer productId,Integer warehouseId,Integer inventoryType);
 
 
+//    @Transactional
+//    @Modifying
+//    @Query(value = "UPDATE inventory_status SET inventorysum = 0 ,inventorynumbers =  0 where ppp_id = ?1 and inventory_type = ?2",nativeQuery = true)  //or  inventory_type = 4
+//    void updateByProductIdAndInventoryType(Integer productId,Integer inventoryType);
+
     @Transactional
     @Modifying
-    @Query(value = "UPDATE inventory_status SET inventorysum = 0 ,inventorynumbers =  0 where product_id = ?1 and inventory_type = ?2",nativeQuery = true)  //or  inventory_type = 4
-    void updateByProductIdAndInventoryType(Integer productId,Integer inventoryType);
+    @Query(value = "UPDATE inventory_status SET delete_no = 1,state = 1 where ppp_id = ?1 and inventory_type = ?2",nativeQuery = true)  //or  inventory_type = 4
+    void updateDeleteNoByProductIdAndInventoryType(Integer productId,Integer inventoryType);
 
 }

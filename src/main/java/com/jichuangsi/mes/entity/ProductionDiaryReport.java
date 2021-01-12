@@ -20,6 +20,7 @@ public class ProductionDiaryReport {
 
     private String productModel;//产品型号
     private Integer incomeHeavy;//来料重g （在新增熔炼的时候产生）
+    private Integer numbers;//数量
 
     private BigDecimal noFinishEdP;//半成品g
     private BigDecimal finishEdP;//成品g
@@ -28,6 +29,14 @@ public class ProductionDiaryReport {
 
 
     private BigDecimal totalNet;//线上合计g
+
+    public Integer getNumbers() {
+        return numbers;
+    }
+
+    public void setNumbers(Integer numbers) {
+        this.numbers = numbers;
+    }
 
     public Integer getId() {
         return id;

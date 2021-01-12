@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.service;
 
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
@@ -528,12 +529,18 @@ public class BasicSettingService {
      */
     public PageInfo getAllEquipment(SelectModel smodel)throws PassportException{
         PageInfo page=new PageInfo();
-
+        Calendar now = Calendar.getInstance();
         if(StringUtils.isEmpty(smodel.getPageNum()) || StringUtils.isEmpty(smodel.getPageSize())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
         List<Equipment> listSale = mesMapper.findAllEquipment(smodel.getFindName(),smodel.getFindIdOne(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+
+        for (Equipment eq:listSale) {
+            //此步操作是查询当天是否有新增数据
+            Integer countoverhaul = equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentId(DateUtil.today(),eq.getId());
+            eq.setCheckNo(countoverhaul >= 0 ? 0 :1);//检修否（当日）
+        }
 
         page.setList(listSale);
         page.setTotal(mesMapper.countByEquipment(smodel.getFindName(),smodel.getFindIdOne()));
@@ -562,11 +569,29 @@ public class BasicSettingService {
     }
 
     /**
-     * 设备管理-检修页面-根据Id查询单条数据
+     * 设备管理-根据Id查询单条数据
      * @param
      * @throws PassportException
      */
     public JSONObject getAllEquipmentById(SelectModel smodel)throws PassportException{
+        JSONObject job = new JSONObject();
+
+        if(StringUtils.isEmpty(smodel.getFindById())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        job.put("equipment",equipmentRepository.findByid(smodel.getFindById()));//设备
+        job.put("equipmentOverhauls",equipmentItemsRepository.findAllByEquipmentIdAndDeleteNo(smodel.getFindById(),0));//检修条目
+
+        return job;
+    }
+
+    /**
+     * 设备管理-检修页面-根据Id查询单条数据
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getAllEquipmentOverhaulById(SelectModel smodel)throws PassportException{
         JSONObject jsonObject = new JSONObject();
 
         if(StringUtils.isEmpty(smodel.getFindById())){
@@ -592,14 +617,14 @@ public class BasicSettingService {
             Integer year = Integer.valueOf(strings[0]);
             Integer month = Integer.valueOf(strings[1]);
             currentNormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,1,year,month).stream().mapToInt(Integer::intValue).sum();
-             currentNONormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,2,year,month).stream().mapToInt(Integer::intValue).sum();
-             currentRestMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,3,year,month).stream().mapToInt(Integer::intValue).sum();
-             currentOutMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,4,year,month).stream().mapToInt(Integer::intValue).sum();
+            currentNONormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,2,year,month).stream().mapToInt(Integer::intValue).sum();
+            currentRestMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,3,year,month).stream().mapToInt(Integer::intValue).sum();
+            currentOutMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,4,year,month).stream().mapToInt(Integer::intValue).sum();
 
-             SumNormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,1,null,null).stream().mapToInt(Integer::intValue).sum();
-             SumNONormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,2,null,null).stream().mapToInt(Integer::intValue).sum();
-             SumRestMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,3,null,null).stream().mapToInt(Integer::intValue).sum();
-             SumOutMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,4,null,null).stream().mapToInt(Integer::intValue).sum();
+            SumNormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,1,null,null).stream().mapToInt(Integer::intValue).sum();
+            SumNONormalMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,2,null,null).stream().mapToInt(Integer::intValue).sum();
+            SumRestMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,3,null,null).stream().mapToInt(Integer::intValue).sum();
+            SumOutMonth = mesMapper.sumEquipmentUserTimeByEqId(equipId,4,null,null).stream().mapToInt(Integer::intValue).sum();
         }
 
         JSONObject jsonObject1 = new JSONObject();

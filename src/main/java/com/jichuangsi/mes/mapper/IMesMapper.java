@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Select;
 import org.springframework.data.jpa.repository.Modifying;
 
 import javax.transaction.Transactional;
+import java.util.Date;
 import java.util.List;
 
 @Mapper
@@ -855,6 +856,36 @@ public interface IMesMapper {
             "GROUP BY ts.material_id</script>")
     List<StockModel> findAllInventoryStateByBobbin(@Param("name")String name,@Param("warehourseId")Integer warehourseId);
 
+    //库存管理-出入库管理-调拨/出库数据查询（半成品、废料、成品）
+    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as stockNumber,\n" +
+            "ins.stock_model as stockModel,ins.standards as stockName,ins.unit_id as dictionarierId,\n" +
+            "sd.`name` as stockRemarks\n" +
+            "FROM inventory_status ins\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
+            "WHERE ins.inventory_type = #{inventoryType} AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "<if test='name != null'>AND ppp.production_number LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='warehourseId != null and warehourseId != 0'>AND ins.warehouse_id =#{warehourseId} </if>\n" +
+            "GROUP BY ppp.production_number\n"+
+            "ORDER BY ppp.id DESC</script>")
+    List<StockModel> findAllInventoryByState(@Param("inventoryType")Integer inventoryType,@Param("name")String name,@Param("warehourseId")Integer warehourseId);
+
+
+    //库存管理-出入库管理-调拨/出库数据根据id查询（半成品、废料、成品）
+    @Select(value = "<script>SELECT ins.id as updateID,tb.bobbin_name as updateRemark,\n" +
+            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId,sd.`name` as updateType\n" +
+            "FROM ppp_products#{id} pp\n" +
+            "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
+            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = ins.unit_id\n" +
+            "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = #{inventoryType} \n" +
+            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "</script>")
+    List<UpdateModel> findAllInventoryStateByPPPId(@Param("inventoryType")Integer inventoryType,@Param("deId")Integer deId,@Param("id")Integer id);
+
+
+
     //库存管理-库存管理-页面查询(所有)
     @Select(value = "<script>SELECT invs.id as id,invs.product_id as productId,invs.inventorysum as inventorysum, \n" +
             "invs.stock_name as stockName,invs.stock_model as stockModel, \n" +
@@ -883,6 +914,18 @@ public interface IMesMapper {
             "<if test='name != null'>AND invs.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "</script>")
     Integer countByInventoryStates(@Param("modelNameId")Integer modelNameId,@Param("name")String name);
+
+    //库存管理-库存管理-根据规格id查询产品参数（半成品、产品、废料）
+    @Select(value = "<script>SELECT st.stock_number as stockNumber,\n" +
+            "sdd.`name` as stockType, st.stock_name as stockName,\n" +
+            "st.stock_remarks as stockRemarks, st.stock_model as stockModel, sd.`name` as dictionarier \n" +
+            "FROM t_standards ts\n" +
+            "LEFT JOIN t_stock st ON st.id = ts.material_id \n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = st.dictionarier_id \n" +
+            "LEFT JOIN s_dictionarier sdd ON sdd.id = st.stock_type_id \n" +
+            "WHERE ts.id = #{deId}\n"+
+            "</script>")
+    StockModel findproductDetailById(@Param("deId")Integer deId);
 
     //库存管理-库存管理-根据规格id查询原料参数
     @Select(value = "<script>SELECT st.stock_number as stockNumber,\n" +
@@ -952,11 +995,12 @@ public interface IMesMapper {
     //查询所有设备信息
     @Select(value = "<script>SELECT te.id as id,te.equipment_name as equipmentName,\n" +
             "te.equipment_model as equipmentModel,te.equipment_number as equipmentNumber,\n" +
-            "te.state as state,te.check_no as checkNo\n" +
+            "te.state as state\n" +
             "FROM t_equipment te\n" +
             "WHERE te.delete_no = 0 \n"+
             "<if test='name != null'>AND te.equipment_model LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null and deId != 2'>AND te.check_no = #{deId} </if>\n"+
+            "ORDER BY te.id DESC \n" +
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<Equipment> findAllEquipment(@Param("name")String name, @Param("deId")Integer deId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
 
@@ -1375,4 +1419,31 @@ public interface IMesMapper {
             "</script>")
     Integer countByAllMatters(@Param("name")String name, @Param("staffId")Integer staffId, @Param("finishedNo")Integer finishedNo, @Param("readNo")Integer readNo);
 
+
+    //首页-查询当日采购金额
+    @Select(value = "<script>SELECT IFNULL(SUM(tpd.stock_unit_price * tpd.stock_amount),0) \n" +
+            "FROM t_purchasedetail tpd\n" +
+            "LEFT JOIN t_purchase tp ON tp.id = tpd.purchase_id\n" +
+            "WHERE tp.delete_no = 0 AND tp.create_time = #{createdate} \n" +
+            "AND tpd.delete_no = 0"+
+            "</script>")
+    Integer countByPurchaseMoney(@Param("createdate")String createdate);
+
+    //首页-查询当日采购金额
+    @Select(value = "<script>SELECT IFNULL(SUM(tsd.product_num * tsd.product_price),0)\n" +
+            "FROM t_saleorderdetail tsd\n" +
+            "LEFT JOIN t_saleorder ts ON ts.id = tsd.saleorder_id\n" +
+            "WHERE ts.delete_no = 0 AND ts.create_time = #{createdate} \n" +
+            "AND tsd.delete_no = 0"+
+            "</script>")
+    Integer countBySaleMoney(@Param("createdate")String createdate);
+
+
+//    @Select(value = "<script>SELECT IFNULL(SUM(numbers),0) \n" +
+//            "FROM pp_production_diary_report pd\n" +
+//            "WHERE pd.product_date IN \n" +
+//            "<foreach collection='createdate' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+//            "GROUP BY pd.product_date\n" +
+//            "</script>")
+//    List<Integer> findAllByRoleIn(@Param("createdate")List<String> createdate);
 }

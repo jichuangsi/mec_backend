@@ -138,18 +138,26 @@ public class SaleService {
         Integer pid = tSaleorder1.getId();
 
         tSaleorderdetailRepository.updatesaleorderdetailByOrderId(pid);//先把明细删除
-        List<TSaleorderdetail> listpur = saleModel.getTsaleorderdetail();
+        List<TSaleorderdetailVo> listpur = saleModel.getTsaleorderdetail();
+
+        List<TSaleorderdetail> listdetail = new ArrayList<>();
         for (int i = 0; i < listpur.size(); i++) {
-            TSaleorderdetail tSaleorderdetail = listpur.get(i);
+            TSaleorderdetail tSaleorderdetail =new TSaleorderdetail();
             if(StringUtils.isEmpty(listpur.get(i).getProductNum()) || StringUtils.isEmpty(listpur.get(i).getProductPrice())){
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
 
             }
+
+            tSaleorderdetail.setProductNum(listpur.get(i).getProductNum());//数量
+            tSaleorderdetail.setProductPrice(listpur.get(i).getProductPrice());//价格
+            tSaleorderdetail.setRemark(listpur.get(i).getRemark());//备注
             tSaleorderdetail.setDeleteNo(0);
+            tSaleorderdetail.setProductId(listpur.get(i).getProductdetailId());
             tSaleorderdetail.setSaleorderId(pid);
+            listdetail.add(tSaleorderdetail);
         }
-        tSaleorderdetailRepository.saveAll(saleModel.getTsaleorderdetail());
+        tSaleorderdetailRepository.saveAll(listdetail);
 
         if(tSaleorder.getOrderStateId() == 1){//如果是提交的话就要发送一条待办事项
 

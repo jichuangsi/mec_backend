@@ -1,7 +1,9 @@
 package com.jichuangsi.mes.common;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class getDateConfig {
@@ -22,15 +24,19 @@ public class getDateConfig {
         return maxDate;
     }
 
-
     /**
      * 根据年 月 获取对应的月份日期 list
      * */
-    public static List<String> getDaysByYearMonthList(String findDate) {
+    public static List<String> getDaysByYearMonthList() {
+        Calendar c = Calendar.getInstance();
+        Integer y=c.get(Calendar.YEAR);//年bai
+        Integer M = c.get(Calendar.MONTH)+1;//月,注意这里要du加1,计算机第一个月从zhi0开始
+
+        String dateNowStr = y+"-"+M;
         List<String> list = new ArrayList<>();
-        Integer intcount = getDaysByYearMonth(findDate);
+        Integer intcount = getDaysByYearMonth(dateNowStr);
         for (int i = 0; i < intcount; i++) {
-            String str =findDate+"-"+String.format("%02d",(i+1));
+            String str =String.format("%02d",(M))+"-"+String.format("%02d",(i+1));
             list.add(str);
         }
         return list;

@@ -7,4 +7,6 @@ public interface EquipmentCheckRecordRepository  extends JpaRepository<Equipment
 
 //    @Query(value = "SELECT count(1) FROM t_equipmentcheckrecord WHERE equipment_time = ?1 and equipment_id = ?2 and frequency = ?3",nativeQuery = true)
     Integer countByEquipmentTimeAndEquipmentIdAndFrequency(String equiTime, Integer equipmentId, Integer frequency);
+
+    Integer countByEquipmentTimeAndEquipmentId(String equiTime, Integer equipmentId);
 }

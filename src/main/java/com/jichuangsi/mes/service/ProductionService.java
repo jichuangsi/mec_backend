@@ -34,9 +34,6 @@ public class ProductionService {
 
     @Resource
     private IMesMapper mesMapper;
-    @Resource
-    private WarehouseService warehouseService;
-
 
     @Resource
     private SDictionarierRepository dictionarierRepository;
@@ -342,7 +339,7 @@ public class ProductionService {
             upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
         }
 
-        savepppproducts(ppProductionModel.getTwoList(),pid,ppProduction.getState(),upd);//保存产物信息
+        savepppproducts(ppProductionModel.getTwoList(),ppProduction,upd);//保存产物信息
 
         if(ppProduction.getState() == 1){//转下班操作
             //转下班操作：1、原料出库操作 2、新增粗拉批次 3、新增日报
@@ -409,6 +406,8 @@ public class ProductionService {
             productionDiaryReport1.setProductModel(productModel);//产品型号
             productionDiaryReport1.setIncomeHeavy(incomeHeavy);//来料重
 
+            productionDiaryReport1.setNumbers(getTwoList.size());
+
             if(ppProductionModel.getPpProduction().getState() == 4){//完成生产。
                 productionDiaryReport1.setNoFinishEdP(BigDecimal.ZERO);//半成品
                 productionDiaryReport1.setFinishEdP(netWeightg);
@@ -431,6 +430,7 @@ public class ProductionService {
             }
             productionDiaryReport.setWaste(productionDiaryReport.getWaste().add(getTwoList.stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//废料g
             productionDiaryReport.setLoss(productionDiaryReport.getLoss().add(getTwoList.stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//损耗g
+            productionDiaryReport.setNumbers(getTwoList.size());
 
             productionDiaryReportRepository.save(productionDiaryReport);
         }
@@ -445,21 +445,24 @@ public class ProductionService {
      *
      * 废料不会清空。只有半成品/成品才会
      * @param list
-     * @param pppid
-     * @param state 状态 如果状态== 4.完成生产。就直接保存产物进库存。
+     * @param ppProduction 中 getstate是 状态 如果状态== 4.完成生产。就直接保存产物进库存。
      *
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public  void savepppproducts(List<PPPProducts0> list,Integer pppid,Integer state,UpdateModel upd)throws PassportException {
+    public  void savepppproducts(List<PPPProducts0> list,PPProduction ppProduction,UpdateModel upd)throws PassportException {
+        Integer pppid = ppProduction.getId();
+        Integer state = ppProduction.getState();
+
         Integer LId = pppid%10;
 
         Integer inventoryType = state == 4 ?  2 : 3;
 
         //1、先把该生产管理该工序所有改变掉状态
         iProductionMapper.UpdatePPPProductsByPPPId(LId,pppid);
-//        inventoryRecordRepository.updateByPIdAndInventoryType(pppid,inventoryType);//把上批的产物清零
-        inventoryStatusRepository.updateByProductIdAndInventoryType(pppid,3);//把上批的产物清零
+
+        inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(ppProduction.getFid(),3);//把上批的产物删除
+        inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(pppid,inventoryType);//把本批的产物删除
 
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();//成品/半成品
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();//库存记录
@@ -499,35 +502,39 @@ public class ProductionService {
             inventoryStatus1.setPppId(pppid);
             inventoryStatus1.setWarehouseId(1);//仓库Id
             inventoryStatus1.setInventoryType(4);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-            inventoryStatus1.setInventorysum(wastageg);//废料数量
-            inventoryStatus1.setInventorynumbers(1);//数量
+            inventoryStatus1.setInventorysum(1);//废料数量
+            inventoryStatus1.setInventorynumbers(wastageg);//数量
 
             inventoryStatus1.setStockName(upd.getStockName());
             inventoryStatus1.setStockNumber(upd.getStockNumber());
             inventoryStatus1.setStockModel(upd.getStockModel());
             inventoryStatus1.setStandards(upd.getStandards());
             inventoryStatus1.setUnitId(upd.getUnitId());
+            inventoryStatus1.setState(0);
+            inventoryStatus1.setDeleteNo(0);
 
             inventoryStatus2.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
             inventoryStatus2.setPppId(pppid);
             inventoryStatus2.setWarehouseId(1);//仓库Id
             inventoryStatus2.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-            inventoryStatus2.setInventorysum(netWeightg);//净含量数量
-            inventoryStatus2.setInventorynumbers(1);//数量
+            inventoryStatus2.setInventorysum(1);//数量
+            inventoryStatus2.setInventorynumbers(netWeightg);//净含量数量
 
             inventoryStatus2.setStockName(upd.getStockName());
             inventoryStatus2.setStockNumber(upd.getStockNumber());
             inventoryStatus2.setStockModel(upd.getStockModel());
             inventoryStatus2.setStandards(upd.getStandards());
             inventoryStatus2.setUnitId(upd.getUnitId());
+            inventoryStatus2.setState(0);
+            inventoryStatus2.setDeleteNo(0);
 
             //存入记录:废料
             inventoryRecord1.setProductDetailid(pppProducts.getId());
             inventoryRecord1.setPppId(pppid);
             inventoryRecord1.setRecordType(2);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
             inventoryRecord1.setCreateTime(System.currentTimeMillis());
-            inventoryRecord1.setChangequantity("+"+wastageg);
-            inventoryRecord1.setSurplusquantity(wastageg);
+            inventoryRecord1.setChangequantity("+"+1);//wastageg
+            inventoryRecord1.setSurplusquantity(1);
             inventoryRecord1.setInventoryType(4);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord1.setRemark("生产计划单过程产生废料");
             inventoryRecord1.setWarehouseId(1);
@@ -544,8 +551,8 @@ public class ProductionService {
             inventoryRecord2.setPppId(pppid);
             inventoryRecord2.setRecordType(2);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
             inventoryRecord2.setCreateTime(System.currentTimeMillis());
-            inventoryRecord2.setChangequantity("+"+netWeightg);
-            inventoryRecord2.setSurplusquantity(netWeightg);
+            inventoryRecord2.setChangequantity("+"+1);//netWeightg
+            inventoryRecord2.setSurplusquantity(1);
             inventoryRecord2.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord2.setRemark("生产计划单过程产生数量");
             inventoryRecord2.setWarehouseId(1);
@@ -605,7 +612,7 @@ public class ProductionService {
             upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
         }
 //        准备转下班操作的工序id
-        savepppproducts(getTwoList,pid,ppProduction.getState(),upd);//保存
+        savepppproducts(getTwoList,ppProduction,upd);//保存
 
         if(ppProduction.getState() == 1 || ppProduction.getState() == 2|| ppProduction.getState() == 4){//如果是转下班/重复当前工序/完成生产操作。就新增下班操作
             Integer newGXid =ppProduction.getState() == 1?  ProductionStateChange.getGXIdByGXType(ProductionStateChange.getGXStateChangeone(ProductionStateChange.getGXIdByGXTypeDesc(ppProduction.getGXId()))) : ppProduction.getGXId();
@@ -786,6 +793,8 @@ public class ProductionService {
             productionDiaryReport.setWaste(productionDiaryReport.getWaste().subtract(getTwoList.stream().map(PPPProducts0::getWastageg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//废料g
             productionDiaryReport.setLoss(productionDiaryReport.getLoss().subtract(getTwoList.stream().map(PPPProducts0::getLossg).reduce(BigDecimal.ZERO, BigDecimal::add)) );//损耗g
 
+            productionDiaryReport.setNumbers(getTwoList.size());//数量
+
             productionDiaryReportRepository.save(productionDiaryReport);
         }
     }
@@ -824,7 +833,7 @@ public class ProductionService {
         }
 
 //        准备转下班操作的工序id
-        savepppproducts(ppProductionModel.getTwoList(),pid,ppProduction.getState(),upd);//保存
+        savepppproducts(ppProductionModel.getTwoList(),ppProduction,upd);//保存
 
         if(ppProductions.getGXId() == ProductionStateChange.Production_PPFinished ||ppProductions.getGXId() == ProductionStateChange.PPPFinished){//如果是成品就是成品退火。其他都是中途退火
             newGXid =ProductionStateChange.PFinishedAnnealing;
@@ -1105,7 +1114,7 @@ public class ProductionService {
                 upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
             }
 
-            inventoryStatusRepository.updateByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
+            inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
             for (int i = 0; i < list.size(); i++) {
                 ProductsVo pppProducts = list.get(i);
 
@@ -1121,8 +1130,8 @@ public class ProductionService {
                 inventoryStatus1.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
                 inventoryStatus1.setWarehouseId(1);//仓库Id
                 inventoryStatus1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-                inventoryStatus1.setInventorysum(netWeightg);//废料数量
-                inventoryStatus1.setInventorynumbers(numbers);//数量
+                inventoryStatus1.setInventorysum(numbers);//废料数量
+                inventoryStatus1.setInventorynumbers(netWeightg);//数量
 
                 inventoryStatus1.setStockName(upd.getStockName());
                 inventoryStatus1.setStockNumber(upd.getStockNumber());
@@ -1135,8 +1144,8 @@ public class ProductionService {
                 inventoryRecord1.setProductDetailid(pppProducts.getId());
                 inventoryRecord1.setRecordType(2);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
                 inventoryRecord1.setCreateTime(System.currentTimeMillis());
-                inventoryRecord1.setChangequantity("+"+netWeightg);
-                inventoryRecord1.setSurplusquantity(netWeightg);
+                inventoryRecord1.setChangequantity("+"+numbers);
+                inventoryRecord1.setSurplusquantity(numbers);
                 inventoryRecord1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
                 inventoryRecord1.setRemark("绕线过程产生成品");
                 inventoryRecord1.setWarehouseId(1);

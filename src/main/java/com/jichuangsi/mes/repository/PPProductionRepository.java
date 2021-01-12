@@ -15,4 +15,6 @@ public interface PPProductionRepository  extends JpaRepository<PPProduction,Inte
 
 
     Integer countByProductionNumberAndGXId(String number,Integer gxId);
+
+    List<PPProduction> findByCreateTimeIsBetweenAndDeleteNo(Date startTime, Date endTime, Integer deleteNo);
 }

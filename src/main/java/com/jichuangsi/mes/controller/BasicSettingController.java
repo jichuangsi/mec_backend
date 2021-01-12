@@ -195,6 +195,17 @@ public class BasicSettingController {
         return ResponseModel.sucessWithEmptyData("");
     }
 
+    @ApiOperation("设备管理-检修页面-根据Id查询单条数据")
+    @ApiImplicitParams({})
+    @PostMapping("/getAllEquipmentOverhaulById")
+    public ResponseModel getAllEquipmentOverhaulById(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",bsService.getAllEquipmentOverhaulById(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
     @ApiOperation("设备管理-检修页面- 检修-新增(年月)")
     @ApiImplicitParams({})
     @PostMapping("/saveOverhaulYM")

@@ -28,6 +28,25 @@ public class InventoryStatus {
     private Integer inventoryType;//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
 
 
+    private Integer state;//状态 （0 最新 1不是最新）
+    private Integer deleteNo;//删除否(0 未删除、有用的  1已删除、没有用的)
+
+    public Integer getState() {
+        return state;
+    }
+
+    public void setState(Integer state) {
+        this.state = state;
+    }
+
+    public Integer getDeleteNo() {
+        return deleteNo;
+    }
+
+    public void setDeleteNo(Integer deleteNo) {
+        this.deleteNo = deleteNo;
+    }
+
     public Integer getInventorynumbers() {
         return inventorynumbers;
     }
