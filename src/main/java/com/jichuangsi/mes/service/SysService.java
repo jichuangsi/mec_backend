@@ -3,6 +3,7 @@ package com.jichuangsi.mes.service;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.util.StringUtil;
+import com.jichuangsi.mes.config.TreeBeanUtil;
 import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.*;
 import com.jichuangsi.mes.exception.PassportException;
@@ -22,9 +23,8 @@ import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SysService {
@@ -146,10 +146,17 @@ public class SysService {
                 jsonObject.put("data",mesPostRepository.findByid(smodel.getFindById()));
                 break;
             case "tTeam"://班组管理-查询班组
-                jsonObject.put("data",tteamPostRepository.findByid(smodel.getFindById()));
+                TTeam tTeam =  tteamPostRepository.findByid(smodel.getFindById());
+                List<Integer> idList = Arrays.stream(tTeam.getTeamStaffList().split(",")).map(Integer::valueOf).collect(Collectors.toList());
+
+                jsonObject.put("data",tTeam);
+                jsonObject.put("dataList",mesMapper.findTeamStaffsBystaffIds(idList));
                 break;
             case "sRole"://角色管理-查询角色
-                jsonObject.put("data",sroleRepository.findByid(smodel.getFindById()));
+                SRole sRole = sroleRepository.findByid(smodel.getFindById());
+                jsonObject.put("data",sRole);
+                jsonObject.put("sRolePowerList",mesMapper.findRolePowerIsNotNodeByIds(Arrays.stream(sRole.getRolePower().split(",")).map(Integer::valueOf).collect(Collectors.toList())));
+                jsonObject.put("getAllSRolePower",new TreeBeanUtil().menuList(rolePowerRepository.findAllByDeleteNo(0)));
                 break;
             default:
 
@@ -292,17 +299,18 @@ public class SysService {
     }
 
     /**
-     * 员工管理-根据员工ID查询单条信息
+     * 角色管理-新增-查询数据
      * @param
      * @throws PassportException
      */
-    public SStaff getInfoById(UserInfoForToken userInfo)throws PassportException{
-        SStaff staff = userRepository.findByid(Integer.valueOf(userInfo.getUserId()));
-        if(staff==null){
-            throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);
-        }
+    public JSONObject getInfoBySRole(UserInfoForToken userInfo)throws PassportException{
+        JSONObject jsonObject = new JSONObject();
 
-        return staff;
+        jsonObject.put("data",new SRole());
+        jsonObject.put("sRolePowerList",null);
+        jsonObject.put("getAllSRolePower",new TreeBeanUtil().menuList(rolePowerRepository.findAllByDeleteNo(0)));
+
+        return jsonObject;
     }
 
     /**

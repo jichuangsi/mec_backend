@@ -23,12 +23,23 @@ public class HomeController {
     @Resource
     private HomeService homeService;
 
-    @ApiOperation("首页-查询数据")
+    @ApiOperation("首页Mes-查询数据")
     @ApiImplicitParams({})
     @PostMapping("/findMyMatters")
     public ResponseModel findMyMatters(@ModelAttribute UserInfoForToken userInfoForToken){
         try {
             return ResponseModel.sucess("",homeService.findMyMatters(userInfoForToken));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("首页ERP-查询数据")
+    @ApiImplicitParams({})
+    @PostMapping("/findMyERPMatters")
+    public ResponseModel findMyERPMatters(@ModelAttribute UserInfoForToken userInfoForToken)throws PassportException,Exception{
+        try {
+            return ResponseModel.sucess("",homeService.findMyERPMatters(userInfoForToken));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -51,6 +62,19 @@ public class HomeController {
     public ResponseModel findMattersByState(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody SelectModel selectModel){
         try {
             return ResponseModel.sucess("",homeService.findMattersByState(userInfoForToken,selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
+
+    @ApiOperation("首页-查询该用户的权限")
+    @ApiImplicitParams({})
+    @PostMapping("/getMyRolePower")
+    public ResponseModel getMyRolePower(@ModelAttribute UserInfoForToken userInfoForToken)throws PassportException,Exception{
+        try {
+            return ResponseModel.sucess("",homeService.getMyRolePower(userInfoForToken));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

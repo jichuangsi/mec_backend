@@ -131,68 +131,6 @@ public class FileService {
     }
 
     /**
-     * 下载
-     *
-     * @param response
-     * @throws IOException
-     */
-//    public OutputStream downloadFile(HttpServletResponse response,SelectModel selectModel) throws IOException {
-//        // 设置文件存储路径
-//        String path = "";
-//        String fileName  ="";
-//        if(selectModel.getFindModelName().equals("FILE")){
-//            path = "D:/file/";
-//            FileTable fileTable = fileTableRepository.findByid(selectModel.getFindById());
-//            fileName = fileTable.getFileName();
-//        }else if(selectModel.getFindModelName().equals("NOTICE")){
-//            path = "D:/notice/";
-//            SNotice sNotice = sNoticeRepository.findByid(selectModel.getFindById());
-//            fileName = sNotice.getNoticeRoute();
-//        }
-//        byte[] buffer = new byte[1024];
-//        FileInputStream fis = null;
-//        BufferedInputStream bis = null;
-//        try {
-//            File tempFile =new File( fileName.trim());
-//
-//            File file = new File(path, tempFile.getName());
-//            response.setContentType("application/x-download");
-//            response.addHeader("Content-Disposition", "attachment;filename=" + fileName);
-//            fis = new FileInputStream(file);
-//            bis = new BufferedInputStream(fis);
-//            OutputStream os = response.getOutputStream();
-//            int i = bis.read(buffer);
-//            while (i != -1) {
-//                os.write(buffer, 0, i);
-//                i = bis.read(buffer);
-//            }
-//        }catch(FileNotFoundException e) {
-//            e.printStackTrace();
-//            System.out.println("The file not found!");
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } finally{
-//            if (bis != null) {
-//                try {
-//                    bis.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            if (fis != null) {
-//                try {
-//                    fis.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//        return  null;
-//    }
-
-
-    /**
      * 文件管理-查询
      * @param
      * @throws PassportException

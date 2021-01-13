@@ -9,4 +9,7 @@ public interface SStaffRoleRepository  extends JpaRepository<SStaffRole,Integer>
 
     List<SStaffRole> findByStaffId(Integer uid);
 
+
+    List<SStaffRole> findByStaffIdAndRoleId(Integer uid,Integer roleId);
+
 }

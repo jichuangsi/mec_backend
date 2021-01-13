@@ -2,6 +2,7 @@ package com.jichuangsi.mes.entity;
 
 import javax.persistence.*;
 
+//配置表
 @Entity
 @Table(name = "s_rolepower")
 public class RolePower {
@@ -12,7 +13,7 @@ public class RolePower {
     private Integer Fid;//配置父ID
     private String rolePowerName;//配置名称
     private String roleCodeUrl;//配置路径
-    private Integer isNode;//是否为节点
+    private Integer isNode;//是否为节点 0功能 1菜单
     private Integer sysType;//1 mes 2 erp
     private Integer state;
     private Integer deleteNo;

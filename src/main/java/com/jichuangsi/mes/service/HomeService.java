@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.jichuangsi.mes.common.ProductionStateChange;
 import com.jichuangsi.mes.common.getDateConfig;
+import com.jichuangsi.mes.config.TreeBeanUtil;
 import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.Matters;
 import com.jichuangsi.mes.entity.ProductionDiaryReport;
@@ -14,19 +15,15 @@ import com.jichuangsi.mes.mapper.IProductionMapper;
 import com.jichuangsi.mes.model.MapVo;
 import com.jichuangsi.mes.model.SelectModel;
 import com.jichuangsi.mes.model.UserInfoForToken;
-import com.jichuangsi.mes.repository.MattersRepository;
-import com.jichuangsi.mes.repository.PPProductionRepository;
-import com.jichuangsi.mes.repository.ProductionDiaryReportRepository;
-import com.jichuangsi.mes.repository.SNoticeRepository;
+import com.jichuangsi.mes.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class HomeService {
@@ -37,6 +34,8 @@ public class HomeService {
     @Resource
     private SNoticeRepository sNoticeRepository;
     @Resource
+    private TSaleorderRepository saleorderRepository;
+    @Resource
     private IProductionMapper iProductionMapper;
     @Resource
     private PPProductionRepository ppProductionRepository;
@@ -46,7 +45,7 @@ public class HomeService {
     private ProductionDiaryReportRepository productionDiaryReportRepository;//生产日报汇总表
 
     /**
-     * 首页-查询数据
+     * 首页Mes-查询数据
      * @param
      * @throws PassportException
      */
@@ -69,6 +68,7 @@ public class HomeService {
         return job;
     }
 
+//    mes首页模块数据查询
     public JSONObject getDaysByYearMonthList() {
         JSONObject jsonObject = new JSONObject();
         Calendar c = Calendar.getInstance();
@@ -94,6 +94,51 @@ public class HomeService {
         return jsonObject;
     }
 
+    /**
+     * 首页ERP-查询数据
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject findMyERPMatters(UserInfoForToken userInfoForToken)throws PassportException,Exception {
+        JSONObject job = new JSONObject();
+
+        job.put("salesAmount",iMesMapper.countBySaleMoney(DateUtil.today()));//销售金额（销售收入的金额）
+        job.put("salesOrderNum",iMesMapper.countByPurchaseNum(DateUtil.today()));//销售订单量
+
+        job.put("purchaseAmount",iMesMapper.countByPurchaseMoney(DateUtil.today()));//采购金额（采购支出的金额）
+        job.put("purchaseNum",iMesMapper.countBySaleNum(DateUtil.today()));//采购订单量
+
+        job.put("myMatter",iMesMapper.findAllMatters(null,Integer.valueOf(userInfoForToken.getUserId()),0, null,null,null));//待办事项
+        job.put("noticeList",sNoticeRepository.findByIsshowAndDeleteNoOrderByCreateTimeDesc(1,0));//系统公告
+
+        job.put("dayProduction", getDaysByYearMonthListERP().get("one"));//月销售量统计横轴日期
+        job.put("dayProductionDetail", getDaysByYearMonthListERP().get("two"));//月销售量统计 竖轴（数据）
+
+        return job;
+    }
+
+    public JSONObject getDaysByYearMonthListERP() throws Exception{
+        JSONObject jsonObject = new JSONObject();
+        Calendar c = Calendar.getInstance();
+        Integer y=c.get(Calendar.YEAR);//年bai
+        Integer M = c.get(Calendar.MONTH)+1;//月,注意这里要du加1,计算机第一个月从zhi0开始
+
+        String dateNowStr = y+"-"+M;
+        List<String> list = new ArrayList<>();
+        List<Integer> countSumList = new ArrayList<>();
+        Integer intcount = getDateConfig.getDaysByYearMonth(dateNowStr);
+        for (int i = 0; i < intcount; i++) {
+            String str =String.format("%02d",(M))+"-"+String.format("%02d",(i+1));
+            list.add(str);//日期
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            countSumList.add(saleorderRepository.findByCreateTimeIsBetweenAndDeleteNo(sdf.parse(y+"-"+str+" 00:00:00") ,sdf.parse(y+"-"+str+" 23:59:59"),0).size());
+        }
+
+        jsonObject.put("one",list);
+        jsonObject.put("two",countSumList);//iMesMapper.findAllByRoleIn(list2));
+        return jsonObject;
+    }
 
     /**
      * 工作台-查询今日生产任务
@@ -148,5 +193,25 @@ public class HomeService {
         page.setPageSize(selectModel.getPageSize());
         page.setPageNum(selectModel.getPageNum());
         return page;
+    }
+
+
+    /**
+     * 获取角色可访问页面方法
+     * @param userInfoForToken
+     * @return
+     * @throws PassportException
+     */
+    public List getMyRolePower(UserInfoForToken userInfoForToken)throws PassportException{
+        Integer staffId = Integer.valueOf(userInfoForToken.getUserId());
+
+        List<String> listAll = new ArrayList<>(new HashSet<>(iMesMapper.findRolePowerIdsByStaffId(staffId)));
+        List<Integer> idAllList = new ArrayList<>();
+
+        for(String string:listAll){
+            List<Integer> idList = Arrays.stream(string.split(",")).map(Integer::valueOf).collect(Collectors.toList());
+            idAllList.addAll(idList);
+        }
+        return new TreeBeanUtil().menuList(iMesMapper.findRolePowerByroleIds(idAllList));
     }
 }

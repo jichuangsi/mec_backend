@@ -13,4 +13,7 @@ public interface TBobbinRepository extends JpaRepository<TBobbin,Integer> {
 //    List<TBobbin> findByBobbinName(String bobbinName);
 
     TBobbin findByid(Integer id);
+
+    @Query(value = "SELECT id FROM t_bobbin ORDER BY id DESC LIMIT 1 ",nativeQuery = true)
+    Integer findLastId();
 }

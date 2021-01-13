@@ -192,7 +192,7 @@ public class BasicSettingService {
             job.put("gxLossBislist",mesMapper.findAllGXLossBiVoById(selectModel.getFindById()));
         }
 
-        long tpNum =tpRepository.count();
+        long tpNum =(tpRepository.findLastId()+1);
         String strnum = "TP000"+tpNum;
 
         job.put("productNumber",strnum);//产品编号
@@ -210,13 +210,13 @@ public class BasicSettingService {
         String strnum ="";
         switch (selectModel.getFindModelName()){
             case "YL":
-                strnum = "YL-000"+stockRepository.count()+1;
+                strnum = "YL-000"+(stockRepository.findLastId()+1);
                 break;
             case "XZ":
-                strnum = "XZ-000"+tbobbinRepository.count()+1;
+                strnum = "XZ-000"+(tbobbinRepository.findLastId()+1);
                 break;
             case "QT":
-                strnum = "QT-000"+stockRepository.count()+1;
+                strnum = "QT-000"+(stockRepository.findLastId()+1);
                 break;
         }
 
@@ -240,8 +240,12 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(StringUtils.isEmpty(tProduct.getId()) && tpRepository.countByProductNumber(tProduct.getProductNumber()) > 0){
-            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        if(StringUtils.isEmpty(tProduct.getId()) && tpRepository.countByProductNumber(tProduct.getProductNumber()) > 0){
+//            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        }
+
+        if(StringUtils.isEmpty(tProduct.getId())){
+            tProduct.setProductNumber("TP000"+(tpRepository.findLastId()+1));
         }
 
         tProduct.setState(0);
@@ -307,8 +311,11 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(StringUtils.isEmpty(stock.getId()) && stockRepository.countByStockNumber(stock.getStockNumber()) > 0){
-            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        if(StringUtils.isEmpty(stock.getId()) && stockRepository.countByStockNumber(stock.getStockNumber()) > 0){
+//            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        }
+        if(StringUtils.isEmpty(stock.getId())){//新增的时候
+            stock.setStockNumber("YL-000"+(stockRepository.findLastId()+1));
         }
 
         stock.setMaterialType(1);//1原料 2其他
@@ -340,8 +347,12 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(StringUtils.isEmpty(tb.getId()) && tbobbinRepository.countByBobbinNumber(tb.getBobbinNumber()) > 0){
-            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        if(StringUtils.isEmpty(tb.getId()) && tbobbinRepository.countByBobbinNumber(tb.getBobbinNumber()) > 0){
+//            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        }
+
+        if(StringUtils.isEmpty(tb.getId())){//新增
+            tb.setBobbinNumber("XZ-000"+tbobbinRepository.findLastId()+1);//编号
         }
         tb.setDeleteNo(0);
         tb.setState(0);
@@ -353,7 +364,7 @@ public class BasicSettingService {
         for (int i = 0; i < list.size(); i++) {
             TStandards tStandards = list.get(i);
 
-            if(StringUtils.isEmpty(tStandards.getBobbinWeight())){
+            if(StringUtils.isEmpty(tStandards.getStandards())){
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
             }
@@ -377,8 +388,12 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(StringUtils.isEmpty(stock.getId()) &&stockRepository.countByStockNumber(stock.getStockNumber()) > 0){
-            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        if(StringUtils.isEmpty(stock.getId()) &&stockRepository.countByStockNumber(stock.getStockNumber()) > 0){
+//            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
+//        }
+
+        if(StringUtils.isEmpty(stock.getId())){//新增的时候
+            stock.setStockNumber("QT-000"+(stockRepository.findLastId()+1));
         }
 
         stock.setMaterialType(2);//1原料 2其他

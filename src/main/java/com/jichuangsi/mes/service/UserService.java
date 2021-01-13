@@ -2,10 +2,13 @@ package com.jichuangsi.mes.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.jichuangsi.mes.config.Md5Util;
+import com.jichuangsi.mes.config.TreeBeanUtil;
 import com.jichuangsi.mes.constant.ResultCode;
+import com.jichuangsi.mes.entity.SRole;
 import com.jichuangsi.mes.entity.SStaff;
 import com.jichuangsi.mes.entity.SStaffRole;
 import com.jichuangsi.mes.exception.PassportException;
+import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.model.BackUserLoginModel;
 import com.jichuangsi.mes.model.UpdatePwdModel;
 import com.jichuangsi.mes.model.UserInfoForToken;
@@ -21,9 +24,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -36,6 +38,8 @@ public class UserService {
     private BackTokenService backTokenService;
     @Resource
     private LogService logService;
+    @Resource
+    private IMesMapper mesMapper;
     /**
      * 用户注册
      * @param usermodel
@@ -86,10 +90,13 @@ public class UserService {
         String[] strArr = str.split("\\,");
         if(strArr.length != 0){
             for (int i = 0; i < strArr.length; i++) {
-                SStaffRole sr = new SStaffRole();
-                sr.setRoleId(Integer.valueOf(strArr[i]) );
-                sr.setStaffId(staffid);
-                sstaffRoleRepository.save(sr);
+                Integer roleId = Integer.valueOf(strArr[i]);
+                if(sstaffRoleRepository.findByStaffIdAndRoleId(staffid,roleId).size() == 0){
+                    SStaffRole sr = new SStaffRole();
+                    sr.setRoleId(roleId);
+                    sr.setStaffId(staffid);
+                    sstaffRoleRepository.save(sr);
+                }
             }
         }
     }
@@ -152,46 +159,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    /**
-     * 获取角色可访问页面方法
-     * @param userInfo
-     * @return
-     * @throws PassportException
-     */
-    public boolean getUrlMethodByRole(UserInfoForToken userInfo,String url)throws PassportException{
-        if (userInfo.getRoleId().equalsIgnoreCase("123456")){
-            return true;
-        }
-        List<SStaffRole> relations=sstaffRoleRepository.findByStaffId(Integer.valueOf(userInfo.getUserId()));
-        List<Integer> roleIds=new ArrayList<>();
-        relations.forEach(userRoleRelation -> {
-            roleIds.add(userRoleRelation.getRoleId());
-        });
-        if (roleIds.size()==0){
-            throw new PassportException(ResultCode.USER_NOROLE_MSG);
-        }
-//        List<UrlMapping> urlMappings= visaMapper.findMethodByRoleIn(roleIds);
-        Map<String,String> urlList=null;
-//        if (null!=urlMappings){
-//            urlList=new HashMap<String,String>();
-//            for (UrlMapping item:urlMappings) {
-//                urlList.put(item.getId(),item.getRoleUrl());
-//            }
-//            //通用方法
-//            urlList.put("获取用户信息","/backRoleConsole/getBackuserById");
-//            urlList.put("查询角色","/backRoleConsole/getAllRole");
-//            urlList.put("查询父节点","/backRoleConsole/getAllParentNode");
-//            urlList.put("查询角色对应url列表","/backRoleConsole/getUrlByUserRole");
-//        }
-        if(null!=urlList && urlList.size()!=0){
-            for (Map.Entry<String,String> entry: urlList.entrySet()) {
-                if (url.equals(entry.getValue())|| url.startsWith(entry.getValue())){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+
 
 
 }

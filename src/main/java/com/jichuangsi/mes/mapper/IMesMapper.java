@@ -1,9 +1,6 @@
 package com.jichuangsi.mes.mapper;
 
-import com.jichuangsi.mes.entity.Equipment;
-import com.jichuangsi.mes.entity.EquipmentItems;
-import com.jichuangsi.mes.entity.GXScheduling;
-import com.jichuangsi.mes.entity.Matters;
+import com.jichuangsi.mes.entity.*;
 import com.jichuangsi.mes.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -155,6 +152,7 @@ public interface IMesMapper {
             "INNER JOIN s_staff sf ON sf.id = de.staff_id\n" +
             "WHERE de.delete_no = 0\n" +
             "<if test='name != null'>AND de.department_name LIKE CONCAT('%', #{name},'%')</if>"+
+            "ORDER BY de.id DESC\n" +
             "<if test='pageNum != null and pageSize != null'>LIMIT #{pageNum},#{pageSize}</if></script>")
     List<UserInfoModel> findByDepartment(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -167,6 +165,7 @@ public interface IMesMapper {
             "INNER JOIN s_staff sf ON sf.id = tt.staff_id\n" +
             "WHERE tt.delete_no = 0\n" +
             "<if test='name != null'>AND tt.team_name LIKE CONCAT('%', #{name},'%')</if>"+
+            "ORDER BY tt.id DESC\n" +
             "<if test='pageNum != 0 and pageSize != 0'>LIMIT #{pageNum},#{pageSize}</if></script>")
     List<TTeamModel> findByTteam(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -200,6 +199,7 @@ public interface IMesMapper {
             "WHERE tp.delete_no = 0"+
             "<if test='name != null'>AND tp.product_number LIKE CONCAT('%', #{name},'%')</if>"+
             "<if test='deId != null'>AND tp.product_line_id=#{deId}</if>" +
+            "ORDER BY id DESC \n" +
             "<if test='pageNum != null and pageSize != null'>LIMIT #{pageNum},#{pageSize}</if></script>")
     List<TProductModel> findAllProduct(@Param("name")String name,@Param("deId")Integer deId,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -264,6 +264,7 @@ public interface IMesMapper {
             "WHERE st.delete_no = 0 and st.material_type = #{deTypeid}"+
             "<if test='name != null'>AND st.stock_number LIKE CONCAT('%', #{name},'%')</if>"+
             "<if test='xbTypeId != null'>AND st.stock_type_id = #{xbTypeId}</if>"+
+            "ORDER BY st.id DESC \n" +
             "<if test='pageNum != null and pageSize != null'>LIMIT #{pageNum},#{pageSize}</if></script>")
     List<StockModel> findAllStock(@Param("name")String name,@Param("xbTypeId")Integer xbTypeId,@Param("deTypeid")Integer deTypeid,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -297,8 +298,8 @@ public interface IMesMapper {
             "tb.bobbin_name as stockName,\n" +
             "tb.bobbin_model as stockModel,\n" +
             "tb.bobbin_number as stockNumber,\n" +
-            "sd.`name` as procedurename,\n" +
-            "sdd.`name` as bobbintype,\n" +
+            "sd.`name` as gxName,\n" +
+            "sdd.`name` as stockType,\n" +
             "sdi.`name` as dictionarier,\n" +
             "tb.remark as stockRemarks,\n" +
             "tb.state as state,\n" +
@@ -310,6 +311,7 @@ public interface IMesMapper {
             "WHERE tb.delete_no = 0"+
             "<if test='name != null'>AND tb.bobbin_model LIKE CONCAT('%', #{name},'%')</if>"+
             "<if test='deId != null'>AND tb.bobbintype_id=#{deId}</if>" +
+            "ORDER BY tb.id DESC \n" +
             "<if test='pageNum != null and pageSize != null'>LIMIT #{pageNum},#{pageSize}</if></script>")
     List<StockModel> findAllbobbin(@Param("name")String name,@Param("deId")Integer deId,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -1429,7 +1431,7 @@ public interface IMesMapper {
             "</script>")
     Integer countByPurchaseMoney(@Param("createdate")String createdate);
 
-    //首页-查询当日采购金额
+    //首页-查询当日销售金额
     @Select(value = "<script>SELECT IFNULL(SUM(tsd.product_num * tsd.product_price),0)\n" +
             "FROM t_saleorderdetail tsd\n" +
             "LEFT JOIN t_saleorder ts ON ts.id = tsd.saleorder_id\n" +
@@ -1438,6 +1440,19 @@ public interface IMesMapper {
             "</script>")
     Integer countBySaleMoney(@Param("createdate")String createdate);
 
+    //首页-查询当日采购订单量
+    @Select(value = "<script>SELECT count(1) \n" +
+            "FROM t_purchase \n" +
+            "WHERE delete_no = 0 AND create_time = #{createdate} \n" +
+            "</script>")
+    Integer countByPurchaseNum(@Param("createdate")String createdate);
+
+    //首页-查询当日销售订单量
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM t_saleorder\n" +
+            "WHERE delete_no = 0 AND create_time = #{createdate} \n" +
+            "</script>")
+    Integer countBySaleNum(@Param("createdate")String createdate);
 
 //    @Select(value = "<script>SELECT IFNULL(SUM(numbers),0) \n" +
 //            "FROM pp_production_diary_report pd\n" +
@@ -1446,4 +1461,39 @@ public interface IMesMapper {
 //            "GROUP BY pd.product_date\n" +
 //            "</script>")
 //    List<Integer> findAllByRoleIn(@Param("createdate")List<String> createdate);
+
+
+    //   班组管理-根据班组id查询班组成员
+    @Select(value = "<script>SELECT id as id,staff_num as staffNum,staff_name as staffName \n" +
+            "FROM s_staff \n" +
+            "WHERE id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    List<SStaff> findTeamStaffsBystaffIds(@Param("ids")List<Integer> ids);
+
+    //   角色管理-查询节点的数据
+    @Select(value = "<script>SELECT id \n" +
+            "FROM s_rolepower \n" +
+            "WHERE is_node = 0 AND id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    List<Integer> findRolePowerIsNotNodeByIds(@Param("ids")List<Integer> ids);
+
+    //   权限管理-根据用户id查询用户角色id
+    @Select(value = "<script>SELECT DISTINCT sr.role_power\n" +
+            "FROM s_staffrole ss\n" +
+            "LEFT JOIN s_role sr ON sr.id = ss.role_id\n" +
+            "WHERE  ss.staff_id = #{deId} \n" +
+            "</script>")
+    List<String> findRolePowerIdsByStaffId(@Param("deId")Integer deId);
+
+    //   权限管理-根据用户id查询用户权限
+    @Select(value = "<script>SELECT id as id,role_power_name as rolePowerName,fid as Fid," +
+            "role_code_url as roleCodeUrl,is_node as isNode,state as state,sys_type as sysType \n" +
+            "FROM s_rolepower \n" +
+            "WHERE delete_no = 0 and  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    List<RolePower> findRolePowerByroleIds(@Param("ids")List<Integer> ids);
+
 }

@@ -82,12 +82,12 @@ public class SysController {
         }
     }
 
-    @ApiOperation("员工管理-根据员工ID查询单条信息")//暂停
+    @ApiOperation("角色管理-新增-查询数据")
     @ApiImplicitParams({})
-    @PostMapping("/getInfoById")
-    public ResponseModel getInfoById(@ModelAttribute UserInfoForToken userInfo){
+    @PostMapping("/getInfoBySRole")
+    public ResponseModel getInfoBySRole(@ModelAttribute UserInfoForToken userInfo){
         try {
-            return ResponseModel.sucess("",sysService.getInfoById(userInfo));
+            return ResponseModel.sucess("",sysService.getInfoBySRole(userInfo));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

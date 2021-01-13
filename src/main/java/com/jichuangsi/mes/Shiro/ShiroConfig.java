@@ -63,13 +63,17 @@
 //        return shiroFilterFactoryBean;
 //    }
 //
-//
-////    @Bean
-////    public SecurityManager securityManager() {
-////        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-////        // 设置realm.
-////        securityManager.setRealm(myShiroRealm());
-////    }
+//    /**
+//     * 注入安全管理器
+//     * @return SecurityManager
+//     */
+//    @Bean
+//    public SecurityManager securityManager() {
+//        // 将自定义 Realm 加进来
+//        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(myShiroRealm());
+//        logger.info("====securityManager注册完成====");
+//        return securityManager;
+//    }
 //    /**
 //     * 身份认证realm; (这个需要自己写，账号密码校验；权限等)
 //     * @return
@@ -77,6 +81,7 @@
 //    @Bean
 //    public MyShiroRealm myShiroRealm() {
 //        MyShiroRealm myShiroRealm = new MyShiroRealm();
+//        logger.info("====myRealm注册完成=====");
 //        return myShiroRealm;
 //    }
 //

@@ -16,7 +16,17 @@ public class StockModel {
     private Integer deleteNo;//删除否
 
 
-//    private Integer stockDetailId;//材料规格id
+    private String gxName;//工序名称
+
+    public String getGxName() {
+        return gxName;
+    }
+
+    public void setGxName(String gxName) {
+        this.gxName = gxName;
+    }
+
+    //    private Integer stockDetailId;//材料规格id
 //    private Integer warehouseId;//仓库id
 
     public Integer getId() {

@@ -145,4 +145,26 @@ public class ProductionDataService {
         page.setPageNum(selectModel.getPageNum());
         return page;
     }
+
+
+    /**
+     * 生产数据-生产日报细分报表
+     * @param
+     * @throws PassportException
+     */
+    public PageInfo getProductionSubdivideReport(SelectModel selectModel)throws PassportException {
+        PageInfo page = new PageInfo();
+
+        String createTime = null;
+        if(!StringUtils.isEmpty(selectModel.getFindDate())){
+            createTime = selectModel.getFindDate();
+        }
+
+        page.setList(iProductionMapper.findAllByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),createTime,(selectModel.getPageNum()-1)*selectModel.getPageSize(),selectModel.getPageSize()));
+        page.setTotal(iProductionMapper.countByProductionDiaryReport(selectModel.getFindName(),selectModel.getFindModelName(),createTime));
+
+        page.setPageSize(selectModel.getPageSize());
+        page.setPageNum(selectModel.getPageNum());
+        return page;
+    }
 }
