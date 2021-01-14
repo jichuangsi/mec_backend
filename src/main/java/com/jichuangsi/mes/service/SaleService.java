@@ -29,6 +29,8 @@ import java.util.Map;
 public class SaleService {
     @Resource
     private IMesMapper mesMapper;
+    @Resource
+    private WarehouseService warehouseService;
 
 
     @Resource
@@ -606,12 +608,13 @@ public class SaleService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateMaterialOuter(UserInfoForToken userInfoForToken, UpdateModel model)throws PassportException {
+    public void updateMaterialOuter(UserInfoForToken userInfoForToken, UpdateModel model,List<UpdateModel> updateModelList)throws PassportException {
         if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        saleInventory(OrderStateChange.Sale_OrderAudit_Delivered_Sured,InventoryRecordReturnCode.RecordType_CK,InventoryRecordReturnCode.InventoryType_CP,model.getUpdateID(),model.getUpdateRemark());
+        warehouseService.updateWarehouseOut(updateModelList);//批量出库
+//        saleInventory(OrderStateChange.Sale_OrderAudit_Delivered_Sured,InventoryRecordReturnCode.RecordType_CK,InventoryRecordReturnCode.InventoryType_CP,model.getUpdateID(),model.getUpdateRemark());
 
         //新增审核流程
         AuditPocess auditPocess = new AuditPocess();

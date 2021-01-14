@@ -53,4 +53,40 @@ public class ProductionDataController {
         }
     }
 
+
+    @ApiOperation("生产数据-生产日报细分报表")//暂停
+    @ApiImplicitParams({})
+    @PostMapping("/getProductionSubdivideReport")
+    public ResponseModel getProductionSubdivideReport(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",productionDataService.getProductionDiaryReport(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
+
+    @ApiOperation("生产数据-生产质量分析")
+    @ApiImplicitParams({})
+    @PostMapping("/getProductionQualityAnalysis")
+    public ResponseModel getProductionQualityAnalysis(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",productionDataService.getProductionQualityAnalysis(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("生产数据-班组生产数据统计")
+    @ApiImplicitParams({})
+    @PostMapping("/getProductionTeam")
+    public ResponseModel getProductionTeam(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",productionDataService.getProductionTeam(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
 }

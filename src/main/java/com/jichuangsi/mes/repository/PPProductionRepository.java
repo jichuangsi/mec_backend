@@ -14,7 +14,7 @@ public interface PPProductionRepository  extends JpaRepository<PPProduction,Inte
     List<PPProduction> findByCreateTimeIsBetweenAndGXId(Date startTime, Date endTime, Integer gxid);
 
 
-    Integer countByProductionNumberAndGXId(String number,Integer gxId);
+    Integer countByProductionNumberAndGXIdAndDeleteNo(String number,Integer gxId,Integer deleteNo);
 
     List<PPProduction> findByCreateTimeIsBetweenAndDeleteNo(Date startTime, Date endTime, Integer deleteNo);
 }

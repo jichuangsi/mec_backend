@@ -902,7 +902,7 @@ public interface IMesMapper {
             "FROM inventory_status invs \n" +
             "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = invs.unit_id\n" +
-            "WHERE  invs.inventory_type =#{modelNameId}   \n"+
+            "WHERE  invs.inventory_type =#{modelNameId} and  invs.state = 0 and invs.delete_no = 0  \n"+
             "<if test='name != null'>AND invs.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "ORDER BY invs.id DESC LIMIT #{pageNum},#{pageSize}</script>")
     List<InventoryStatusVo> findAllInventoryStates(@Param("modelNameId")Integer modelNameId,@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);

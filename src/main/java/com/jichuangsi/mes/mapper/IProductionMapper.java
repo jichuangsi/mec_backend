@@ -615,4 +615,108 @@ public interface IProductionMapper {
     Integer countByProductionDiaryReport(@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime);
 
 
+    //    生产数据-生产日报细分报汇总查询--暂停
+    @Select(value = "<script>SELECT pppp.id,pppp.create_time,pppp.wire_diameter_um,\n" +
+            "pppp.net_weightg,pppp.lengthm,\n" +
+            "ppp.production_number,pl.pp_number\n" +
+            "FROM ppp_products#{id} pppp\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = pppp.pppid\n" +
+            "LEFT JOIN pp_product pp ON pp.id = ppp.pproduct_id\n" +
+            "LEFT JOIN product_plan pl ON pl.id =pp.pp_id\n" +
+            "WHERE pppp.delete_no= 0 \n" +
+            "<if test='ppnumber != null'>AND pl.pp_number LIKE CONCAT('%', #{ppnumber},'%') </if>\n"+
+            "<if test='productionNumber != null'>AND ppp.production_number  LIKE CONCAT('%', #{productionNumber},'%')</if>\n"+
+            "<if test='createTime != null '>AND  pppp.create_time = #{createTime}  </if>\n"+
+            "ORDER BY id DESC\n " +
+            "LIMIT #{pageNum},#{pageSize}" +
+            "</script>")
+    List<PPProductVo> findAllByProductionSubdivideReport(@Param("id")Integer id,@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+
+    //    生产数据-生产日报细分报汇总查询-总数--暂停
+    @Select(value = "<script>SELECT pppp.id,pppp.create_time,pppp.wire_diameter_um,\n" +
+            "pppp.net_weightg,pppp.lengthm,\n" +
+            "ppp.production_number,pl.pp_number\n" +
+            "FROM ppp_products#{id} pppp\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = pppp.pppid\n" +
+            "LEFT JOIN pp_product pp ON pp.id = ppp.pproduct_id\n" +
+            "LEFT JOIN product_plan pl ON pl.id =pp.pp_id\n" +
+            "WHERE pppp.delete_no= 0 \n" +
+            "<if test='ppnumber != null'>AND pl.pp_number LIKE CONCAT('%', #{ppnumber},'%') </if>\n"+
+            "<if test='productionNumber != null'>AND ppp.production_number  LIKE CONCAT('%', #{productionNumber},'%')</if>\n"+
+            "<if test='createTime != null '>AND  pppp.create_time = #{createTime}  </if>\n"+
+            "ORDER BY id DESC\n " +
+            "LIMIT #{pageNum},#{pageSize}" +
+            "</script>")
+    Integer countByProductionSubdivideReport(@Param("id")Integer id,@Param("ppnumber")String ppnumber, @Param("productionNumber")String productionNumber, @Param("createTime")String createTime,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+
+    //    生产数据-生产质量分析
+//    @Select(value = "<script>(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products0 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\")\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products1 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products2 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products3 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products4 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\")\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products5 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products6 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\")\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products7 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products8 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "UNION ALL\n" +
+//            "(SELECT id as id,create_time as createTime,net_weightg as netWeight,wastageg as wastageg,lossg as lossg FROM ppp_products9 WHERE delete_no = 0 AND create_time BETWEEN \"2021-01-12 00:00:00\" AND \"2021-01-12 23:23:59\" )\n" +
+//            "ORDER BY id DESC\n " +
+//            "</script>")
+
+    @Select(value = "<script>SELECT id as id, product_date as productDate,SUM(finish_edp) as finishEdP,\n" +
+            "SUM(income_heavy) as incomeHeavy,SUM(loss) as lossg,\n" +
+            "SUM(waste) as wastageg\n" +
+            "FROM pp_production_diary_report\n" +
+            "WHERE id != 0 AND product_date  like  concat('%',#{createTime},'%') \n" +
+            "GROUP BY production_number\n" +
+            "ORDER BY id DESC\n " +
+            "LIMIT #{pageNum},#{pageSize}" +
+            "</script>")
+    List<PPProductsVo> findAllByProductionQualityAnalysis(@Param("createTime")String createTime,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+
+
+    @Select(value = "<script>SELECT id as id, product_date as productDate,SUM(finish_edp) as finishEdP,\n" +
+            "SUM(income_heavy) as incomeHeavy,SUM(loss) as lossg,\n" +
+            "SUM(waste) as wastageg\n" +
+            "FROM pp_production_diary_report\n" +
+            "WHERE id != 0 AND product_date  like  concat('%',#{createTime},'%') \n" +
+            "GROUP BY production_number\n" +
+            "ORDER BY id DESC\n " +
+            "</script>")
+    List<PPProductsVo> findAllByProductionQualityAnalysisNoLimit(@Param("createTime")String createTime);
+
+
+    //    生产数据-生产日报汇总查询-总数
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM (\n" +
+            " SELECT id  FROM pp_production_diary_report\n" +
+            "WHERE id != 0 AND product_date  like concat('%',#{createTime},'%') \n" +
+            "GROUP BY production_number)aa\n" +
+            "</script>")
+    Integer countByProductionQualityAnalysis(@Param("createTime")String createTime);
+
+
+    @Select(value = "<script>SELECT ppp.team_id as teamId,SUM(pd.income_heavy) as incomeHeavy,SUM(pd.finish_edp) as finishEdP," +
+            "SUM(pd.waste) as wastageg,SUM(pd.loss) as lossg,tt.team_name as teamName\n" +
+            "FROM pp_production_diary_report pd\n" +
+            "LEFT JOIN pp_production ppp ON ppp.production_number = pd.production_number\n" +
+            "LEFT JOIN t_team tt ON tt.id = ppp.team_id\n" +
+            "WHERE pd.id != 0 AND pd.product_date like concat('%',#{createTime},'%') \n" +
+            "AND ppp.team_id = #{teamId}\n" +
+            "GROUP BY ppp.team_id" +
+            "</script>")
+    List<PPProductsVo> findAllByProductionTeam(@Param("createTime")String createTime,@Param("teamId")Integer teamId);
+
+
 }

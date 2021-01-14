@@ -341,6 +341,9 @@ public class WarehouseService {
                 inventoryStatus.setInventoryType(inventoruType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
                 surplusquantity = updateModel.getUpdateNum();
                 inventoryStatus.setInventorysum(surplusquantity);
+
+                inventoryStatus.setDeleteNo(0);
+                inventoryStatus.setState(0);
                 inventoryStatusList.add(inventoryStatus);
 
             }else{

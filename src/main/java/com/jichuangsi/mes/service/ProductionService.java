@@ -461,7 +461,7 @@ public class ProductionService {
         //1、先把该生产管理该工序所有改变掉状态
         iProductionMapper.UpdatePPPProductsByPPPId(LId,pppid);
 
-        inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(ppProduction.getFid(),3);//把上批的产物删除
+        inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),3);//把上批的产物状态改变
         inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(pppid,inventoryType);//把本批的产物删除
 
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();//成品/半成品
@@ -628,7 +628,7 @@ public class ProductionService {
             }
 
             String gxName =dictionarierRepository.findByid(newGXid).getName();
-            gxName = ppProduction.getState() == 1? gxName :gxName+ppProductionRepository.countByProductionNumberAndGXId(ppProductions.getProductionNumber(),newGXid) ;//如果是重复当前工序。就查询当前生产id的当前工序有多少个
+            gxName = ppProduction.getState() == 1? gxName :gxName+ppProductionRepository.countByProductionNumberAndGXIdAndDeleteNo(ppProductions.getProductionNumber(),newGXid,0) ;//如果是重复当前工序。就查询当前生产id的当前工序有多少个
 
 //            PPProduct ppProduct = ppProductRepository.findByid(ppProduction.getPproductId());
             GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),newGXid,1);//粗拉
@@ -811,11 +811,11 @@ public class ProductionService {
         if (StringUtils.isEmpty(ppProduction.getProductionNumber()) || StringUtils.isEmpty(ppProduction.getState()) || StringUtils.isEmpty(ppProduction.getPproductId()) ||StringUtils.isEmpty(ppProduction.getEquipmentId())|| StringUtils.isEmpty(ppProduction.getSuitId())|| StringUtils.isEmpty(ppProduction.getStaffId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        PPProduction ppProductions = ppProductionRepository.findByid(ppProduction.getFid());
+//        PPProduction ppProductions = ppProductionRepository.findByid(ppProduction.getFid());
 
-        if (ppProductions.getGXId() == ProductionStateChange.Production_Smelting){throw new PassportException(ResultCode.PARAM_MISS_MSG);}//熔炼状态下不能退火
-
-        if(StringUtils.isEmpty(ppProductions)){ throw new PassportException(ResultCode.DATA_NOEXIST_MSG);}
+//        if (ppProductions.getGXId() == ProductionStateChange.Production_Smelting){throw new PassportException(ResultCode.PARAM_MISS_MSG);}//熔炼状态下不能退火
+//
+//        if(StringUtils.isEmpty(ppProductions)){ throw new PassportException(ResultCode.DATA_NOEXIST_MSG);}
 
         ppProductionRepository.save(ppProduction);//保存原来的
 
@@ -835,14 +835,14 @@ public class ProductionService {
 //        准备转下班操作的工序id
         savepppproducts(ppProductionModel.getTwoList(),ppProduction,upd);//保存
 
-        if(ppProductions.getGXId() == ProductionStateChange.Production_PPFinished ||ppProductions.getGXId() == ProductionStateChange.PPPFinished){//如果是成品就是成品退火。其他都是中途退火
+        if(ppProduction.getGXId() == ProductionStateChange.Production_PPFinished ||ppProduction.getGXId() == ProductionStateChange.PPPFinished){//如果是成品就是成品退火。其他都是中途退火
             newGXid =ProductionStateChange.PFinishedAnnealing;
         }else{//中途退火
             newGXid =ProductionStateChange.PIntermediateAnnealing;
         }
 
         String gxName =dictionarierRepository.findByid(newGXid).getName();
-        Integer repeatCount = ppProductionRepository.countByProductionNumberAndGXId(ppProductions.getProductionNumber(),newGXid);
+        Integer repeatCount = ppProductionRepository.countByProductionNumberAndGXIdAndDeleteNo(ppProduction.getProductionNumber(),newGXid,0);
         gxName = repeatCount > 0? gxName+repeatCount :gxName;//如果是重复当前工序。就查询当前生产id的当前工序有多少个
 
 //        PPProduct ppProduct = ppProductRepository.findByid(ppProduction.getPproductId());
@@ -854,7 +854,7 @@ public class ProductionService {
         ppProductionnew.setGxName(gxName);//工序名称
         ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
         ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
-        ppProductionnew.setSuitId(ppProductions.getSuitId());//套模id
+        ppProductionnew.setSuitId(ppProduction.getSuitId());//套模id
 
         ppProductionnew.setFinishNum(0);
         ppProductionnew.setStaffId(staffId);
@@ -924,7 +924,7 @@ public class ProductionService {
         if(StringUtils.isEmpty(ppProductions2)){ throw new PassportException(ResultCode.DATA_NOEXIST_MSG);}
             Integer newGXid =ppProductions2.getGXId();
 
-            String gxName =dictionarierRepository.findByid(newGXid).getName()+ppProductionRepository.countByProductionNumberAndGXId(ppProductions2.getProductionNumber(),newGXid);//如果是重复当前工序。就查询当前生产id的当前工序有多少个
+            String gxName =dictionarierRepository.findByid(newGXid).getName()+ppProductionRepository.countByProductionNumberAndGXIdAndDeleteNo(ppProductions2.getProductionNumber(),newGXid,0);//如果是重复当前工序。就查询当前生产id的当前工序有多少个
 
             PPProduct ppProduct = ppProductRepository.findByid(ppProductions2.getPproductId());
             GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),newGXid,1);//粗拉
@@ -1114,7 +1114,7 @@ public class ProductionService {
                 upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
             }
 
-            inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
+            inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
             for (int i = 0; i < list.size(); i++) {
                 ProductsVo pppProducts = list.get(i);
 

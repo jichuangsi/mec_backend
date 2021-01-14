@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.util.List;
 
 @Api("后台-销售管理")
 @CrossOrigin
@@ -147,9 +148,9 @@ public class SaleController  {
     @ApiImplicitParams({})
     @PostMapping("/updateMaterialOuter")
     @OperLog(operModul = "新增",operType = "2",operDesc = "销售出库-新增销售出库")
-    public ResponseModel updateMaterialOuter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel){
+    public ResponseModel updateMaterialOuter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel,@RequestBody List<UpdateModel> list){
         try {
-            saleService.updateMaterialOuter(userInfoForToken,smodel);
+            saleService.updateMaterialOuter(userInfoForToken,smodel,list);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
