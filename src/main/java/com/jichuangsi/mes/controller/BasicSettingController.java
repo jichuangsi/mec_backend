@@ -294,9 +294,9 @@ public class BasicSettingController {
     @ApiOperation("设备管理-历史报修页面-根据报修单id查询详情")
     @ApiImplicitParams({})
     @PostMapping("/getRepairReportById")
-    public ResponseModel getRepairReportById(@RequestBody SelectModel selectModel){
+    public ResponseModel getRepairReportById(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SelectModel selectModel){
         try {
-            return ResponseModel.sucess("",bsService.getRepairReportById(selectModel));
+            return ResponseModel.sucess("",bsService.getRepairReportById(userInfoForToken,selectModel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -317,9 +317,9 @@ public class BasicSettingController {
     @ApiOperation("设备管理-历史报修页面-根据报修单Id修改报修流程(待处理 待维修 待检验 已完成等)")
     @ApiImplicitParams({})
     @PostMapping("/updateRepairReportAuditPocessById")
-    public ResponseModel updateRepairReportAuditPocessById(@RequestBody UpdateModel updateModel){
+    public ResponseModel updateRepairReportAuditPocessById(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel updateModel){
         try {
-            bsService.updateRepairReportAuditPocessById(updateModel);
+            bsService.updateRepairReportAuditPocessById(userInfoForToken,updateModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

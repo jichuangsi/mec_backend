@@ -15,6 +15,17 @@ import java.util.List;
 
 @Mapper
 public interface IProductionMapper {
+
+    //    根据工序查询对应线轴下拉框
+    @Select(value = "<script>SELECT id as MapKey,bobbin_number as MapValue,bobbin_name as MapValue2\n" +
+            "FROM t_bobbin WHERE delete_no = 0 and state = 0 and procedure_id = #{gxId} </script>")
+    List<MapVo> findXiaLaBobbinBygxId(@Param("gxId")Integer gxId);
+
+    //    查询设备下拉框
+    @Select(value = "<script>SELECT id as MapKey,equipment_number as MapValue,equipment_name as MapValue2  FROM t_equipment " +
+            "WHERE delete_no = 0 and state = 0 and equipment_type_id = #{gxId} </script>")
+    List<MapVo> findXiaLaEquipmentBygxId(@Param("gxId")Integer gxId);
+
 //    不关联销售订单的产物明细
     @Select(value = "<script>SELECT ppp.id as id,tp.product_model as productModel,tp.product_name as productName,tp.product_number as productNumber, tpr.um_start as standards,sd.`name` as ppUnit,ppp.quantum as quantum\n" +
             "FROM pp_product ppp \n" +
@@ -193,10 +204,11 @@ public interface IProductionMapper {
             "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
             "pp.surface as surface,pp.paying_off as payingOff," +
             "pp.total_length as totalLength,\n" +
-            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,\n" +
-            "pw.straight_line as straightLine\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo," +
+            "pp.straight_line as straightLine\n" +
+//            "pw.straight_line as straightLine\n" +
             "FROM ppp_products#{id} pp\n" +
-            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
+//            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
 //            "LEFT JOIN s_dictionarier sd ON sd.id = pp.gx_id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +

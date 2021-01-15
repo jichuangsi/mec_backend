@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -544,6 +545,34 @@ public class MouldService {
         }
 
         jsonObject.put("tsuit",suitRepository.findByid(smodel.getFindById()));
+
+        List<TSuitdetailVo> tSuitdetailVoList = mesMapper.findTSuitDetailById(smodel.getFindById());
+        for (TSuitdetailVo tSuitdetailVo:  tSuitdetailVoList) {
+            tSuitdetailVo.setSonmouldModel(StringUtils.isEmpty(tSuitdetailVo.getMouldDetailId()) ? "" :mesMapper.findTmodelDetailByIds(tSuitdetailVo.getMouldDetailId()));
+        }
+        jsonObject.put("tsuitDetail",tSuitdetailVoList);
+        return jsonObject;
+    }
+
+
+    /**
+     * 套模管理-根据套模id查询套模信息--预览组合
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getPreviewTSuitById(SelectModel smodel)throws PassportException {
+        JSONObject jsonObject=new JSONObject();
+
+        if(StringUtils.isEmpty(smodel.getFindById())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        List<String> stringList = new ArrayList<>();
+        stringList.add("粗拉");
+        stringList.add("中拉");
+        stringList.add("半成品");
+        stringList.add("成品");
+
 
         List<TSuitdetailVo> tSuitdetailVoList = mesMapper.findTSuitDetailById(smodel.getFindById());
         for (TSuitdetailVo tSuitdetailVo:  tSuitdetailVoList) {

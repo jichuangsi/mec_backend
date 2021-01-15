@@ -106,7 +106,7 @@ public class PurchaseService {
     public JSONObject getPurchaseDetailById(SelectModel smodel)throws PassportException {
         JSONObject job = new JSONObject();
 
-        job.put("stockDetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(smodel.getFindById(),null));//原材料下拉框
+        job.put("stockDetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(smodel.getFindById(),1));//原材料下拉框
 
         return job;
     }
@@ -641,6 +641,9 @@ public class PurchaseService {
                 inventoryStatus.setStockNumber(tPurchasedetailModel.getStockNumber());
                 inventoryStatus.setStandards(tPurchasedetailModel.getStandards());
                 inventoryStatus.setUnitId(tPurchasedetailModel.getUnitId());
+
+                inventoryStatus.setDeleteNo(0);
+                inventoryStatus.setState(0);
                 inventoryStatusList.add(inventoryStatus);
 
             }else{

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.util.StringUtil;
+import com.jichuangsi.mes.common.OrderStateChange;
 import com.jichuangsi.mes.common.RepairReportStateChange;
 import com.jichuangsi.mes.common.getDateConfig;
 import com.jichuangsi.mes.constant.ResultCode;
@@ -544,18 +545,21 @@ public class BasicSettingService {
      */
     public PageInfo getAllEquipment(SelectModel smodel)throws PassportException{
         PageInfo page=new PageInfo();
-        Calendar now = Calendar.getInstance();
+        Calendar c = Calendar.getInstance();
         if(StringUtils.isEmpty(smodel.getPageNum()) || StringUtils.isEmpty(smodel.getPageSize())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        List<Equipment> listSale = mesMapper.findAllEquipment(smodel.getFindName(),smodel.getFindIdOne(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+        Integer intMonth = c.get(Calendar.MONTH) > 10 ? c.get(Calendar.MONTH) : 0 + c.get(Calendar.MONTH);
 
-        for (Equipment eq:listSale) {
-            //此步操作是查询当天是否有新增数据
-            Integer countoverhaul = equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentId(DateUtil.today(),eq.getId());
-            eq.setCheckNo(countoverhaul >= 0 ? 0 :1);//检修否（当日）
-        }
+        List<Equipment> listSale = mesMapper.findAllEquipment(smodel.getFindName(),smodel.getFindIdOne(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize(),
+                   c.get(Calendar.YEAR),intMonth+1,c.get(Calendar.DAY_OF_MONTH));
+
+//        for (Equipment eq:listSale) {
+//            //此步操作是查询当天是否有新增数据
+//            Integer countoverhaul = equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentId(DateUtil.today(),eq.getId());
+//            eq.setCheckNo(countoverhaul >= 0 ? 0 :1);//检修否（当日）
+//        }
 
         page.setList(listSale);
         page.setTotal(mesMapper.countByEquipment(smodel.getFindName(),smodel.getFindIdOne()));
@@ -654,7 +658,8 @@ public class BasicSettingService {
         jsonObject1.put("SumOutMonth",SumOutMonth);//累计停用运行时间
 
         Calendar c = Calendar.getInstance();
-        jsonObject.put("equipment",mesMapper.findEquipmentVoById(smodel.getFindById(),c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH)));
+        Integer intMonth = c.get(Calendar.MONTH) > 10 ? c.get(Calendar.MONTH) : 0 + c.get(Calendar.MONTH);
+        jsonObject.put("equipment",mesMapper.findEquipmentVoById(smodel.getFindById(),c.get(Calendar.YEAR),intMonth+1,c.get(Calendar.DAY_OF_MONTH)));
         jsonObject.put("sumTime",jsonObject1);//统计的时间
 
 
@@ -911,7 +916,10 @@ public class BasicSettingService {
         matters.setMatterNews("您有1个报修单待处理");
         matters.setStaffId(auditSettingRepository.getstaffIdByauditTypeandLevel("BX","1"));
         matters.setOrderId(repairReport1.getId());
+        matters.setType(6);//类型 1 采购-订单审核  2 采购-来料检验 3销售-订单审核 4销售-退回审核 5生产计划单-审核 6 设备报修-审核
         matters.setDeleteNo(0);
+        matters.setFinishedNo(0);
+        matters.setReadNo(0);
         mattersRepository.save(matters);//新增待办事项
 
         AuditPocess auditPocess = new AuditPocess();
@@ -929,19 +937,38 @@ public class BasicSettingService {
      * @param
      * @throws PassportException
      */
-    public JSONObject getRepairReportById(SelectModel smodel)throws PassportException{
+    public JSONObject getRepairReportById(UserInfoForToken userInfoForToken,SelectModel smodel)throws PassportException{
         JSONObject jsonObject=new JSONObject();
 
         if(StringUtils.isEmpty(smodel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-
         EquipmentVo equipmentVo = mesMapper.getRepairReportById(smodel.getFindById());
+
+        updateMatterReadNo(Integer.valueOf(userInfoForToken.getUserId()),equipmentVo.getId());
 
         jsonObject.put("equipmentVo",equipmentVo);
         jsonObject.put("auditDetail",mesMapper.findAuditListById(equipmentVo.getId(),"BX",""));//加上审核详情
 
         return jsonObject;
+    }
+
+
+    /**
+     * 待办事项-修改状态（已读否）
+     * @throws PassportException
+     */
+    public void updateMatterReadNo(Integer staffId,Integer orderId)throws PassportException {
+
+        String str = "BX";
+        Integer type = 6;
+
+        List<OrderAuditPocess> oldaudit = orderAuditPocessRepository.findByAuditTypeAndOrderId(str,orderId);
+
+        if(oldaudit.size() != 0 &&  staffId == oldaudit.get(0).getStaffId()){//对比两个操作的员工是否相同
+            mattersRepository.updateReadNoByStaffIdAndTypeAndOrderId(staffId,type,orderId);
+        }
+
     }
 
     /**
@@ -998,7 +1025,9 @@ public class BasicSettingService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void  updateRepairReportAuditPocessById(UpdateModel updateModel)throws PassportException{
+    public void  updateRepairReportAuditPocessById(UserInfoForToken userInfoForToken,UpdateModel updateModel)throws PassportException{
+        Integer currentStaffId = Integer.valueOf(userInfoForToken.getUserId());
+
         RepairReport repairReport = repairReportRepository.findByid(updateModel.getUpdateID());
         if(StringUtils.isEmpty(repairReport)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
@@ -1012,14 +1041,17 @@ public class BasicSettingService {
         List<OrderAuditPocess> oldauditCG = orderAuditPocessRepository.findByAuditTypeAndOrderId("BX",orderId);
         if(!StringUtils.isEmpty(oldauditCG)){
 
-            Matters oldmatters = new Matters();
-            oldmatters.setOrderId(orderId);
-            oldmatters.setStaffId(oldauditCG.get(0).getStaffId());
-            oldmatters.setFinishedNo(1);
-            mattersRepository.save(oldmatters);
+            Integer oldstaffid = oldauditCG.get(0).getStaffId();
+
+            if(currentStaffId != oldstaffid){//对比两个操作的员工是否相同
+                throw new PassportException(ResultCode.NO_ACCESS);
+            }
+
+            //修改待办事项
+            mattersRepository.updateByStaffIdAndTypeAndOrderId(oldstaffid,6,orderId);
 
             //修改订单审核流程完成度
-            orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("BX",orderId,oldauditCG.get(0).getStaffId());
+            orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("BX",orderId,oldstaffid);
         }
         if(oldauditCG.size() >1){
             Integer countId = oldauditCG.get(1).getStaffId() ;
@@ -1030,6 +1062,8 @@ public class BasicSettingService {
                 matters.setStaffId(countId);// 获取下一个阶段需要审核的员工Id
                 matters.setOrderId(orderId);
                 matters.setDeleteNo(0);
+                matters.setType(6);
+                matters.setReadNo(0);
                 matters.setFinishedNo(0);
                 mattersRepository.save(matters);//新增待办事项
             }

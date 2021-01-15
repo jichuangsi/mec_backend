@@ -148,7 +148,7 @@ public class ProductionService {
 
         job.put("PPProductionInfo", new PPProduction());//熔炼信息（初始化都为null）
 
-        job.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        job.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(38)));//下拉框：设备
         job.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         job.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
         return job;
@@ -216,10 +216,10 @@ public class ProductionService {
 
         jsonObject.put("PPProductionInfo", ppProduction);//熔炼信息
 
-        jsonObject.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         jsonObject.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
-        jsonObject.put("BobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//下拉框：线轴
+        jsonObject.put("BobbinXiaLa",iProductionMapper.findXiaLaBobbinBygxId(ppProduction.getGXId()));//下拉框：线轴
 
 
         Integer id = ppProduction.getId()%10;
@@ -984,10 +984,10 @@ public class ProductionService {
         jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId2(ppProduction.getId(),ppProduction.getId()%10));//本班产物/绕线明细
 //        jsonObject.put("twoList",iProductionMapper.findPWindingProductsVoByPPPPId(ppProduction.getId(),ppProduction.getId()%10));//本班产物/绕线明细
 
-        jsonObject.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         jsonObject.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
-        jsonObject.put("BobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//下拉框：线轴
+        jsonObject.put("BobbinXiaLa",iProductionMapper.findXiaLaBobbinBygxId(ppProduction.getGXId()));//下拉框：线轴
 
         return jsonObject;
     }
@@ -1018,10 +1018,10 @@ public class ProductionService {
 
         jsonObject.put("oneListName",ppProduction.getGxName());//上班工序名称
 
-        jsonObject.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         jsonObject.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
-        jsonObject.put("BobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//下拉框：线轴
+        jsonObject.put("BobbinXiaLa",iProductionMapper.findXiaLaBobbinBygxId(ppProduction.getGXId()));//下拉框：线轴
 
         jsonObject.put("beforeLength",productsVo.getLengthM().multiply(new BigDecimal(productsVo.getNumbers())));//绕线前总长度
         jsonObject.put("afterLength",productsVoList.stream().map(ProductsVo::getTotalLength).reduce(BigDecimal.ZERO, BigDecimal::add));//绕线后总长度
@@ -1139,6 +1139,9 @@ public class ProductionService {
                 inventoryStatus1.setStandards(upd.getStandards());
                 inventoryStatus1.setUnitId(upd.getUnitId());
                 inventoryStatus1.setPppId(pppid);
+
+                inventoryStatus1.setState(0);
+                inventoryStatus1.setDeleteNo(0);
 
                 //存入记录:绕线成品
                 inventoryRecord1.setProductDetailid(pppProducts.getId());
@@ -1265,10 +1268,10 @@ public class ProductionService {
         jsonObject.put("oneList",list);//上班产物/待改绕成品
         jsonObject.put("twoList",list1);//本班产物/改绕明细
 
-        jsonObject.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         jsonObject.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
-        jsonObject.put("BobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//下拉框：线轴
+        jsonObject.put("BobbinXiaLa",iProductionMapper.findXiaLaBobbinBygxId(ppProduction.getGXId()));//下拉框：线轴
 
         return jsonObject;
     }
@@ -1303,10 +1306,10 @@ public class ProductionService {
         jsonObject.put("oneList",iProductionMapper.findDetourProductsVoByPPPId(ppProduction.getId()));//上班产物/待改绕成品
         jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),ppProduction.getId()%10));//本班产物/改绕明细
 
-        jsonObject.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         jsonObject.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
-        jsonObject.put("BobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//下拉框：线轴
+        jsonObject.put("BobbinXiaLa",iProductionMapper.findXiaLaBobbinBygxId(ppProduction.getGXId()));//下拉框：线轴
 
         return jsonObject;
     }
@@ -1430,10 +1433,10 @@ public class ProductionService {
 
         jsonObject.put("oneListName",ppProduction.getGxName());//上班工序名称
 
-        jsonObject.put("equipmentXiaLa",mesMapper.findAllEquipmentByXiaLa());//下拉框：设备
+        jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
         jsonObject.put("TeamXiaLa",mesMapper.findAllTTeamByXiaLa());//下拉框：班组
-        jsonObject.put("BobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//下拉框：线轴
+        jsonObject.put("BobbinXiaLa",iProductionMapper.findXiaLaBobbinBygxId(ppProduction.getGXId()));//下拉框：线轴
 
         jsonObject.put("beforeLength",productsVo.getLengthM().multiply(new BigDecimal(productsVo.getNumbers())));//绕线前总长度
         jsonObject.put("afterLength",productsVoList.stream().map(ProductsVo::getTotalLength).reduce(BigDecimal.ZERO, BigDecimal::add));//绕线后总长度

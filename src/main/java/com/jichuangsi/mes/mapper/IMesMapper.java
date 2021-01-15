@@ -839,7 +839,7 @@ public interface IMesMapper {
             "FROM inventory_status\n" +
             "LEFT JOIN t_standards ts ON ts.id = inventory_status.product_id\n" +
             "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
-            "WHERE inventory_status.inventory_type  = #{deId}\n" +
+            "WHERE inventory_status.inventory_type  = #{deId} and inventory_status.state = 0 and inventory_status.delete_no = 0 \n" +
             "<if test='warehourseId != null and warehourseId != 0'>AND inventory_status.warehouse_id =#{warehourseId} </if>\n"+
             "AND ts.material_id = #{materialId}</script>")
     List<UpdateModel> findAllInventoryStateByCDDataId(@Param("deId")Integer deId, @Param("materialId")Integer materialId,@Param("warehourseId")Integer warehourseId);
@@ -852,7 +852,7 @@ public interface IMesMapper {
             "LEFT JOIN t_standards ts ON ts.id = inventory_status.product_id \n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tb.dictionarier_id\n" +
-            "WHERE inventory_status.inventory_type  = 5 \n" +
+            "WHERE inventory_status.inventory_type  = 5 and inventory_status.state = 0 and inventory_status.delete_no = 0 \n" +
             "<if test='name != null'>AND tb.bobbin_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='warehourseId != null and warehourseId != 0'>AND inventory_status.warehouse_id =#{warehourseId} </if>\n"+
             "GROUP BY ts.material_id</script>")
@@ -912,7 +912,7 @@ public interface IMesMapper {
             "FROM inventory_status invs\n" +
             "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id\n" +
             "LEFT JOIN  s_dictionarier sd ON sd.id = invs.unit_id\n" +
-            "WHERE  invs.inventory_type =#{modelNameId}   \n"+
+            "WHERE  invs.inventory_type =#{modelNameId} and invs.state = 0 and invs.delete_no = 0   \n"+
             "<if test='name != null'>AND invs.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "</script>")
     Integer countByInventoryStates(@Param("modelNameId")Integer modelNameId,@Param("name")String name);
@@ -997,14 +997,18 @@ public interface IMesMapper {
     //查询所有设备信息
     @Select(value = "<script>SELECT te.id as id,te.equipment_name as equipmentName,\n" +
             "te.equipment_model as equipmentModel,te.equipment_number as equipmentNumber,\n" +
-            "te.state as state\n" +
+            "te.state as state,\n" +
+            "(SELECT count(1) FROM t_equipmentcheckrecord \n" +
+            "WHERE check_year = #{checkYear} and check_month= #{checkMonth} \n" +
+            "and check_day =#{checkDay} and equipment_id = te.id) AS checkNo\n" +
             "FROM t_equipment te\n" +
             "WHERE te.delete_no = 0 \n"+
             "<if test='name != null'>AND te.equipment_model LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null and deId != 2'>AND te.check_no = #{deId} </if>\n"+
             "ORDER BY te.id DESC \n" +
             "LIMIT #{pageNum},#{pageSize}</script>")
-    List<Equipment> findAllEquipment(@Param("name")String name, @Param("deId")Integer deId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
+    List<Equipment> findAllEquipment(@Param("name")String name, @Param("deId")Integer deId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize,
+                                     @Param("checkYear")Integer checkYear,@Param("checkMonth")Integer checkMonth,@Param("checkDay")Integer checkDay);
 
     //统计所有设备信息
     @Select(value = "<script>SELECT count(1)\n" +
@@ -1017,7 +1021,7 @@ public interface IMesMapper {
 
     //设备检修-根据设备id查询当前检修数据
     @Select(value = "<script>SELECT te.id as id,te.equipment_name as equipmentName,te.equipment_number as equipmentNumber,\n" +
-            "te.state as state,\n" +
+            "te.state as state,te.equipment_model as equipmentModel,\n" +
             "(SELECT count(1) FROM t_equipmentcheckrecord \n" +
             "WHERE check_year = #{checkYear} and check_month= #{checkMonth} \n" +
             "and check_day =#{checkDay} and equipment_id = #{deId}) AS checkNo\n" +
@@ -1042,7 +1046,7 @@ public interface IMesMapper {
     @Modifying
     @Select(value = "<script>INSERT INTO t_equipmentoverhaul(equipment_item_id,equipment_id,equipment_time) \n" +
             "SELECT id,#{orderId},#{createtime} FROM t_equipmentitems\n" +
-            "WHERE t_equipmentitems.equipment_id = #{orderId}" +
+            "WHERE t_equipmentitems.equipment_id = #{orderId} and t_equipmentitems.delete_no = 0" +
             "</script>")
     void insertEquipmentOverhaul(@Param("orderId")Integer orderId, @Param("createtime")String createtime);
 
@@ -1085,6 +1089,7 @@ public interface IMesMapper {
             "WHERE tr.delete_no = 0 and tr.equipment_id = #{equipmentId}  \n"+
             "<if test='name != null'>AND tr.repair_report_number LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null and deId != 4'>AND tr.state = #{deId} </if>\n"+
+            "ORDER BY tr.id DESC\n " +
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<EquipmentVo> getAllRepairReport(@Param("name")String name, @Param("deId")Integer deId,@Param("equipmentId")Integer equipmentId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
 
@@ -1288,6 +1293,23 @@ public interface IMesMapper {
             "WHERE ts.delete_no = 0 and ts.suit_id = #{deId} \n" +
             "</script>")
     List<TSuitdetailVo> findTSuitDetailById(@Param("deId")Integer deId);
+
+
+    //预览组合，查看明细模具
+    @Select(value = "<script>SELECT ts.id as id,ts.mould_type as mouldType,ts.mould_detail_id as mouldDetailId," +
+            "tm.mould_model as mouldModel,tm.mould_number as mouldNumber,ts.composite_type_id as compositeTypeId,\n" +
+            "(CASE WHEN ts.mould_type = 0 THEN \"不使用模具\"\n" +
+            "WHEN ts.mould_type = 1 THEN \"成品模具\"\n" +
+            "WHEN ts.mould_type = 2 THEN \"成套模具\" END)as mouldTypes,\n" +
+            "(CASE WHEN ts.composite_type_id = 1 THEN \"粗拉\"\n" +
+            "WHEN ts.composite_type_id = 2 THEN \"中拉\"\n" +
+            "WHEN ts.composite_type_id = 3 THEN \"细拉\"\n" +
+            "WHEN ts.composite_type_id = 4 THEN \"超细拉\" END)as compositeType\n" +
+            "FROM t_suitdetail ts\n" +
+            "LEFT JOIN t_mould tm ON tm.id = ts.mould_id\n" +
+            "WHERE ts.delete_no = 0 and ts.suit_id = #{deId} \n" +
+            "</script>")
+    List<TSuitdetailVo> findPreviewTSuitDetailById(@Param("deId")Integer deId);
 
     //根据子模具ids查询子模具名称
     @Select(value = "<script>SELECT GROUP_CONCAT(sonmould_model)\n" +

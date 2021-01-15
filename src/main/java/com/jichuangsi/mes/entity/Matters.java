@@ -14,7 +14,7 @@ public class Matters {
     private String matterNews;//信息(您有1个生产计划（熔炼）待进行)
     private Integer staffId;//员工Id
     private Integer orderId;//订单Id
-    private Integer type;//进程类型（1 采购-订单审核  2 采购-来料检验 3销售-订单审核 4销售-退回审核 5生产计划单-审核）
+    private Integer type;//进程类型（1 采购-订单审核  2 采购-来料检验 3销售-订单审核 4销售-退回审核 5生产计划单-审核 6 设备报修-审核）
     private Integer readNo;//已读否 （0 未读 1已读）
     private Integer finishedNo;//完成否
     private Integer deleteNo;//删除否

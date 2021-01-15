@@ -130,4 +130,44 @@ public class ProductionStateChange {
 
 
 
+    //获取工序设备数据 1熔炼 2粗拉 3中拉 4半成品(细拉) 5成品(超细拉) 6中间退火 7成品退火 8绕线 9成品改绕
+    public static Integer getGXEquipmentByGX(Integer state){
+        Integer intid = 0;
+        switch (state){
+            case 38://熔炼
+                intid = 72;
+                break;
+            case 39:
+                intid = 73;
+                break;
+            case 40:
+                intid = 74;
+                break;
+            case 41:
+                intid = 75;
+                break;
+            case 42:
+                intid = 76;
+                break;
+            case 43:
+                intid = 77;
+                break;
+            case 90:
+                intid = 94;
+                break;
+            case 68:
+                intid = 95;
+                break;
+            case 70:
+                intid = 96;
+                break;
+
+            default:
+                break;
+        }
+
+        return intid;
+    }
+
+
 }

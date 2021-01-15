@@ -318,6 +318,11 @@ public class WarehouseService {
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
 
+
+        if(model.size() == 0 ){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
         for(UpdateModel updateModel : model){
             if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getFindModelName())|| StringUtils.isEmpty(updateModel.getStockModel()) || StringUtils.isEmpty(updateModel.getUnitId())){
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
