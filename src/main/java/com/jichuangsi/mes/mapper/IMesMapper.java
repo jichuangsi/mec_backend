@@ -621,7 +621,7 @@ public interface IMesMapper {
             "LEFT JOIN s_staff sf ON sf.id = ft.staff_id\n" +
             "WHERE ft.delete_no = 0\n"+
             "<if test='name != null'>AND ft.file_name LIKE CONCAT('%', #{name},'%')</if>\n"+
-            "ORDER BY ft.id DESC LIMIT #{pageNum},#{pageSize}</script>")
+            "ORDER BY ft.create_time DESC LIMIT #{pageNum},#{pageSize}</script>")
     List<fileTableVo> findAllFile(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
     //查询文件信息总数
@@ -1517,5 +1517,4 @@ public interface IMesMapper {
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
             "</script>")
     List<RolePower> findRolePowerByroleIds(@Param("ids")List<Integer> ids);
-
 }

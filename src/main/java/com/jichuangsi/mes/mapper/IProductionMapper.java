@@ -157,7 +157,7 @@ public interface IProductionMapper {
 //            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
             "LEFT JOIN t_team tt ON tt.id = ppp.team_id\n" +
             "WHERE ppp.delete_no = 0 and ppp.gxid = #{deId}\n"+
-            "<if test='deIdnew != 0'>or ppp.gxid = #{deIdnew}</if>\n"+
+            "<if test='deIdnew != 0'> or  ppp.delete_no = 0 and ppp.gxid = #{deIdnew}</if>\n"+
             "<if test='name != null'>AND pp.pp_number LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='pname != null'>AND ppp.production_number LIKE CONCAT('%', #{pname},'%')</if>\n"+
             "<if test='beginfindDate != null and endfindDate != null'>AND ppp.create_time BETWEEN #{beginfindDate} AND #{endfindDate}</if>\n"+
@@ -231,7 +231,8 @@ public interface IProductionMapper {
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.pppid = #{deId} AND pw.pppid = #{deId} AND pp.delete_no = 0 \n" +
+            "GROUP BY pp.id" +
             "</script>")
     List<ProductsVo> findProductsVoByPPPId2(@Param("deId")Integer deId,@Param("id")Integer id);
 
@@ -250,9 +251,9 @@ public interface IProductionMapper {
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.id = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.id = #{deId} AND pw.pppid = #{pppId} AND pp.delete_no = 0 " +
             "</script>")
-    ProductsVo findProductsVoById(@Param("deId")Integer deId,@Param("id")Integer id);
+    ProductsVo findProductsVoById(@Param("deId")Integer deId,@Param("pppId")Integer pppId,@Param("id")Integer id);
 
 
     //工序-新增产物成功后查询自增的id
@@ -414,7 +415,7 @@ public interface IProductionMapper {
 
     //工序-回填-根据库存数据查询绕线数量
     @Select(value = "<script>SELECT pp.id as id,tb.bobbin_name as bobbinName,\n" +
-            "pp.lengthm as lengthM,ins.inventorynumbers as numbers\n" +
+            "pp.lengthm as lengthM,ins.inventorysum as numbers\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
@@ -501,13 +502,13 @@ public interface IProductionMapper {
             "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
             "pp.surface as surface,pp.paying_off as payingOff," +
             "pp.total_length as totalLength,\n" +
-            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,\n" +
-            "pw.straight_line as straightLine\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo\n" +
+//            ",pw.straight_line as straightLine\n" +
             "FROM ppp_products_detour pp\n" +
-            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
+//            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" + AND pw.pppid =  #{deId}
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.pppid = #{deId}  AND pp.delete_no = 0 " +
             "</script>")
     List<ProductsVo> findDetourProductsVoByPPPId(@Param("deId")Integer deId);
 

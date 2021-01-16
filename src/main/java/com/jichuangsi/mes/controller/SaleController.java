@@ -7,6 +7,7 @@ import com.jichuangsi.mes.service.SaleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -146,11 +147,11 @@ public class SaleController  {
 
     @ApiOperation("销售出库-新增销售出库")
     @ApiImplicitParams({})
-    @PostMapping("/updateMaterialOuter")
+    @PostMapping("/updateMaterialOuter/{updateId}")
     @OperLog(operModul = "新增",operType = "2",operDesc = "销售出库-新增销售出库")
-    public ResponseModel updateMaterialOuter(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody UpdateModel smodel,@RequestBody List<UpdateModel> list){
+    public ResponseModel updateMaterialOuter(@ModelAttribute UserInfoForToken userInfoForToken,@PathVariable("updateId") Integer updateId,@RequestBody  List<UpdateModel> list){
         try {
-            saleService.updateMaterialOuter(userInfoForToken,smodel,list);
+            saleService.updateMaterialOuter(userInfoForToken,updateId,list);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

@@ -617,7 +617,7 @@ public class ProductionService {
         if(ppProduction.getState() == 1 || ppProduction.getState() == 2|| ppProduction.getState() == 4){//如果是转下班/重复当前工序/完成生产操作。就新增下班操作
             Integer newGXid =ppProduction.getState() == 1?  ProductionStateChange.getGXIdByGXType(ProductionStateChange.getGXStateChangeone(ProductionStateChange.getGXIdByGXTypeDesc(ppProduction.getGXId()))) : ppProduction.getGXId();
 
-            if(ppProduction.getState() == 1 && ppProduction.getGXId() == ProductionStateChange.PIntermediateAnnealing || ppProduction.getGXId() == ProductionStateChange.PFinishedAnnealing){
+            if(ppProduction.getState() == 1 && (ppProduction.getGXId() == ProductionStateChange.PIntermediateAnnealing || ppProduction.getGXId() == ProductionStateChange.PFinishedAnnealing)){
 //                退火操作的话。转下班需要获取本班的上班工序是什么，再赋值下班工序；
                 newGXid =ProductionStateChange.getGXIdByGXType(ProductionStateChange.getGXStateChangeone(ProductionStateChange.getGXIdByGXTypeDesc(ppProductionRepository.findByid(ppProduction.getFid()).getGXId()))) ;
             }
@@ -1224,7 +1224,7 @@ public class ProductionService {
             if(StringUtils.isEmpty(smodel.getFindIdOne()) || StringUtils.isEmpty(smodel.getPageNum())){//需要改绕的产物id跟选择的数量
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
             }
-            ProductsVo productsVo = iProductionMapper.findProductsVoById(smodel.getFindIdOne(),smodel.getFindById()%10);
+            ProductsVo productsVo = iProductionMapper.findProductsVoById(smodel.getFindIdOne(),smodel.getFindById(), smodel.getFindById()%10);
             productsVo.setNumbers(smodel.getPageNum());
             productsVo.setGxId(ProductionStateChange.PPPDetour);//工序id
             productsVo.setTotalLength(productsVo.getLengthM().multiply(new BigDecimal(smodel.getPageNum())) );//总长度
@@ -1304,7 +1304,7 @@ public class ProductionService {
 
         jsonObject.put("oneListName",ppProductionRepository.findByid(ppProduction.getFid()).getGxName());//上班工序名称
         jsonObject.put("oneList",iProductionMapper.findDetourProductsVoByPPPId(ppProduction.getId()));//上班产物/待改绕成品
-        jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),ppProduction.getId()%10));//本班产物/改绕明细
+        jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId2(ppProduction.getId(),ppProduction.getId()%10));//本班产物/改绕明细
 
         jsonObject.put("equipmentXiaLa",iProductionMapper.findXiaLaEquipmentBygxId(ProductionStateChange.getGXEquipmentByGX(ppProduction.getGXId())));//下拉框：设备
         jsonObject.put("staffXiaLa",mesMapper.findStaffAllXiaLa());//下拉框：员工
@@ -1330,19 +1330,30 @@ public class ProductionService {
 
         PPProduction ppProduction1 = ppProductionRepository.save(ppProduction);
 
-        if(ppProductionModel.getTwoList().size() == 0 ){//判断待改绕是否存在
+        Integer pppid = ppProduction1.getId();
+
+        if(ppProductionModel.getTwoList().size() == 0 ){//判断待改绕是否存在 此时是twolist
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
 
-        List<PPPProducts0> products0List = ppProductionModel.getTwoList();
-        for (PPPProducts0 pppProducts: products0List) {
-            pppProducts.setPPPId(ppProduction1.getId());
-            pppProducts.setFid(pppProducts.getId());
+
+        //判断是否有保存过，如果有就不再做新增/修改保存操作
+        List<ProductsVo>  list =  iProductionMapper.findDetourProductsVoByPPPId(ppProduction.getId());
+
+        if(list.size() == 0){
+            List<PPPProducts0> products0List = ppProductionModel.getTwoList();
+            for (PPPProducts0 pppProducts: products0List) {
+                pppProducts.setPPPId(ppProduction1.getId());
+                pppProducts.setFid(pppProducts.getId());
+            }
+            iProductionMapper.insertPDetourroducts(products0List);
         }
-        iProductionMapper.insertPDetourroducts(products0List);
 
         if(ppProduction.getState() == 1){//转下班操作：判断数量是否足够。记录库存状态
             List<ProductsVo> productsVoList =  iProductionMapper.findKuCunProductsVoByPPPId(ppProduction.getFid(),ppProduction.getFid()%10);
+
+
+
 
             List<InventoryStatus> inventoryStatusList = new ArrayList<>();//成品
             List<InventoryRecord> inventoryRecordList = new ArrayList<>();//库存记录
@@ -1357,53 +1368,56 @@ public class ProductionService {
                 upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
             }
 
-//            for (PPPProducts0 pppProducts: ppProductionModel.getTwoList()) {
-//                if(StringUtils.isEmpty(pppProducts.getPPPId()) || StringUtils.isEmpty(pppProducts.getNumbers()) || StringUtils.isEmpty(pppProducts.getLengthM())){//需要改绕的产物id跟选择的数量
-//                    throw new PassportException(ResultCode.PARAM_MISS_MSG);
-//                }
-//
-//                InventoryStatus inventoryStatus1 = new InventoryStatus();//成品
-//                InventoryRecord inventoryRecord1 = new InventoryRecord();//成品
-//
-//                BigDecimal netWeightgs =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());//净重
-//                Integer netWeightg = Integer.valueOf(netWeightgs.toString());
-//                BigDecimal number =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNumbers().toString())).stripTrailingZeros().toPlainString());//净重
-//                Integer numbers = Integer.valueOf(number.toString());
-//
-//                inventoryStatus1.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
-//                inventoryStatus1.setWarehouseId(1);//仓库Id
-//                inventoryStatus1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-//                inventoryStatus1.setInventorysum(netWeightg);//废料数量
-//                inventoryStatus1.setInventorynumbers(numbers);//数量
-//
-//                inventoryStatus1.setStockName(upd.getStockName());
-//                inventoryStatus1.setStockNumber(upd.getStockNumber());
-//                inventoryStatus1.setStockModel(upd.getStockModel());
-//                inventoryStatus1.setStandards(upd.getStandards());
-//                inventoryStatus1.setUnitId(upd.getUnitId());
-//                inventoryStatus1.setPppId(pppid);
-//
-//                //存入记录:绕线成品
-//                inventoryRecord1.setProductDetailid(pppProducts.getId());
-//                inventoryRecord1.setRecordType(2);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
-//                inventoryRecord1.setCreateTime(System.currentTimeMillis());
-//                inventoryRecord1.setChangequantity("+"+netWeightg);
-//                inventoryRecord1.setSurplusquantity(netWeightg);
-//                inventoryRecord1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-//                inventoryRecord1.setRemark("绕线过程产生成品");
-//                inventoryRecord1.setWarehouseId(1);
-//
-//                inventoryRecord1.setStockName(upd.getStockName());
-//                inventoryRecord1.setStockNumber(upd.getStockNumber());
-//                inventoryRecord1.setStockModel(upd.getStockModel());
-//                inventoryRecord1.setStandards(upd.getStandards());
-//                inventoryRecord1.setUnitId(upd.getUnitId());
-//                inventoryRecord1.setPppId(pppid);
-//
-//                inventoryStatusList.add(inventoryStatus1);
-//                inventoryRecordList.add(inventoryRecord1);
-//
-//            }
+            for (PPPProducts0 pppProducts: ppProductionModel.getTwoList()) {
+                if(StringUtils.isEmpty(pppProducts.getPPPId()) || StringUtils.isEmpty(pppProducts.getNumbers()) || StringUtils.isEmpty(pppProducts.getLengthM())){//需要改绕的产物id跟选择的数量
+                    throw new PassportException(ResultCode.PARAM_MISS_MSG);
+                }
+
+                InventoryStatus inventoryStatus1 = new InventoryStatus();//成品
+                InventoryRecord inventoryRecord1 = new InventoryRecord();//成品
+
+                BigDecimal netWeightgs =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());//净重
+                Integer netWeightg = Integer.valueOf(netWeightgs.toString());
+                BigDecimal number =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNumbers().toString())).stripTrailingZeros().toPlainString());//净重
+                Integer numbers = Integer.valueOf(number.toString());
+
+                inventoryStatus1.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
+                inventoryStatus1.setWarehouseId(1);//仓库Id
+                inventoryStatus1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+                inventoryStatus1.setInventorysum(netWeightg);//废料数量
+                inventoryStatus1.setInventorynumbers(numbers);//数量
+
+                inventoryStatus1.setStockName(upd.getStockName());
+                inventoryStatus1.setStockNumber(upd.getStockNumber());
+                inventoryStatus1.setStockModel(upd.getStockModel());
+                inventoryStatus1.setStandards(upd.getStandards());
+                inventoryStatus1.setUnitId(upd.getUnitId());
+                inventoryStatus1.setPppId(pppid);
+
+                inventoryStatus1.setState(0);
+                inventoryStatus1.setDeleteNo(0);
+
+                //存入记录:绕线成品
+                inventoryRecord1.setProductDetailid(pppProducts.getId());
+                inventoryRecord1.setRecordType(2);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+                inventoryRecord1.setCreateTime(System.currentTimeMillis());
+                inventoryRecord1.setChangequantity("+"+netWeightg);
+                inventoryRecord1.setSurplusquantity(netWeightg);
+                inventoryRecord1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+                inventoryRecord1.setRemark("绕线过程产生成品");
+                inventoryRecord1.setWarehouseId(1);
+
+                inventoryRecord1.setStockName(upd.getStockName());
+                inventoryRecord1.setStockNumber(upd.getStockNumber());
+                inventoryRecord1.setStockModel(upd.getStockModel());
+                inventoryRecord1.setStandards(upd.getStandards());
+                inventoryRecord1.setUnitId(upd.getUnitId());
+                inventoryRecord1.setPppId(pppid);
+
+                inventoryStatusList.add(inventoryStatus1);
+                inventoryRecordList.add(inventoryRecord1);
+
+            }
         }
     }
 

@@ -318,62 +318,102 @@ public class WarehouseService {
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
 
-
         if(model.size() == 0 ){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        for(UpdateModel updateModel : model){
-            if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getFindModelName())|| StringUtils.isEmpty(updateModel.getStockModel()) || StringUtils.isEmpty(updateModel.getUnitId())){
-                throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        //如果是成品或者废料入库的话。另外操作
+        if(model.get(0).getFindModelName().equals("product") || model.get(0).getFindModelName().equals("waste")){
+            for(UpdateModel updateModel : model){
+                if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getFindModelName())|| StringUtils.isEmpty(updateModel.getStockModel()) || StringUtils.isEmpty(updateModel.getUnitId())){
+                    throw new PassportException(ResultCode.PARAM_MISS_MSG);
+                }
+                Integer recordType =getrecordType("rk") ;
+
+                InventoryStatus getnventoryStatuss = inventoryStatusRepository.findByid(updateModel.getUpdateID());
+                Integer surplusquantity = 0;
+                if(!StringUtils.isEmpty(getnventoryStatuss)){//如果不为空就修改 如果为空就报异常。
+                    surplusquantity = getnventoryStatuss.getInventorysum() + updateModel.getUpdateNum();
+                    getnventoryStatuss.setInventorysum(surplusquantity);//更改数量
+                    inventoryStatusList.add(getnventoryStatuss);
+
+                }else{
+                    throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
+                }
+
+                //存入记录
+                InventoryRecord inventoryRecord = new InventoryRecord();
+                inventoryRecord.setProductDetailid(updateModel.getUpdateID());
+                inventoryRecord.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+                inventoryRecord.setCreateTime(System.currentTimeMillis());
+                inventoryRecord.setChangequantity("+"+updateModel.getUpdateNum());
+                inventoryRecord.setSurplusquantity(surplusquantity);
+                inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+                inventoryRecord.setRemark(updateModel.getUpdateRemark());
+                inventoryRecord.setWarehouseId(updateModel.getUpdateWarehourseID());
+
+                inventoryRecord.setStockName(updateModel.getStockName());//材料名称
+                inventoryRecord.setStockModel(updateModel.getStockModel());//模型
+                inventoryRecord.setStockNumber(updateModel.getStockNumber());//编号
+                inventoryRecord.setStandards(updateModel.getStandards());//规格
+                inventoryRecord.setUnitId(updateModel.getUnitId());//单位id
+                inventoryRecordList.add(inventoryRecord);
+
             }
-            Integer recordType =getrecordType("rk") ;
-            Integer inventoruType = getInventoryType(updateModel.getFindModelName());
+        }else{
 
-            InventoryStatus countInventoryStatus=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(updateModel.getUpdateID(),updateModel.getUpdateWarehourseID(),inventoruType);
-            Integer surplusquantity = 0;
-            if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
-                InventoryStatus inventoryStatus = new InventoryStatus();
-                inventoryStatus.setProductId(updateModel.getUpdateID());//产品/原料明细Id
+            for(UpdateModel updateModel : model){
+                if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getFindModelName())|| StringUtils.isEmpty(updateModel.getStockModel()) || StringUtils.isEmpty(updateModel.getUnitId())){
+                    throw new PassportException(ResultCode.PARAM_MISS_MSG);
+                }
+                Integer recordType =getrecordType("rk") ;
+                Integer inventoruType = getInventoryType(updateModel.getFindModelName());
 
-                inventoryStatus.setStockName(updateModel.getStockName());//材料名称
-                inventoryStatus.setStockModel(updateModel.getStockModel());//模型
-                inventoryStatus.setStockNumber(updateModel.getStockNumber());//编号
-                inventoryStatus.setStandards(updateModel.getStandards());//规格
-                inventoryStatus.setUnitId(updateModel.getUnitId());//单位id
+                InventoryStatus countInventoryStatus=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(updateModel.getUpdateID(),updateModel.getUpdateWarehourseID(),inventoruType);
+                Integer surplusquantity = 0;
+                if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
+                    InventoryStatus inventoryStatus = new InventoryStatus();
+                    inventoryStatus.setProductId(updateModel.getUpdateID());//产品/原料明细Id
 
-                inventoryStatus.setWarehouseId(updateModel.getUpdateWarehourseID());//仓库Id
-                inventoryStatus.setInventoryType(inventoruType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-                surplusquantity = updateModel.getUpdateNum();
-                inventoryStatus.setInventorysum(surplusquantity);
+                    inventoryStatus.setStockName(updateModel.getStockName());//材料名称
+                    inventoryStatus.setStockModel(updateModel.getStockModel());//模型
+                    inventoryStatus.setStockNumber(updateModel.getStockNumber());//编号
+                    inventoryStatus.setStandards(updateModel.getStandards());//规格
+                    inventoryStatus.setUnitId(updateModel.getUnitId());//单位id
 
-                inventoryStatus.setDeleteNo(0);
-                inventoryStatus.setState(0);
-                inventoryStatusList.add(inventoryStatus);
+                    inventoryStatus.setWarehouseId(updateModel.getUpdateWarehourseID());//仓库Id
+                    inventoryStatus.setInventoryType(inventoruType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+                    surplusquantity = updateModel.getUpdateNum();
+                    inventoryStatus.setInventorysum(surplusquantity);
 
-            }else{
-                surplusquantity = countInventoryStatus.getInventorysum() + updateModel.getUpdateNum();
-                countInventoryStatus.setInventorysum(surplusquantity);//更改数量
-                inventoryStatusList.add(countInventoryStatus);
+                    inventoryStatus.setDeleteNo(0);
+                    inventoryStatus.setState(0);
+                    inventoryStatusList.add(inventoryStatus);
+
+                }else{
+                    surplusquantity = countInventoryStatus.getInventorysum() + updateModel.getUpdateNum();
+                    countInventoryStatus.setInventorysum(surplusquantity);//更改数量
+                    inventoryStatusList.add(countInventoryStatus);
+                }
+
+                //存入记录
+                InventoryRecord inventoryRecord = new InventoryRecord();
+                inventoryRecord.setProductDetailid(updateModel.getUpdateID());
+                inventoryRecord.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+                inventoryRecord.setCreateTime(System.currentTimeMillis());
+                inventoryRecord.setChangequantity("+"+updateModel.getUpdateNum());
+                inventoryRecord.setSurplusquantity(surplusquantity);
+                inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+                inventoryRecord.setRemark(updateModel.getUpdateRemark());
+                inventoryRecord.setWarehouseId(updateModel.getUpdateWarehourseID());
+
+                inventoryRecord.setStockName(updateModel.getStockName());//材料名称
+                inventoryRecord.setStockModel(updateModel.getStockModel());//模型
+                inventoryRecord.setStockNumber(updateModel.getStockNumber());//编号
+                inventoryRecord.setStandards(updateModel.getStandards());//规格
+                inventoryRecord.setUnitId(updateModel.getUnitId());//单位id
+                inventoryRecordList.add(inventoryRecord);
             }
-
-            //存入记录
-            InventoryRecord inventoryRecord = new InventoryRecord();
-            inventoryRecord.setProductDetailid(updateModel.getUpdateID());
-            inventoryRecord.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
-            inventoryRecord.setCreateTime(System.currentTimeMillis());
-            inventoryRecord.setChangequantity("+"+updateModel.getUpdateNum());
-            inventoryRecord.setSurplusquantity(surplusquantity);
-            inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-            inventoryRecord.setRemark(updateModel.getUpdateRemark());
-            inventoryRecord.setWarehouseId(updateModel.getUpdateWarehourseID());
-
-            inventoryRecord.setStockName(updateModel.getStockName());//材料名称
-            inventoryRecord.setStockModel(updateModel.getStockModel());//模型
-            inventoryRecord.setStockNumber(updateModel.getStockNumber());//编号
-            inventoryRecord.setStandards(updateModel.getStandards());//规格
-            inventoryRecord.setUnitId(updateModel.getUnitId());//单位id
-            inventoryRecordList.add(inventoryRecord);
         }
 
         inventoryRecordRepository.saveAll(inventoryRecordList);//批量保存
@@ -459,6 +499,14 @@ public class WarehouseService {
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
 
+        if(models.size() == 0){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        //如果是成品或者废料或者半成品调拨
+//        if(models.get(0).getFindModelName().equals("product") || models.get(0).getFindModelName().equals("waste") ||  models.get(0).getFindModelName().equals("nofinished") ){
+//
+//        }
         for (UpdateModel updateModel:models) {
             if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getUnitId())){
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -475,7 +523,7 @@ public class WarehouseService {
             inventoryStatusList.add(findinventory);//修改掉原来仓库的库存
 
             //获取调取仓库是否有此库存。如果有就修改，没有就新增
-            InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),updateModel.getUpdateWarehourseID(),1);
+            InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),updateModel.getUpdateWarehourseID(),getInventoryType(updateModel.getFindModelName()));
             Integer surplusquantity =  0;//调转仓库修改的数量
             if(StringUtils.isEmpty(countInventoryStatus1)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
@@ -582,11 +630,11 @@ public class WarehouseService {
             inventoryRecord.setRemark(updateModel.getUpdateRemark());
             inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
 
-            inventoryRecord.setStockName(updateModel.getStockName());
-            inventoryRecord.setStockNumber(updateModel.getStockNumber());
-            inventoryRecord.setStockModel(updateModel.getStockModel());
-            inventoryRecord.setStandards(updateModel.getStandards());
-            inventoryRecord.setUnitId(updateModel.getUnitId());
+            inventoryRecord.setStockName(findinventory.getStockName());
+            inventoryRecord.setStockNumber(findinventory.getStockNumber());
+            inventoryRecord.setStockModel(findinventory.getStockModel());
+            inventoryRecord.setStandards(findinventory.getStandards());
+            inventoryRecord.setUnitId(findinventory.getUnitId());
             inventoryRecordList.add(inventoryRecord);
 
         }
