@@ -11,6 +11,7 @@ import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.repository.*;
+import com.jichuangsi.mes.utill.MappingEntityModelCoverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -31,6 +32,8 @@ public class SaleService {
     private IMesMapper mesMapper;
     @Resource
     private WarehouseService warehouseService;
+    @Resource
+    private PurchaseService purchaseService;
 
 
     @Resource
@@ -67,6 +70,8 @@ public class SaleService {
     private InventoryRecordRepository inventoryRecordRepository;
     @Resource
     private SaleDeliveryRecordRepository saleDeliveryRecordRepository;//出库记录
+    @Resource
+    private SummaryRecordRepository summaryRecordRepository;//日汇总
 
     /**
      * 销售订单管理- 新增/编辑页面获取下拉框数据
@@ -147,12 +152,12 @@ public class SaleService {
         List<TSaleorderdetail> listdetail = new ArrayList<>();
         for (int i = 0; i < listpur.size(); i++) {
             TSaleorderdetail tSaleorderdetail =new TSaleorderdetail();
-            if(StringUtils.isEmpty(listpur.get(i).getProductNum()) || StringUtils.isEmpty(listpur.get(i).getProductPrice())){
+            if(StringUtils.isEmpty(listpur.get(i).getProductNum()) || StringUtils.isEmpty(listpur.get(i).getProductPrice())|| StringUtils.isEmpty(listpur.get(i).getLengthM())){
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
-
             }
 
+            tSaleorderdetail.setLengthM(listpur.get(i).getLengthM());//长度（轴）
             tSaleorderdetail.setProductNum(listpur.get(i).getProductNum());//数量
             tSaleorderdetail.setProductPrice(listpur.get(i).getProductPrice());//价格
             tSaleorderdetail.setRemark(listpur.get(i).getRemark());//备注
@@ -577,6 +582,11 @@ public class SaleService {
                 orderAuditPocessId =Integer.valueOf(map.get("id"));
                 newstateId = newstateId> 0 ? newstateId:tSaleorder.getOrderStateId();
 
+                if(newstateId == OrderStateChange.Sale_OrderAudit_NOTDelivered_NotSURE){//如果是待出库状态，就是钱到账了
+                    purchaseService.saveSummaryRecord(2,tSaleorder.getId(),"+",tSaleorder.getPayType());
+                }else if(newstateId == OrderStateChange.Sale_OrderAudit_Returned_Passed){//如果是退回审核通过了之后，就出账
+                    purchaseService.saveSummaryRecord(2,tSaleorder.getId(),"-",tSaleorder.getPayType());
+                }
                 break;
             case "F"://不通过
                 if(tSaleorder.getOrderStateId() == OrderStateChange.Sale_OrderAudit_AuditING){//销售订单审核：任何一个审核不通过都是返回到未提交状态
@@ -590,6 +600,7 @@ public class SaleService {
                 }
 
                 levelName ="在-----"+levelName+ "------中被驳回";
+
                 break;
             default:
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -758,5 +769,27 @@ public class SaleService {
 
         tSaleorder.setOrderStateId(orderstateId);
         tsaleorderRepository.save(tSaleorder);//修改订单状态
+    }
+
+    /**
+     * 对账单(日汇总)-条件分页查询
+     * @param model
+     * @return
+     */
+    public PageInfo getAllByCreateTimeAndPage(SelectModel model){
+
+        PageInfo page=new PageInfo();
+
+        if(model.getFindModelName().equals("day")){
+            page.setList(mesMapper.findAllByCreateTimeAndPage(model.getFindDate(),(model.getPageNum()-1)*model.getPageSize(),model.getPageSize()));
+            page.setTotal(mesMapper.countAllByCreateTimeAndPage(model.getFindDate()));
+        }else{
+            page.setList(mesMapper.findSummaryRecordByMonth((model.getPageNum()-1)*model.getPageSize(),model.getPageSize()));
+            page.setTotal(mesMapper.countBySummaryRecordByMonth());
+        }
+        page.setPageSize(model.getPageSize());
+        page.setPageNum(model.getPageNum());
+        return page;
+
     }
 }

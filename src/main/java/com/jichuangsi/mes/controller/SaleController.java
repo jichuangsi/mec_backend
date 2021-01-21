@@ -158,4 +158,13 @@ public class SaleController  {
 
         return ResponseModel.sucessWithEmptyData("");
     }
+
+    @ApiOperation("对账单(日汇总)-条件分页查询")
+    @ApiImplicitParams({})
+    @PostMapping("/getAllByCreateTimeAndPage")
+    public ResponseModel getAllByCreateTimeAndPage(@RequestBody  SelectModel selectModel){
+        return ResponseModel.sucess("",saleService.getAllByCreateTimeAndPage(selectModel));
+    }
+
+
 }

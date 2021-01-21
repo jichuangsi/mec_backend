@@ -32,6 +32,8 @@ public class MouldService {
 
     @Resource
     private TMouldRepository tMouldRepository;
+    @Resource
+    private EquipmentRepository equipmentRepository;
 
     @Resource
     private TMouldDetailRepository tMouldDetailRepository;
@@ -133,6 +135,13 @@ public class MouldService {
         if(StringUtils.isEmpty(mould.getMouldName()) ||StringUtils.isEmpty(mould.getMouldModel())|| StringUtils.isEmpty(mould.getCuffingmouldNno())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(mould.getScrapNo()) && mould.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
+
         String str = "";
         if(mould.getCuffingmouldNno() == 0){
             str = "CT";
@@ -140,12 +149,21 @@ public class MouldService {
             str = "CP";
         }
 
-        mould.setMouldNumber(str+"-"+tMouldDetailRepository.count());
+//        mould.setMouldNumber(str+"-"+tMouldDetailRepository.count());
         mould.setScrapNo(0);
         mould.setDeleteNo(0);
         TMould mould1 = tMouldRepository.save(mould);
 
         Integer tmid = mould1.getId();
+
+        //如果模具中的设备id不为空，就顺便绑定一下设备里面的模具id
+        if(StringUtils.isEmpty(mould.getModelusedId())){
+            Equipment equipment = equipmentRepository.findByid(mould.getModelusedId());
+            if(StringUtils.isEmpty(equipment)){throw new PassportException(ResultCode.DATA_NOEXIST_MSG);}
+            equipment.setMouldId(tmid);
+            equipmentRepository.save(equipment);//保存模具id
+        }
+
         if(mould.getCuffingmouldNno() == 1){//如果是成品模具
             List<TMouldDetail> tMouldDetailList = tMouldModel.gettMouldDetailList();
 
@@ -183,10 +201,17 @@ public class MouldService {
 
         if (StringUtils.isEmpty(tMould)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
 
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(tMould.getScrapNo()) && tMould.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(model.getUpdateType().equals("S")){//修改state
             tMould.setScrapNo(tMould.getScrapNo() == 0 ? 1 :0);
         }else if(model.getUpdateType().equals("D")){//修改deleteno
             tMould.setDeleteNo(tMould.getDeleteNo() == 0 ? 1 :0);
+        }else if(model.getUpdateType().equals("B")){//报废状态操作：把state改为2，然后该设备的任何检修或者保修都无法操作
+            tMould.setScrapNo(2);
         }
         tMouldRepository.save(tMould);
     }
@@ -247,6 +272,14 @@ public class MouldService {
         if(StringUtils.isEmpty(cuffingcheck.getMouldid()) || StringUtils.isEmpty(cuffingcheck.getJudgeresult())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+
+
+        TMould mould = tMouldRepository.findByid(cuffingcheck.getMouldid());
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(mould.getScrapNo()) && mould.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         cuffingcheck.setStaffid(Integer.valueOf(userInfoForToken.getUserId()));
         cuffingcheck.setCreateTime(new Date());
         cuffingcheck.setDeleteno(0);
@@ -280,6 +313,12 @@ public class MouldService {
 
         if (StringUtils.isEmpty(tCuffingcheck)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
 
+        TMould mould = tMouldRepository.findByid(tCuffingcheck.getMouldid());
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(mould.getScrapNo()) && mould.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         tCuffingcheck.setDeleteno(tCuffingcheck.getDeleteno() == 0 ? 1 :0);
         cuffingcheckRepository.save(tCuffingcheck);
     }
@@ -298,6 +337,11 @@ public class MouldService {
         }
 
         TMouldVo mouldVo = mesMapper.findTMouldById(smodel.getFindById());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(mouldVo.getScrapNo()) && mouldVo.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
 
         jsonObject.put("tmould",mouldVo);
         jsonObject.put("Finishedproducecheck",mesMapper.findFinishedproducecheckByMouldId(smodel.getFindById()));
@@ -341,6 +385,14 @@ public class MouldService {
                 ||StringUtils.isEmpty(tFinishedproducecheck.getWeightMg0()) ||StringUtils.isEmpty(tFinishedproducecheck.getWeightavageMg())||StringUtils.isEmpty(tFinishedproducecheck.getMeasureddiamUm())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+
+        TMould tMould = tMouldRepository.findByid(tFinishedproducecheck.getMouldId());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(tMould.getScrapNo()) && tMould.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         tFinishedproducecheck.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
         tFinishedproducecheck.setDeleteNo(0);
         tFinishedproducecheck.setCreateTime(new Date());
@@ -397,6 +449,13 @@ public class MouldService {
 
         if (StringUtils.isEmpty(tFinishedproducecheck)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
 
+        TMould mould = tMouldRepository.findByid(tFinishedproducecheck.getMouldId());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(mould.getScrapNo()) && mould.getScrapNo() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         tFinishedproducecheck.setDeleteNo(tFinishedproducecheck.getDeleteNo() == 0 ? 1 :0);
         tFinishedproducecheckRepository.save(tFinishedproducecheck);
     }
@@ -423,10 +482,10 @@ public class MouldService {
             case "ZL"://中拉
                 intId = 74;
                 break;
-            case "CP"://成品
-                intId = 77;
-                break;
             case "BCP"://半成品
+                intId = 75;
+                break;
+            case "CP"://成品
                 intId = 76;
                 break;
                 default:

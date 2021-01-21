@@ -76,6 +76,14 @@ public class BasicSettingService {
     private AuditPocessRepository auditPocessRepository;
     @Resource
     private OrderAuditPocessRepository orderAuditPocessRepository;
+    @Resource
+    private TMouldRepository mouldRepository;
+
+
+    @Resource
+    private TBobbinDetailRepository bobbinDetailRepository;
+    @Resource
+    private TBobbinHistoryRepository bobbinHistoryRepository;
 
     /**
      * 基础设置-查询(产品型号规格，原材料型号规格，线轴型号规格，其他型号规格等)
@@ -246,7 +254,8 @@ public class BasicSettingService {
 //        }
 
         if(StringUtils.isEmpty(tProduct.getId())){
-            tProduct.setProductNumber("TP000"+(tpRepository.findLastId()+1));
+            Integer getLastId =  tpRepository.findLastId();
+            tProduct.setProductNumber("TP000"+(StringUtils.isEmpty(getLastId) ? 1: getLastId+1));
         }
 
         tProduct.setState(0);
@@ -478,7 +487,159 @@ public class BasicSettingService {
         }
     }
 
-//--------------------------------------------------------------------------仪器设备管理维护-----------------------------------------------------
+//    ---------------------------------线轴管理维护----------------------------------------------------------------
+    /**
+     * 线轴管理-查询
+     * @param
+     * @throws PassportException
+     */
+    public PageInfo getAllTbobbinInfo(SelectModel smodel)throws PassportException{
+        PageInfo page=new PageInfo();
+        if(StringUtils.isEmpty(smodel.getPageNum()) || StringUtils.isEmpty(smodel.getPageSize())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        List<StockModel> list = mesMapper.findAllBobbinDetailInfo(smodel.getFindById(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+
+        page.setList(list);
+        page.setTotal(mesMapper.countByBobbinDetailInfo(smodel.getFindById()));
+        page.setPageSize(smodel.getPageSize());
+        page.setPageNum(smodel.getPageNum());
+        return page;
+    }
+
+    /**
+     * 线轴管理维护- 新增/编辑设备页面获取下拉框数据
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinBasicInfo()throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//线轴下拉框
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑设备页面根据线轴id获取线轴规格
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinBasicInfoByBobbinId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinDetailXiaLa",mesMapper.findAllBobbinByBobbinId(selectModel.getFindById()));//根据线轴id查询线轴规格
+
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑设备页面根据线轴id获取线轴规格
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinInfoBystandardsId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinInfo",mesMapper.findByBobbinDetailId(selectModel.getFindById()));//根据线轴的规格id查询线轴信息
+
+        List<TBobbinDetailVo> tBobbinDetailVoList = new ArrayList<>();
+
+        List<TBobbinDetail> list = bobbinDetailRepository.findByStandardIdAndDeleteNo(selectModel.getFindById(),0);
+        for (TBobbinDetail tbobbinDetail:list) {
+
+            List<TBobbinHistory> bobbinHistoryList = bobbinHistoryRepository.findByBobbinDetailIdOrderByCreateTimeDesc(tbobbinDetail.getId());
+
+            TBobbinDetailVo tBobbinDetailVo = new TBobbinDetailVo();
+
+            tBobbinDetailVo.setId(tbobbinDetail.getId());
+            tBobbinDetailVo.setStandardId(tbobbinDetail.getStandardId());
+            tBobbinDetailVo.setAxisNumber(tbobbinDetail.getAxisNumber());
+            tBobbinDetailVo.setNewBobbinWeight(tbobbinDetail.getNewBobbinWeight());
+
+            tBobbinDetailVo.setBobbinWeight1(tbobbinDetail.getNewBobbinWeight());
+
+            if(bobbinHistoryList.size() >=2){
+                tBobbinDetailVo.setBobbinWeight2(bobbinHistoryList.get(1).getHistoryBobbinWeight());
+            }else if(bobbinHistoryList.size() >=3){
+                tBobbinDetailVo.setBobbinWeight3(bobbinHistoryList.size() >=3? BigDecimal.ZERO:bobbinHistoryList.get(2).getHistoryBobbinWeight());
+            }else if(bobbinHistoryList.size() >=4){
+                tBobbinDetailVo.setBobbinWeight4(bobbinHistoryList.size() >=4? BigDecimal.ZERO:bobbinHistoryList.get(3).getHistoryBobbinWeight());
+            }else if(bobbinHistoryList.size() >=5){
+                tBobbinDetailVo.setBobbinWeight5(bobbinHistoryList.size() >=5? BigDecimal.ZERO:bobbinHistoryList.get(4).getHistoryBobbinWeight());
+            }
+
+
+//            tBobbinDetailVo.setBobbinWeight2(bobbinHistoryList.size() >=2 ? BigDecimal.ZERO:bobbinHistoryList.get(1).getHistoryBobbinWeight());
+//            tBobbinDetailVo.setBobbinWeight3(bobbinHistoryList.size() >=3? BigDecimal.ZERO:bobbinHistoryList.get(2).getHistoryBobbinWeight());
+//            tBobbinDetailVo.setBobbinWeight4(bobbinHistoryList.size() >=4? BigDecimal.ZERO:bobbinHistoryList.get(3).getHistoryBobbinWeight());
+//            tBobbinDetailVo.setBobbinWeight5(bobbinHistoryList.size() >=5? BigDecimal.ZERO:bobbinHistoryList.get(4).getHistoryBobbinWeight());
+
+            tBobbinDetailVo.setState(tbobbinDetail.getState());
+            tBobbinDetailVo.setDeleteNo(tbobbinDetail.getDeleteNo());
+
+            tBobbinDetailVoList.add(tBobbinDetailVo);
+
+        }
+        job.put("bobbinDetail",tBobbinDetailVoList);//查询库存线轴信息
+
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑线轴明细-根据线轴明细查询线轴明细历史
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinHistoryByBobbinDetailId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinHistoryData",bobbinHistoryRepository.findByBobbinDetailIdOrderByCreateTimeDesc(selectModel.getFindById()));//查询线轴明细历史数据
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑线轴明细操作
+     *
+     * 1、判断一下该id是否存在，如果存在就是修改，不存在就是新增
+     * 2、新增历史记录
+     *
+     * @param
+     * @throws PassportException
+     */
+    public void saveBobbinDetail(List<TBobbinDetail> tBobbinDetailList)throws PassportException {
+
+        for (TBobbinDetail tBobbinDetail:tBobbinDetailList) {
+            if(StringUtils.isEmpty(tBobbinDetail.getStandardId()) || StringUtils.isEmpty(tBobbinDetail.getAxisNumber()) || StringUtils.isEmpty(tBobbinDetail.getNewBobbinWeight())){
+                throw new PassportException(ResultCode.PARAM_MISS_MSG);
+            }
+
+            tBobbinDetail.setState(0);
+            tBobbinDetail.setDeleteNo(0);
+
+            TBobbinDetail tBobbinDetail1 =  bobbinDetailRepository.save(tBobbinDetail);//保存线轴明细
+
+            TBobbinHistory tBobbinHistory = new TBobbinHistory();
+            tBobbinHistory.setBobbinDetailId(tBobbinDetail1.getId());
+            tBobbinHistory.setCreateTime(new Date());
+            tBobbinHistory.setHistoryBobbinWeight(tBobbinDetail.getNewBobbinWeight());
+
+            bobbinHistoryRepository.save(tBobbinHistory);//保存线轴历史数据
+        }
+
+    }
+
+//    ---------------------------------线轴管理维护end----------------------------------------------------------------
+
+
+
+
+
+//-------------------仪器设备管理维护-----------------------------------------------------
 
 
 
@@ -492,6 +653,18 @@ public class BasicSettingService {
 
         job.put("SBType",sdRepository.findByDicCode("SBType"));//设备类型
         job.put("SBNumber",getEquipmentNumber());//设备编号
+        return job;
+    }
+
+    /**
+     * 设备管理- 新增/编辑设备页面根据模具类型id查询模具
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getAllTmouldByTypeId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("mouldXiaLa",mesMapper.findAllTmouldByXiaLa(selectModel.getFindById()));//模具下拉框
         return job;
     }
 
@@ -515,15 +688,30 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(eq.getState()) && eq.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(StringUtils.isEmpty(eq.getId()) && equipmentRepository.countByEquipmentNumber(eq.getEquipmentNumber()) > 0){
             throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
         }
+
         eq.setDeleteNo(0);
         eq.setState(0);
         eq.setCheckNo(0);
 
         Equipment equipment = equipmentRepository.save(eq);
         Integer tpid = equipment.getId();
+
+        //        设备新增的时候多加了个绑定模具id的,如果模具id不为空就顺便绑定模具管理的设备id
+        if(!StringUtils.isEmpty(eq.getMouldId())){
+            TMould tMould =  mouldRepository.findByid(eq.getMouldId());
+            if(StringUtils.isEmpty(tMould)){throw new PassportException(ResultCode.DATA_NOEXIST_MSG);}
+
+            tMould.setModelusedId(tpid);//绑定设备id
+            mouldRepository.save(tMould);//保存
+        }
 
         List<EquipmentItems> equipmentItemsList = new ArrayList<>();
 
@@ -579,10 +767,19 @@ public class BasicSettingService {
         if(StringUtils.isEmpty(equipment)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
+
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(updateModel.getUpdateType().equals("S")){
             equipment.setState(equipment.getState() == 0?1:0);
         }else if(updateModel.getUpdateType().equals("D")){
             equipment.setDeleteNo(equipment.getDeleteNo() == 0?1:0);
+        }else if(updateModel.getUpdateType().equals("B")){
+            equipment.setState(2);//报废状态后，所有都无法修改
         }
         equipmentRepository.save(equipment);
     }
@@ -681,6 +878,13 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
 
+        Equipment equipment = equipmentRepository.findByid(selectModel.getFindById());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         Integer countoverhaul = equipmentOverhaulRepository.countByEquipmentIdAndEquipmentTime(selectModel.getFindById(),selectModel.getFindDate());
         if(countoverhaul > 0 ){
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_MSG);
@@ -737,6 +941,13 @@ public class BasicSettingService {
 
         if(StringUtils.isEmpty(equipmentCheckRecord.getEquipmentId()) ||StringUtils.isEmpty(equipmentCheckRecord.getFrequency())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        Equipment equipment = equipmentRepository.findByid(equipmentCheckRecord.getEquipmentId());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
         }
 
         if(equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentIdAndFrequency(equipmentCheckRecord.getEquipmentTime(),equipmentCheckRecord.getEquipmentId(),equipmentCheckRecord.getFrequency()) > 0 ){
@@ -895,6 +1106,11 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
 
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(repairReportRepository.countByEquipmentIdAndStateNot(updateModel.getUpdateID(),RepairReportStateChange.Purchase_OrderAudit_Finished_Sured) > 0 ){
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_REPORD_MSG);
         }
@@ -983,6 +1199,12 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
 
+        //判断一下是否为报废状态
+        Equipment equipment = equipmentRepository.findByid(repairReport.getEquipmentId());
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(repairReport.getState() != RepairReportStateChange.Purchase_OrderAudit_Finished_Sured){
             throw new PassportException(ResultCode.DICTIONARY_ISNOTFINISHED_REPORD_MSG);
         }
@@ -1031,6 +1253,11 @@ public class BasicSettingService {
         RepairReport repairReport = repairReportRepository.findByid(updateModel.getUpdateID());
         if(StringUtils.isEmpty(repairReport)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
+        }
+
+        Equipment equipment = equipmentRepository.findByid(repairReport.getEquipmentId());
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
         }
 
         if(repairReport.getState() == RepairReportStateChange.Purchase_OrderAudit_Finished_Sured){

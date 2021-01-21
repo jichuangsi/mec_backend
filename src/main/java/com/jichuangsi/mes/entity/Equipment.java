@@ -12,10 +12,21 @@ public class Equipment {
     private String equipmentModel;//设备型号
     private String equipmentNumber;//设备编号
     private Integer equipmentTypeId;//设备类型Id（熔炼设备，粗拉设备，中拉设备，细拉设备等）
-    private Integer state;//状态
+    private Integer state;//状态 0 开启 1关闭 2停用
     private Integer deleteNo;//删除否
 
     private Integer checkNo;//是否检修(当天) 定时任务：到12点自动变成 0   0 未检验 1 已检验
+
+
+    private Integer mouldId;//模具id（跟模具管理那边绑定的设备id相对应）
+
+    public Integer getMouldId() {
+        return mouldId;
+    }
+
+    public void setMouldId(Integer mouldId) {
+        this.mouldId = mouldId;
+    }
 
     public Integer getCheckNo() {
         return checkNo;

@@ -16,11 +16,29 @@ public class TSaleorderdetailVo {
 
     private Integer unitId;//单位Id
     private String unitName;//单位
-    private Integer productNum;//数量
+    private BigDecimal lengthM;//长度/(m/轴)
+    private Integer productNum;//数量(轴)
     private BigDecimal productPrice;//单价
-    private BigDecimal productSum;//总价
+    private BigDecimal productLengthSum;//总价(长度数量)
+    private BigDecimal productSum;//总价(元)
     private String remark;//备注
     private Integer deleteNo;
+
+    public BigDecimal getLengthM() {
+        return lengthM;
+    }
+
+    public void setLengthM(BigDecimal lengthM) {
+        this.lengthM = lengthM;
+    }
+
+    public BigDecimal getProductLengthSum() {
+        return productLengthSum;
+    }
+
+    public void setProductLengthSum(BigDecimal productLengthSum) {
+        this.productLengthSum = productLengthSum;
+    }
 
     public Integer getProductdetailId() {
         return productdetailId;

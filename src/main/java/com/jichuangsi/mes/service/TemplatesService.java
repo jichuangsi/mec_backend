@@ -111,7 +111,6 @@ public class TemplatesService {
         if(StringUtils.isEmpty(model.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-
         Templates templates = templatesRepository.findByIdAndDeleteNo(model.getFindById(),0);
         return templates;
     }

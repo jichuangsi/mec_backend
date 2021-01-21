@@ -46,26 +46,29 @@ public class UserService {
      * @throws PassportException
      */
     public void registBackUser(UserInfoModel usermodel)throws PassportException {
-        if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName())){
+        if (StringUtils.isEmpty(usermodel.getStaffNum()) || StringUtils.isEmpty(usermodel.getStaffName()) || StringUtils.isEmpty(usermodel.getRoleId())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
         if (StringUtils.isEmpty(usermodel.getId()) && StringUtils.isEmpty(usermodel.getLoginPassword())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-//        if (userRepository.countByStaffNum(usermodel.getStaffNum())>0){
-//            throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
-//        }
+        if (StringUtils.isEmpty(usermodel.getId()) && userRepository.countByStaffNum(usermodel.getStaffNum())>0){
+            throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
+        }else if(!StringUtils.isEmpty(usermodel.getId()) && userRepository.countByStaffNum(usermodel.getStaffNum())>1){
+            throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
+        }
 
-        Integer staffcount = userRepository.countByid()+1;
-        String strnum = "YG000"+staffcount;
+
+//        Integer staffcount = userRepository.countByid()+1;
+//        String strnum = "YG000"+staffcount;
 
         SStaff setstaff = new SStaff();
 
         setstaff.setId(StringUtils.isEmpty(usermodel.getId()) ? null :usermodel.getId());
 
         setstaff.setDepartmentId(usermodel.getDepartmentId());
-        setstaff.setStaffNum(StringUtils.isEmpty(usermodel.getId()) ? strnum : usermodel.getStaffNum());
+        setstaff.setStaffNum(usermodel.getStaffNum());//usermodel.getId()) ? strnum :
         setstaff.setStaffName(usermodel.getStaffName());
         setstaff.setStaffAge(usermodel.getStaffAge());
         setstaff.setPostId(usermodel.getPostId().toString());

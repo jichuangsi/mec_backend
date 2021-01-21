@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.advice.OperLog;
+import com.jichuangsi.mes.entity.TBobbinDetail;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.BasicSettingService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
+import java.util.List;
 
 @Api("后台-基础设置管理")
 @CrossOrigin
@@ -134,6 +136,90 @@ public class BasicSettingController {
     }
 
 
+
+
+//    ---------------------------------线轴管理维护----------------------------------------------------------------
+
+    @ApiOperation("线轴管理-查询")
+    @ApiImplicitParams({})
+    @PostMapping("/getAllTbobbinInfo")
+    public ResponseModel getAllTbobbinInfo(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",bsService.getAllTbobbinInfo(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("线轴管理维护- 新增/编辑设备页面获取下拉框数据")
+    @ApiImplicitParams({})
+    @PostMapping("/getBobbinBasicInfo")
+    public ResponseModel getBobbinBasicInfo(){
+        try {
+            return ResponseModel.sucess("",bsService.getBobbinBasicInfo());
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
+    @ApiOperation("线轴管理维护- 新增/编辑设备页面根据线轴id获取线轴规格")
+    @ApiImplicitParams({})
+    @PostMapping("/getBobbinBasicInfoByBobbinId")
+    public ResponseModel getBobbinBasicInfoByBobbinId(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",bsService.getBobbinBasicInfoByBobbinId(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("线轴管理维护- 新增/编辑设备页面根据规格id获取线轴信息")
+    @ApiImplicitParams({})
+    @PostMapping("/getBobbinInfoBystandardsId")
+    public ResponseModel getBobbinInfoBystandardsId(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",bsService.getBobbinInfoBystandardsId(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("线轴管理维护- 新增/编辑线轴明细-根据线轴明细查询线轴明细历史")
+    @ApiImplicitParams({})
+    @PostMapping("/getBobbinHistoryByBobbinDetailId")
+    public ResponseModel getBobbinHistoryByBobbinDetailId(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",bsService.getBobbinHistoryByBobbinDetailId(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
+    @ApiOperation("线轴管理维护- 新增/编辑线轴明细操作")
+    @ApiImplicitParams({})
+    @PostMapping("/saveBobbinDetail")
+    public ResponseModel saveBobbinDetail(@RequestBody List<TBobbinDetail> tBobbinDetailList){
+        try {
+            bsService.saveBobbinDetail(tBobbinDetailList);
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+
+        return ResponseModel.sucessWithEmptyData ("");
+    }
+
+
+
+//    ---------------------------------线轴管理维护end----------------------------------------------------------------
+
+
+
+
+
+
+
 //-------------------------------------------仪器设备管理维修------------------------------------------------------------------------------
 
     @ApiOperation("设备管理- 新增/编辑设备页面获取下拉框数据")
@@ -142,6 +228,17 @@ public class BasicSettingController {
     public ResponseModel getEquipmentBasicInfo(){
         try {
             return ResponseModel.sucess("",bsService.getEquipmentBasicInfo());
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("设备管理- 新增/编辑设备页面根据模具类型id查询模具")
+    @ApiImplicitParams({})
+    @PostMapping("/getAllTmouldByTypeId")
+    public ResponseModel getAllTmouldByTypeId(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",bsService.getAllTmouldByTypeId(selectModel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

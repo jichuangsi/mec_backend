@@ -22,7 +22,25 @@ public class TProstandard {
     private BigDecimal diamEnd;//中拉直径um
     private BigDecimal semiStart;//半成品直径um
     private BigDecimal semiEnd;//半成品直径um
+    private BigDecimal superfineStart;//超细拉直径um
+    private BigDecimal superfineEnd;//超细拉直径um
     private Integer deleteNo;
+
+    public BigDecimal getSuperfineStart() {
+        return superfineStart;
+    }
+
+    public void setSuperfineStart(BigDecimal superfineStart) {
+        this.superfineStart = superfineStart;
+    }
+
+    public BigDecimal getSuperfineEnd() {
+        return superfineEnd;
+    }
+
+    public void setSuperfineEnd(BigDecimal superfineEnd) {
+        this.superfineEnd = superfineEnd;
+    }
 
     public Integer getId() {
         return id;

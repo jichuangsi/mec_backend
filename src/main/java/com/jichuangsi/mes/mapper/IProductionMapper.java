@@ -583,7 +583,7 @@ public interface IProductionMapper {
 
     //    生产任务-根据情况查询 （待开始、进行中、已完成、预警等）
     @Select(value = "<script>SELECT ppp.id as id,ppp.gxid as GXId, \n" +
-            "ppp.gx_name as GXName,\n" +
+            "ppp.gx_name as GXName,ppp.production_number as productionNumber,\n" +
             "pp.create_time as createTime,pp.finished_time as finishedTime,\n" +
             "tt.team_name as teamName\n" +
             "FROM pp_production ppp\n" +

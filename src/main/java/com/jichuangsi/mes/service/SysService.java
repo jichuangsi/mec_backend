@@ -648,6 +648,12 @@ public class SysService {
         if(sdictionarierRepository.countByNameAndDictFID(sDictionarier.getName(),sDictionarier.getDictFID()) > 0 ){
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_MSG);
         }
+
+//        做一下限制，如果是工序的话手动限制一下
+        if(sDictionarier.getDictFID() == 37){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         sDictionarier.setDeleteNo(0);
         sDictionarier.setCreateTime(new Date());
         sDictionarier.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
