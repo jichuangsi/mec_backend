@@ -1,9 +1,7 @@
 package com.jichuangsi.mes.controller;
 
 import com.jichuangsi.mes.exception.PassportException;
-import com.jichuangsi.mes.model.ResponseModel;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UserInfoForToken;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.service.HomeService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
@@ -72,9 +70,9 @@ public class HomeController {
     @ApiOperation("首页-查询该用户的权限")
     @ApiImplicitParams({})
     @PostMapping("/getMyRolePower")
-    public ResponseModel getMyRolePower(@ModelAttribute UserInfoForToken userInfoForToken)throws PassportException,Exception{
+    public ResponseModel getMyRolePower(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody BackUserLoginModel loginModel)throws PassportException,Exception{
         try {
-            return ResponseModel.sucess("",homeService.getMyRolePower(userInfoForToken));
+            return ResponseModel.sucess("",homeService.getMyRolePower(userInfoForToken,loginModel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

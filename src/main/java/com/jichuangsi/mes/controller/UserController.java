@@ -7,6 +7,13 @@ import com.jichuangsi.mes.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.subject.Subject;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -41,9 +48,16 @@ public class UserController {
     @OperLog(operModul = "登录",operType = "1",operDesc = "登录")
     public ResponseModel loginUser(@RequestBody BackUserLoginModel model,HttpServletRequest request,InputStream inputStream){
         try {
+            //进行验证，这里可以捕获异常，然后返回对应信息
             return ResponseModel.sucess("",userService.loginBackUser(model,request,inputStream));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
+        }catch (UnknownAccountException e) {
+            return ResponseModel.fail("","用户名不存在");
+        } catch (AuthenticationException e) {
+            return ResponseModel.fail("","账号或密码错误");
+        } catch (AuthorizationException e) {
+            return ResponseModel.fail("","没有权限");
         }
     }
 

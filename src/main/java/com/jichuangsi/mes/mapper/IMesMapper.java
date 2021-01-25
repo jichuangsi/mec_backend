@@ -1081,30 +1081,17 @@ public interface IMesMapper {
     List<EquipmentItems> findEquipmentoverhaulByEquipmentIdAndTime(@Param("equipmentId")Integer equipmentId, @Param("createtime")String createtime);
 
     //设备管理：查询该设备所有日期
-    @Select(value = "<script>SELECT SUM(te.user_time) as userTime,GROUP_CONCAT(ed.overhaul_state) as overhaulState,\n" +
-            "ed.equipment_overhaul_id as equipmentOverhaulId,te.check_year as checkYear," +
-            "te.check_month as checkMonth,te.check_day as checkDay,\n" +
-
-            "(CASE (SELECT SUM(te1.frequency) FROM t_equipmentcheckrecord te1 \n" +
-            "WHERE te1.check_year = #{checkYear} AND te1.check_month = #{checkMonth} AND te1.check_day = te.check_day\n" +
-            "AND te1.equipment_id = #{equipmentId}) \n" +
-            "    WHEN 1 THEN \"B\"\n" +
-            "\t\tWHEN 2 THEN \"Y\"\n" +
-            "\t\tWHEN 3 THEN \"BY\"\n" +
-            "END) as frequencystr," +
-
-//            "(CASE SUM(te.frequency) \n" +
-//            "    WHEN 1 THEN \"B\"\n" +
-//            "\t\tWHEN 2 THEN \"Y\"\n" +
-//            "\t\tWHEN 3 THEN \"BY\"\n" +
-//            "END) as frequencystr," +
-            "sf.staff_name as staffName\n" +
-            "FROM t_equipmentcheckrecord te\n" +
-            "LEFT JOIN t_equipmentcheckdetailrecord ed ON ed.equipment_check_record_id = te.id\n" +
-            "LEFT JOIN s_staff sf ON sf.id = te.staff_id\n" +
+    @Select(value = "<script>SELECT SUM(te.user_time) as userTime,GROUP_CONCAT(ed.overhaul_state ORDER BY te.frequency, ed.id ASC) as overhaulState," +
+            "ed.equipment_overhaul_id as equipmentOverhaulId,\n" +
+            "(CASE SUM(te.frequency) WHEN 1 THEN \"B\" WHEN 2 THEN \"Y\" WHEN 3 THEN \"BY\" END) as frequencystr,\n" +
+            "te.check_year as checkYear,te.check_month as checkMonth,\n" +
+            "te.check_day as checkDay, sf.staff_name as staffName\n" +
+            "FROM t_equipmentcheckrecord te \n" +
+            "LEFT JOIN t_equipmentcheckdetailrecord ed ON ed.equipment_check_record_id = te.id \n" +
+            "LEFT JOIN s_staff sf ON sf.id = te.staff_id \n" +
             "WHERE te.check_year = #{checkYear} AND te.check_month = #{checkMonth}\n" +
             "AND te.equipment_id = #{equipmentId}\n" +
-            "GROUP BY ed.equipment_overhaul_id\n"+
+            "GROUP BY  te.check_year,te.check_month,te.check_day,ed.equipment_overhaul_id\n"+
             "</script>")
     List<EquipmentRecordVo> findCheckRecordByEquipmentIdAndTime(@Param("equipmentId")Integer equipmentId, @Param("checkYear")Integer checkYear, @Param("checkMonth")Integer checkMonth);
 
@@ -1531,12 +1518,12 @@ public interface IMesMapper {
             "</script>")
     List<SStaff> findTeamStaffsBystaffIds(@Param("ids")List<Integer> ids);
 
-    //   角色管理-查询节点的数据
+    //   角色管理-查询节点的数据  is_node = 0 AND
     @Select(value = "<script>SELECT id \n" +
             "FROM s_rolepower \n" +
-            "WHERE is_node = 0 AND id IN \n" +
+            "WHERE delete_no = 0  AND id IN \n" +
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
-            "</script>")
+            "ORDER BY sort ASC</script>")
     List<Integer> findRolePowerIsNotNodeByIds(@Param("ids")List<Integer> ids);
 
     //   权限管理-根据用户id查询用户角色id
@@ -1551,10 +1538,19 @@ public interface IMesMapper {
     @Select(value = "<script>SELECT id as id,role_power_name as rolePowerName,fid as Fid," +
             "role_code_url as roleCodeUrl,is_node as isNode,state as state,sys_type as sysType \n" +
             "FROM s_rolepower \n" +
-            "WHERE delete_no = 0 and  id IN \n" +
+            "WHERE delete_no = 0 and sys_type = #{sysType} and is_node = 1  and  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "ORDER BY sort ASC </script>")
+    List<RolePower> findRolePowerByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType);
+
+
+    //   权限管理-根据用户id查询用户功能数据
+    @Select(value = "<script>SELECT id as id \n" +
+            "FROM s_rolepower \n" +
+            "WHERE delete_no = 0 and sys_type = #{sysType} and is_node = 0  and  id IN \n" +
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
             "</script>")
-    List<RolePower> findRolePowerByroleIds(@Param("ids")List<Integer> ids);
+    List<Integer> findRolePowerDetailByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType);
 
 
 

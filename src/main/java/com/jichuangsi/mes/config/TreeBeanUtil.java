@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.config;
 
 import com.jichuangsi.mes.entity.RolePower;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -17,6 +18,7 @@ public class TreeBeanUtil {
                 mapArr.put("label", x.getRolePowerName());
 //                mapArr.put("spread",true);
                 mapArr.put("parentId", x.getFid());
+                mapArr.put("path", StringUtils.isEmpty(x.getRoleCodeUrl()) ? null:x.getRoleCodeUrl());
                 mapArr.put("children", menuChild(x.getId(),rolePowers));
                 list.add(mapArr);
             }
@@ -33,6 +35,7 @@ public class TreeBeanUtil {
                 childArray.put("id", x.getId());
                 childArray.put("label", x.getRolePowerName()+"");
 //                childArray.put("spread",true);
+                childArray.put("path", StringUtils.isEmpty(x.getRoleCodeUrl()) ? null:x.getRoleCodeUrl());
                 childArray.put("parentId", x.getFid());
                 childArray.put("children", menuChild(x.getId(),rolePowers));
                 lists.add(childArray);

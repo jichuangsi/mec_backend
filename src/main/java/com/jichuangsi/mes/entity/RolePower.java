@@ -18,6 +18,17 @@ public class RolePower {
     private Integer state;
     private Integer deleteNo;
 
+
+    private Integer sort;//顺序（找到顺序排序）
+
+    public Integer getSort() {
+        return sort;
+    }
+
+    public void setSort(Integer sort) {
+        this.sort = sort;
+    }
+
     public Integer getIsNode() {
         return isNode;
     }

@@ -21,7 +21,7 @@ public class BackTokenService {
     @Value("${custom.token.survivalTime}")
     private long survivalTime;
 
-    public String createdToken(String user) throws IllegalArgumentException, UnsupportedEncodingException {
+    public String createdToken(String user) throws IllegalArgumentException {
         return StringUtils.isEmpty(user)?null:JWT.create().withClaim(userClaim, user).withExpiresAt(new Date(System.currentTimeMillis() + survivalTime)).sign(algorithm);
     }
 
