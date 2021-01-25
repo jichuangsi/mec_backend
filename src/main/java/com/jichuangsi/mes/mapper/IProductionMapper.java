@@ -18,12 +18,12 @@ public interface IProductionMapper {
 
     //    根据工序查询对应线轴下拉框
     @Select(value = "<script>SELECT id as MapKey,bobbin_number as MapValue,bobbin_name as MapValue2\n" +
-            "FROM t_bobbin WHERE delete_no = 0 and state = 0 and procedure_id = #{gxId} </script>")
+            "FROM t_bobbin WHERE delete_no = 0 and state = 0 and procedure_id LIKE CONCAT('%', #{gxId},'%') </script>")
     List<MapVo> findXiaLaBobbinBygxId(@Param("gxId")Integer gxId);
 
-    //    查询设备下拉框
+    //    查询设备下拉框(因为设备是多选，所以用了根据工序id模糊查询设备)
     @Select(value = "<script>SELECT id as MapKey,equipment_number as MapValue,equipment_name as MapValue2  FROM t_equipment " +
-            "WHERE delete_no = 0 and state = 0 and equipment_type_id = #{gxId} </script>")
+            "WHERE delete_no = 0 and state = 0 and equipment_type_id LIKE CONCAT('%', #{gxId},'%') </script>")
     List<MapVo> findXiaLaEquipmentBygxId(@Param("gxId")Integer gxId);
 
 //    不关联销售订单的产物明细

@@ -144,9 +144,9 @@ public class MouldService {
 
         String str = "";
         if(mould.getCuffingmouldNno() == 0){
-            str = "CT";
+            str = "CT";//成套
         }else{
-            str = "CP";
+            str = "CP";//成品
         }
 
 //        mould.setMouldNumber(str+"-"+tMouldDetailRepository.count());
@@ -184,6 +184,16 @@ public class MouldService {
 
     }
 
+
+    /**
+     * 模具管理-成套子模具管理-替换操作--暂停
+     * @param
+     * @throws PassportException
+     */
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public void  savereplaceSonMould(TMouldModel tMouldModel)throws PassportException{
+
+    }
 
     /**
      * 模具管理-修改状态(state or  delete_no)

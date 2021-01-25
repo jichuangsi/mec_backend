@@ -488,10 +488,10 @@ public class ProductionService {
         for (int j = 0; j < findgetId.size(); j++) {
             PPPProducts0 pppProducts = findgetId.get(j);
 
-            BigDecimal wastagegs = new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getWastageg().toString())).stripTrailingZeros().toPlainString());
-            BigDecimal netWeightgs =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());
-            Integer wastageg =Integer.valueOf(wastagegs.toString()) ;
-            Integer netWeightg = Integer.valueOf(netWeightgs.toString());
+            BigDecimal wastagegs =pppProducts.getWastageg();// new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getWastageg().toString())).stripTrailingZeros().toPlainString());
+            BigDecimal netWeightgs =pppProducts.getNetWeightg(); //new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());
+//            Integer wastageg =Integer.valueOf(wastagegs.toString()) ;
+//            Integer netWeightg = Integer.valueOf(netWeightgs.toString());
 
             InventoryStatus inventoryStatus1 = new InventoryStatus();//废料
             InventoryStatus inventoryStatus2 = new InventoryStatus();//产品/半成品
@@ -503,7 +503,7 @@ public class ProductionService {
             inventoryStatus1.setWarehouseId(1);//仓库Id
             inventoryStatus1.setInventoryType(4);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryStatus1.setInventorysum(1);//废料数量
-            inventoryStatus1.setInventorynumbers(wastageg);//数量
+            inventoryStatus1.setInventorynumbers(wastagegs);//数量
 
             inventoryStatus1.setStockName(upd.getStockName());
             inventoryStatus1.setStockNumber(upd.getStockNumber());
@@ -518,7 +518,7 @@ public class ProductionService {
             inventoryStatus2.setWarehouseId(1);//仓库Id
             inventoryStatus2.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryStatus2.setInventorysum(1);//数量
-            inventoryStatus2.setInventorynumbers(netWeightg);//净含量数量
+            inventoryStatus2.setInventorynumbers(netWeightgs);//净含量数量
 
             inventoryStatus2.setStockName(upd.getStockName());
             inventoryStatus2.setStockNumber(upd.getStockNumber());
@@ -1122,7 +1122,7 @@ public class ProductionService {
                 InventoryRecord inventoryRecord1 = new InventoryRecord();//成品
 
                 BigDecimal netWeightgs =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());//净重
-                Integer netWeightg = Integer.valueOf(netWeightgs.toString());
+//                Integer netWeightg = Integer.valueOf(netWeightgs.toString());
                 BigDecimal number =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNumbers().toString())).stripTrailingZeros().toPlainString());//净重
                 Integer numbers = Integer.valueOf(number.toString());
 
@@ -1131,7 +1131,7 @@ public class ProductionService {
                 inventoryStatus1.setWarehouseId(1);//仓库Id
                 inventoryStatus1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
                 inventoryStatus1.setInventorysum(numbers);//废料数量
-                inventoryStatus1.setInventorynumbers(netWeightg);//数量
+                inventoryStatus1.setInventorynumbers(netWeightgs);//数量
 
                 inventoryStatus1.setStockName(upd.getStockName());
                 inventoryStatus1.setStockNumber(upd.getStockNumber());
@@ -1376,16 +1376,17 @@ public class ProductionService {
                 InventoryStatus inventoryStatus1 = new InventoryStatus();//成品
                 InventoryRecord inventoryRecord1 = new InventoryRecord();//成品
 
-                BigDecimal netWeightgs =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());//净重
+                BigDecimal netWeightgs =pppProducts.getNetWeightg();//净重
+//                BigDecimal netWeightgs =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());//净重
                 Integer netWeightg = Integer.valueOf(netWeightgs.toString());
-                BigDecimal number =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNumbers().toString())).stripTrailingZeros().toPlainString());//净重
-                Integer numbers = Integer.valueOf(number.toString());
+//                BigDecimal number =new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNumbers().toString())).stripTrailingZeros().toPlainString());//净重
+                Integer numbers =pppProducts.getNumbers();// Integer.valueOf(number.toString());
 
                 inventoryStatus1.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
                 inventoryStatus1.setWarehouseId(1);//仓库Id
                 inventoryStatus1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
                 inventoryStatus1.setInventorysum(netWeightg);//废料数量
-                inventoryStatus1.setInventorynumbers(numbers);//数量
+                inventoryStatus1.setInventorynumbers(new BigDecimal(numbers));//数量
 
                 inventoryStatus1.setStockName(upd.getStockName());
                 inventoryStatus1.setStockNumber(upd.getStockNumber());

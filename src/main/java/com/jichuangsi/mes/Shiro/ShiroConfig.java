@@ -22,11 +22,18 @@
 //     */
 //    @Bean
 //    public ShiroFilterFactoryBean shiroFilter(SecurityManager securityManager) {
+//        System.out.println("ShiroConfiguration.shirFilter()");
 //        // 定义 shiroFactoryBean
 //        ShiroFilterFactoryBean shiroFilterFactoryBean=new ShiroFilterFactoryBean();
 //
 //        // 设置自定义的 securityManager
 //        shiroFilterFactoryBean.setSecurityManager(securityManager);
+//
+//        // 拦截器： LinkedHashMap 是有序的，进行顺序拦截器配置
+//        Map<String,String> filterChainMap = new LinkedHashMap<>();
+//
+//        //配置退出 过滤器,其中的具体的退出代码Shiro已经替我们实现了
+//        filterChainMap.put("/logout", "logout");
 //
 //        // 设置默认登录的 URL，身份认证失败会访问该 URL
 //        shiroFilterFactoryBean.setLoginUrl("/login");
@@ -35,10 +42,10 @@
 //        // 设置未授权界面，权限认证失败会访问该 URL
 //        shiroFilterFactoryBean.setUnauthorizedUrl("/unauthorized");
 //
-//        // LinkedHashMap 是有序的，进行顺序拦截器配置
-//        Map<String,String> filterChainMap = new LinkedHashMap<>();
+//
 //
 //        // 配置可以匿名访问的地址，可以根据实际情况自己添加，放行一些静态资源等，anon 表示放行
+//        filterChainMap.put("/static/**", "anon");
 //        filterChainMap.put("/css/**", "anon");
 //        filterChainMap.put("/imgs/**", "anon");
 //        filterChainMap.put("/js/**", "anon");

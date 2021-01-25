@@ -33,13 +33,16 @@
 //    @Resource
 //    private SStaffRoleRepository sStaffRoleRepository;
 //    /**
-//     *  执行授权逻辑
+//     *  执行授权访问控制逻辑
 //     *
 //     * @param principals
 //     * @return
 //     */
 //    @Override
 //    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+//        System.out.println("权限配置-->MyShiroRealm.doGetAuthorizationInfo()");
+//
+//        SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
 //        List<String> roleList=new ArrayList<>();
 //        // 获取用户名
 //        SStaff stafff = (SStaff) principals.getPrimaryPrincipal();
@@ -53,7 +56,6 @@
 //            roleList.add(sRole.getRoleName());
 //        }
 //
-//        SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
 //        // 给该用户设置角色，角色信息存在 t_role 表中取
 //        authorizationInfo.addRoles(roleList);
 //        // 给该用户设置权限，权限信息存在 t_permission 表中取

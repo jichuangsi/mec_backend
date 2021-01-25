@@ -11,7 +11,7 @@ public class Equipment {
     private String equipmentName;//设备名称
     private String equipmentModel;//设备型号
     private String equipmentNumber;//设备编号
-    private Integer equipmentTypeId;//设备类型Id（熔炼设备，粗拉设备，中拉设备，细拉设备等）
+    private String equipmentTypeId;//设备类型Ids（熔炼设备，粗拉设备，中拉设备，细拉设备等） 注意：这个设备类型可以多选
     private Integer state;//状态 0 开启 1关闭 2停用
     private Integer deleteNo;//删除否
 
@@ -68,11 +68,11 @@ public class Equipment {
         this.equipmentNumber = equipmentNumber;
     }
 
-    public Integer getEquipmentTypeId() {
+    public String getEquipmentTypeId() {
         return equipmentTypeId;
     }
 
-    public void setEquipmentTypeId(Integer equipmentTypeId) {
+    public void setEquipmentTypeId(String equipmentTypeId) {
         this.equipmentTypeId = equipmentTypeId;
     }
 

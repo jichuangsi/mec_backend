@@ -16,6 +16,13 @@ import com.jichuangsi.mes.model.UserInfoModel;
 import com.jichuangsi.mes.repository.SStaffRoleRepository;
 import com.jichuangsi.mes.repository.UserRepository;
 import com.jichuangsi.mes.utill.MappingEntityModelCoverter;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -111,10 +118,30 @@ public class UserService {
      * @throws PassportException
      */
     public JSONObject loginBackUser(BackUserLoginModel model,HttpServletRequest request,InputStream inputStream)throws PassportException{
+        JSONObject jsonObject = new JSONObject();
         if (StringUtils.isEmpty(model.getAccount()) || StringUtils.isEmpty(model.getPwd())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        JSONObject jsonObject = new JSONObject();
+
+        //用户认证信息
+//        Subject subject = SecurityUtils.getSubject();
+//        UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(
+//                model.getAccount(),
+//                Md5Util.encodeByMd5(model.getPwd())
+//        );
+//        try {
+//            //进行验证，这里可以捕获异常，然后返回对应信息
+//            subject.login(usernamePasswordToken);
+//        } catch (UnknownAccountException e) {
+//            throw new PassportException("用户名不存在!");
+//        } catch (AuthenticationException e) {
+//            throw new PassportException("账号或密码错误!");
+//        } catch (AuthorizationException e) {
+//            throw new PassportException("没有权限");
+//        }
+//        return jsonObject;
+
+//        JSONObject jsonObject = new JSONObject();
         SStaff backUser=userRepository.findByStaffNumAndLoginPassword(model.getAccount(),Md5Util.encodeByMd5(model.getPwd()));
         if (backUser==null){
             throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);
@@ -130,6 +157,8 @@ public class UserService {
         }catch (UnsupportedEncodingException e){
             throw new PassportException(e.getMessage());
         }
+        // 此方法不处理登录成功,由shiro进行处理
+//        return "/login";
     }
 
     /**
