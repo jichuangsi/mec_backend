@@ -11,12 +11,30 @@ public class ProductionStockVo {
     private Integer deleteNo;//删除否
 
 
+    private Integer warehourseId;//仓库ID
+    private String warehourseName;//仓库名称
 
     private String stockNumber;//原料编号
     private String stockName;//名称
     private String stockModel;//型号
     private String standards;//规格(1g2g等)
     private String unitName;//单位
+
+    public Integer getWarehourseId() {
+        return warehourseId;
+    }
+
+    public void setWarehourseId(Integer warehourseId) {
+        this.warehourseId = warehourseId;
+    }
+
+    public String getWarehourseName() {
+        return warehourseName;
+    }
+
+    public void setWarehourseName(String warehourseName) {
+        this.warehourseName = warehourseName;
+    }
 
     public String getUnitName() {
         return unitName;

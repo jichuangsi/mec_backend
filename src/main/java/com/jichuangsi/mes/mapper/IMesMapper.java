@@ -856,10 +856,13 @@ public interface IMesMapper {
 
     //库存管理-出入库管理-调拨/出库数据根据id查询明细
     @Select(value = "<script>SELECT \n" +
-            "ts.standards as updateRemark,inventory_status.id as updateID,inventory_status.inventorysum as updateNum\n" +
+            "ts.standards as updateRemark,inventory_status.id as updateID," +
+            "inventory_status.inventorysum as updateNum," +
+            "tw.warehousen_name as  findModelName\n" +
             "FROM inventory_status\n" +
             "LEFT JOIN t_standards ts ON ts.id = inventory_status.product_id\n" +
             "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
+            "LEFT JOIN t_warehouse tw ON tw.id =  inventory_status.warehouse_id\n" +
             "WHERE inventory_status.inventory_type  = #{deId} and inventory_status.state = 0 and inventory_status.delete_no = 0 \n" +
             "<if test='warehourseId != null and warehourseId != 0'>AND inventory_status.warehouse_id =#{warehourseId} </if>\n"+
             "AND ts.material_id = #{materialId}</script>")
