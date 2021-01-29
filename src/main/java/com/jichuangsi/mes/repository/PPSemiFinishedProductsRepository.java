@@ -11,6 +11,6 @@ public interface PPSemiFinishedProductsRepository  extends JpaRepository<PPSemiF
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE pp_semiFinishedProducts SET delete_no = 1 AND pppid = ?1",nativeQuery = true)
+    @Query(value = "UPDATE pp_semiFinishedProducts SET delete_no = 1 WHERE pppid = ?1",nativeQuery = true)
     void updateByPPPId(Integer orderId);
 }

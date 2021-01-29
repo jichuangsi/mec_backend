@@ -36,6 +36,9 @@ public class ResultCode {
 	public static final String Date_ERROR = "检修设备不能超出当天日期!!!!";
 
 
+	public static final String NO_OPE = "无法操作";
+
+
 //	库存
 
 	public static final String NUM_NOENOUGH_MSG = "调取数量超过当前库存数量!!!";

@@ -50,11 +50,11 @@ public class NewProductionController {
 
     @ApiOperation("【新】-生产管理-熔炼[开始生产]操作-新增/编辑")
     @ApiImplicitParams({})
-    @PostMapping("/savesmeltingProductsList")
-    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "生产管理-熔炼-新增/编辑")
-    public ResponseModel saveProcuction(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody PPProductionModel ppProductionModel){
+    @PostMapping("/saveStartProduction")
+    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "生产管理-熔炼[开始生产]-新增/编辑")
+    public ResponseModel saveStartProduction(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody PPProductionModel ppProductionModel){
         try {
-            newProductionService.saveProcuction(userInfoForToken,ppProductionModel);
+            newProductionService.saveStartProduction(userInfoForToken,ppProductionModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
@@ -62,22 +62,20 @@ public class NewProductionController {
         return ResponseModel.sucessWithEmptyData("");
     }
 
-    @ApiOperation("【新】-生产管理-熔炼-新增/编辑")
+
+    @ApiOperation("【新】-生产管理-粗拉、中拉、细拉、超细拉、退火、绕线、改绕等[开始生产]操作-新增/编辑")
     @ApiImplicitParams({})
-    @PostMapping("/savesmeltingPr")
+    @PostMapping("/saveStartProduction2")
     @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "生产管理-熔炼-新增/编辑")
-    public ResponseModel savesmeltingProductsList(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody PPProductionModel ppProductionModel){
+    public ResponseModel saveStartProduction2(@ModelAttribute UserInfoForToken userInfoForToken, @RequestBody PPProductionModel ppProductionModel){
         try {
-            newProductionService.savesmeltingProductsList(userInfoForToken,ppProductionModel);
+            newProductionService.saveStartProduction2(userInfoForToken,ppProductionModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }
 
         return ResponseModel.sucessWithEmptyData("");
     }
-
-
-
 
 
 }

@@ -8,6 +8,8 @@ public class PPProductionModel {
 
     PPProduction ppProduction;
 
+//    List<ProductionStockVo> productionStockVoList;//产品管理-领料需要使用的原料---暂时不需要
+
     List<ProductionStock> OneList;//产品管理-熔炼使用的原料
     List<PPPProducts0> TwoList;//产品管理-本班产物
 

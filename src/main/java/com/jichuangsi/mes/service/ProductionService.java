@@ -211,8 +211,17 @@ public class ProductionService {
         }
 
         jsonObject.put("ProcessTechnology",suitRepository.findByid(productPlan.getSuitId()));//工艺参数 根据套模id
-        jsonObject.put("equipmentInfo",iProductionMapper.findEquipmentByEquipmentId(ppProduction.getEquipmentId()));//设备信息
+
+        EquipmentVo equipmentVo = iProductionMapper.findEquipmentByEquipmentId(ppProduction.getEquipmentId());
+        jsonObject.put("equipmentInfo",StringUtils.isEmpty(equipmentVo) ? new EquipmentVo() :equipmentVo);//设备信息
         jsonObject.put("OperationInfo",iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ppProduction.getGXId(),ppProduction.getStaffId()));//操作信息
+
+        //套模信息
+        List<TSuitdetailVo> tSuitdetailVoList = mesMapper.findTSuitDetailById(productPlan.getSuitId());
+        for (TSuitdetailVo tSuitdetailVo:  tSuitdetailVoList) {
+            tSuitdetailVo.setSonmouldModel(StringUtils.isEmpty(tSuitdetailVo.getMouldDetailId()) ? "" :mesMapper.findTmodelDetailByIds(tSuitdetailVo.getMouldDetailId()));
+        }
+        jsonObject.put("tsuitDetail",tSuitdetailVoList);//套模信息
 
         jsonObject.put("PPProductionInfo", ppProduction);//熔炼信息
 
@@ -229,12 +238,12 @@ public class ProductionService {
             jsonObject.put("twoListName",ppProduction.getGxName());//本班生产产物
 
             jsonObject.put("oneList",iProductionMapper.findSmeltingStocksByPPPId(ppProduction.getId()));//原材料
-            jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id));//本班产物
+            jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id,0));//本班产物
         }else{
             jsonObject.put("oneListName",ppProductionRepository.findByid(ppProduction.getFid()).getGxName());//上班工序名称
             jsonObject.put("twoListName",ppProduction.getGxName());//本班工序名称
-            jsonObject.put("oneList",iProductionMapper.findProductsVoByPPPId(ppProduction.getFid(),ppProduction.getFid()%10));//上班产物
-            jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id));//本班产物
+            jsonObject.put("oneList",iProductionMapper.findProductsVoByLPPId(ppProduction.getFid(),ppProduction.getId(),ppProduction.getFid()%10));//上班产物
+            jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id,0));//本班产物
 
             if(ppProduction.getGXId() == ProductionStateChange.PIntermediateAnnealing || ppProduction.getGXId() == ProductionStateChange.PFinishedAnnealing){
                 //如果是退火，需要多加两个数据。
@@ -345,25 +354,25 @@ public class ProductionService {
             //转下班操作：1、原料出库操作 2、新增粗拉批次 3、新增日报
             updateWarehouseProductOut(productionStockList,upd);//原料出库操作
 
-            GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing),1);//粗拉
-
-            PPProduction ppProductionnew = new PPProduction();
-            ppProductionnew.setFid(pid);//粗拉的上级id
-            ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
-            ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
-            ppProductionnew.setSuitId(ppProduction.getSuitId());//套模id
-
-            ppProductionnew.setFinishNum(0);
-            ppProductionnew.setGXId(ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing));
-            ppProductionnew.setGxName(dictionarierRepository.findByid(ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing)).getName());//工序名称
-            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
-            ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
-            ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
-
-            ppProductionnew.setState(0);
-            ppProductionnew.setCreateTime(new Date());
-            ppProductionnew.setDeleteNo(0);
-            ppProductionRepository.save(ppProductionnew);
+//            GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing),1);//粗拉
+//
+//            PPProduction ppProductionnew = new PPProduction();
+//            ppProductionnew.setFid(pid);//粗拉的上级id
+//            ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
+//            ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
+//            ppProductionnew.setSuitId(ppProduction.getSuitId());//套模id
+//
+//            ppProductionnew.setFinishNum(0);
+//            ppProductionnew.setGXId(ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing));
+//            ppProductionnew.setGxName(dictionarierRepository.findByid(ProductionStateChange.getGXIdByGXType(ProductionStateChange.Production_PPRoughDrawing)).getName());//工序名称
+//            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
+//            ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
+//            ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
+//
+//            ppProductionnew.setState(0);
+//            ppProductionnew.setCreateTime(new Date());
+//            ppProductionnew.setDeleteNo(0);
+//            ppProductionRepository.save(ppProductionnew);
 
             // 3、新增日报
             saveProductionDiary(ppProductionModel,productModel,productPlan.getPpNumber());
@@ -469,7 +478,7 @@ public class ProductionService {
 
         for (int i = 0; i < list.size(); i++) {
             PPPProducts0 pppProducts = list.get(i);
-            if(StringUtils.isEmpty(pppProducts.getNetWeightg()) || StringUtils.isEmpty(pppProducts.getLossg()) || StringUtils.isEmpty(pppProducts.getWastageg())){
+            if(StringUtils.isEmpty(pppProducts.getNetWeightg()) || StringUtils.isEmpty(pppProducts.getLossg()) || StringUtils.isEmpty(pppProducts.getWastageg())){//判断一下轴号跟轴重是否存在
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
             }
@@ -627,29 +636,28 @@ public class ProductionService {
                 newGXid =ProductionStateChange.PPPWinding;
             }
 
-            String gxName =dictionarierRepository.findByid(newGXid).getName();
-            gxName = ppProduction.getState() == 1? gxName :gxName+ppProductionRepository.countByProductionNumberAndGXIdAndDeleteNo(ppProductions.getProductionNumber(),newGXid,0) ;//如果是重复当前工序。就查询当前生产id的当前工序有多少个
-
-//            PPProduct ppProduct = ppProductRepository.findByid(ppProduction.getPproductId());
-            GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),newGXid,1);//粗拉
-
-            PPProduction ppProductionnew = new PPProduction();
-            ppProductionnew.setFid(pid);//粗拉的上级id
-            ppProductionnew.setGXId(newGXid);//粗拉
-            ppProductionnew.setGxName(gxName);//工序名称
-            ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
-            ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
-            ppProductionnew.setSuitId(ppProductions.getSuitId());//套模id
-
-            ppProductionnew.setFinishNum(0);
-            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
-            ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
-            ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
-
-            ppProductionnew.setState(0);
-            ppProductionnew.setCreateTime(new Date());
-            ppProductionnew.setDeleteNo(0);
-            ppProductionRepository.save(ppProductionnew);
+//            String gxName =dictionarierRepository.findByid(newGXid).getName();
+//            gxName = ppProduction.getState() == 1? gxName :gxName+ppProductionRepository.countByProductionNumberAndGXIdAndDeleteNo(ppProductions.getProductionNumber(),newGXid,0) ;//如果是重复当前工序。就查询当前生产id的当前工序有多少个
+//
+//            GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),newGXid,1);//粗拉
+//
+//            PPProduction ppProductionnew = new PPProduction();
+//            ppProductionnew.setFid(pid);//粗拉的上级id
+//            ppProductionnew.setGXId(newGXid);//粗拉
+//            ppProductionnew.setGxName(gxName);//工序名称
+//            ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
+//            ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
+//            ppProductionnew.setSuitId(ppProductions.getSuitId());//套模id
+//
+//            ppProductionnew.setFinishNum(0);
+//            ppProductionnew.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));
+//            ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
+//            ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
+//
+//            ppProductionnew.setState(0);
+//            ppProductionnew.setCreateTime(new Date());
+//            ppProductionnew.setDeleteNo(0);
+//            ppProductionRepository.save(ppProductionnew);
         }
 
         if(ppProduction.getState() == 3){//转退火
@@ -846,25 +854,25 @@ public class ProductionService {
         gxName = repeatCount > 0? gxName+repeatCount :gxName;//如果是重复当前工序。就查询当前生产id的当前工序有多少个
 
 //        PPProduct ppProduct = ppProductRepository.findByid(ppProduction.getPproductId());
-        GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),newGXid,1);//粗拉
+//        GXScheduling  gxScheduling= iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),newGXid,1);//粗拉
 
-        PPProduction ppProductionnew = new PPProduction();
-        ppProductionnew.setFid(pid);//上级id
-        ppProductionnew.setGXId(newGXid);//工序id
-        ppProductionnew.setGxName(gxName);//工序名称
-        ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
-        ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
-        ppProductionnew.setSuitId(ppProduction.getSuitId());//套模id
-
-        ppProductionnew.setFinishNum(0);
-        ppProductionnew.setStaffId(staffId);
-        ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
-        ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
-
-        ppProductionnew.setState(0);
-        ppProductionnew.setCreateTime(new Date());
-        ppProductionnew.setDeleteNo(0);
-        ppProductionRepository.save(ppProductionnew);
+//        PPProduction ppProductionnew = new PPProduction();
+//        ppProductionnew.setFid(pid);//上级id
+//        ppProductionnew.setGXId(newGXid);//工序id
+//        ppProductionnew.setGxName(gxName);//工序名称
+//        ppProductionnew.setProductionNumber(ppProduction.getProductionNumber());
+//        ppProductionnew.setPproductId(ppProduction.getPproductId());//生产计划单产物id
+//        ppProductionnew.setSuitId(ppProduction.getSuitId());//套模id
+//
+//        ppProductionnew.setFinishNum(0);
+//        ppProductionnew.setStaffId(staffId);
+//        ppProductionnew.setTeamId(gxScheduling.getTteamId());//班组id
+//        ppProductionnew.setFrequency(gxScheduling.getFrequency());//班次id
+//
+//        ppProductionnew.setState(0);
+//        ppProductionnew.setCreateTime(new Date());
+//        ppProductionnew.setDeleteNo(0);
+//        ppProductionRepository.save(ppProductionnew);
     }
 
     /**
@@ -980,7 +988,7 @@ public class ProductionService {
         jsonObject.put("PPProductionInfo", ppProduction);//熔炼信息
 
         jsonObject.put("oneListName",ppProductionRepository.findByid(ppProduction.getFid()).getGxName());//上班工序名称
-        jsonObject.put("oneList",iProductionMapper.findProductsVoByPPPId(ppProduction.getFid(),ppProduction.getFid()%10));//上班产物/待绕线成品
+        jsonObject.put("oneList",iProductionMapper.findProductsVoByPPPId(ppProduction.getFid(),ppProduction.getFid()%10,0));//上班产物/待绕线成品
         jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId2(ppProduction.getId(),ppProduction.getId()%10));//本班产物/绕线明细
 //        jsonObject.put("twoList",iProductionMapper.findPWindingProductsVoByPPPPId(ppProduction.getId(),ppProduction.getId()%10));//本班产物/绕线明细
 

@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -114,23 +115,35 @@ public class ProductionInventoryService {
     }
 
     /**
-     * 生产库存管理- 生产领料-新增/编辑
+     * 生产库存管理- 生产领料-新增/(没有编辑)
      * @param
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
     public void saveProductionPicking(ProductionPickingModel productionPickingModel)throws PassportException {
         ProductionPicking productionPicking = productionPickingModel.getProductionPicking();
+
+        List<PickingStock> pickingStockList = productionPickingModel.getPickingStockList();
+        if(!StringUtils.isEmpty(productionPicking.getId())){//不能修改
+            throw new PassportException(ResultCode.NO_OPE);
+        }
+
         if (StringUtils.isEmpty(productionPicking.getPPIName()) || StringUtils.isEmpty(productionPicking.getPPId()) || productionPickingModel.getPickingStockList().isEmpty()){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+
+        productionPicking.setCreateTime(new Date());
         productionPicking.setDeleteNo(0);
+        productionPicking.setWarehouseId(9);//默认仓库id为9
+        productionPicking.setTotalNet(pickingStockList.stream().map(PickingStock::getTotalNet).reduce(BigDecimal.ZERO, BigDecimal::add));//总净重g
 
         ProductionPicking productionPicking1 =productionPickingRepository.save(productionPicking);
         Integer pid = productionPicking1.getId();
 
-        pickingStockRepository.updateByPPIId(pid);
-        List<PickingStock> pickingStockList = productionPickingModel.getPickingStockList();
+        pickingStockRepository.updateByPPIId(pid);//先清空数据
+
+        List<InventoryStatus> inventoryStatusList = new ArrayList<>();
+        List<InventoryRecord> inventoryRecordList = new ArrayList<>();
         for (int i = 0; i < pickingStockList.size(); i++) {
             PickingStock pickingStock = pickingStockList.get(i);
             if(StringUtils.isEmpty(pickingStock.getInventoryStatusId()) || StringUtils.isEmpty(pickingStock.getQuantityChoose())){
@@ -138,35 +151,16 @@ public class ProductionInventoryService {
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
 
             }
-            pickingStock.setPPIId(pid);
-            pickingStock.setDeleteNo(0);
-        }
-        pickingStockRepository.saveAll(pickingStockList);
-
-        // 原材调拨
-        updateWarehouseProductDB(pickingStockList);//原料出库操作
-    }
-
-
-    //    原料出库操作
-    @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateWarehouseProductDB(List<PickingStock> pickingStockList)throws PassportException {
-
-        List<InventoryStatus> inventoryStatusList = new ArrayList<>();
-        List<InventoryRecord> inventoryRecordList = new ArrayList<>();
-
-        if(pickingStockList.size() == 0){
-            throw new PassportException(ResultCode.PARAM_MISS_MSG);
-        }
-
-        for (PickingStock pickingStock:pickingStockList) {
-            if(StringUtils.isEmpty(pickingStock.getInventoryStatusId()) || StringUtils.isEmpty(pickingStock.getQuantityChoose())){
-                throw new PassportException(ResultCode.PARAM_MISS_MSG);
-            }
 
             InventoryStatus findinventory = inventoryStatusRepository.findByid(pickingStock.getInventoryStatusId());//根据库存id查找出相对应的信息。
 
-            Integer intsum = findinventory.getInventorysum() -pickingStock.getQuantityChoose();
+            pickingStock.setPPIId(pid);
+            pickingStock.setDeleteNo(0);
+            pickingStock.setState(0);
+            pickingStock.setWarehourseId(findinventory.getWarehouseId());//出库仓库id
+
+
+            Integer intsum = findinventory.getInventorysum() - pickingStock.getQuantityChoose().intValue();
             if(intsum<0){//判断库存数量是否足够
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
@@ -175,14 +169,14 @@ public class ProductionInventoryService {
             inventoryStatusList.add(findinventory);//修改掉原来仓库的库存
 
             //获取调取仓库是否有此库存。如果有就修改，没有就新增
-            InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),pickingStock.getWarehourseId(),warehouseService.getInventoryType("stock"));
+            InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),productionPicking1.getWarehouseId(),warehouseService.getInventoryType("stock"));
             Integer surplusquantity =  0;//调转仓库修改的数量
             if(StringUtils.isEmpty(countInventoryStatus1)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(findinventory.getProductId());//产品/原料明细Id
-                inventoryStatus.setWarehouseId(pickingStock.getWarehourseId());//仓库Id
+                inventoryStatus.setWarehouseId(productionPicking1.getWarehouseId());//存入的仓库Id
                 inventoryStatus.setInventoryType(warehouseService.getInventoryType("stock"));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-                surplusquantity = pickingStock.getQuantityChoose();
+                surplusquantity = pickingStock.getQuantityChoose().intValue();
                 inventoryStatus.setInventorysum(surplusquantity);
 
                 inventoryStatus.setStockName(findinventory.getStockName());
@@ -198,7 +192,7 @@ public class ProductionInventoryService {
                 inventoryStatus.setState(0);
                 inventoryStatusList.add(inventoryStatus);
             }else{
-                surplusquantity = countInventoryStatus1.getInventorysum() + pickingStock.getQuantityChoose();
+                surplusquantity = countInventoryStatus1.getInventorysum() + pickingStock.getQuantityChoose().intValue();
                 countInventoryStatus1.setInventorysum(surplusquantity);//更改数量
                 inventoryStatusList.add(countInventoryStatus1);
             }
@@ -230,7 +224,7 @@ public class ProductionInventoryService {
             inventoryRecord1.setSurplusquantity(surplusquantity);
             inventoryRecord1.setInventoryType(warehouseService.getInventoryType("stock"));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord1.setRemark("生产领料调拨");
-            inventoryRecord1.setWarehouseId(pickingStock.getWarehourseId());
+            inventoryRecord1.setWarehouseId(productionPicking1.getWarehouseId());
 
             inventoryRecord1.setStockName(findinventory.getStockName());
             inventoryRecord1.setStockNumber(findinventory.getStockNumber());
@@ -239,10 +233,111 @@ public class ProductionInventoryService {
             inventoryRecord1.setUnitId(findinventory.getUnitId());
 
             inventoryRecordList.add(inventoryRecord1);
-
         }
+        pickingStockRepository.saveAll(pickingStockList);
+
         inventoryStatusRepository.saveAll(inventoryStatusList);
         inventoryRecordRepository.saveAll(inventoryRecordList);
+
+//        updateWarehouseProductDB(pickingStockList);//原料调拨操作
+    }
+
+
+    //    原料出库操作
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public void updateWarehouseProductDB(List<PickingStock> pickingStockList)throws PassportException {
+
+//        List<InventoryStatus> inventoryStatusList = new ArrayList<>();
+//        List<InventoryRecord> inventoryRecordList = new ArrayList<>();
+//
+//        if(pickingStockList.size() == 0){
+//            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+//        }
+//
+//        for (PickingStock pickingStock:pickingStockList) {
+//            if(StringUtils.isEmpty(pickingStock.getInventoryStatusId()) || StringUtils.isEmpty(pickingStock.getQuantityChoose())){
+//                throw new PassportException(ResultCode.PARAM_MISS_MSG);
+//            }
+//
+//            InventoryStatus findinventory = inventoryStatusRepository.findByid(pickingStock.getInventoryStatusId());//根据库存id查找出相对应的信息。
+//
+//            Integer intsum = findinventory.getInventorysum() -pickingStock.getQuantityChoose();
+//            if(intsum<0){//判断库存数量是否足够
+//                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
+//                throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
+//            }
+//            findinventory.setInventorysum(intsum);//修改库存数量
+//            inventoryStatusList.add(findinventory);//修改掉原来仓库的库存
+//
+//            //获取调取仓库是否有此库存。如果有就修改，没有就新增
+//            InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),pickingStock.getWarehourseId(),warehouseService.getInventoryType("stock"));
+//            Integer surplusquantity =  0;//调转仓库修改的数量
+//            if(StringUtils.isEmpty(countInventoryStatus1)){//如果为空就是新增。如果不为空就是修改咯
+//                InventoryStatus inventoryStatus = new InventoryStatus();
+//                inventoryStatus.setProductId(findinventory.getProductId());//产品/原料明细Id
+//                inventoryStatus.setWarehouseId(pickingStock.getWarehourseId());//仓库Id
+//                inventoryStatus.setInventoryType(warehouseService.getInventoryType("stock"));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+//                surplusquantity = pickingStock.getQuantityChoose();
+//                inventoryStatus.setInventorysum(surplusquantity);
+//
+//                inventoryStatus.setStockName(findinventory.getStockName());
+//                inventoryStatus.setStockNumber(findinventory.getStockNumber());
+//                inventoryStatus.setStockModel(findinventory.getStockModel());
+//                inventoryStatus.setStandards(findinventory.getStandards());
+//                inventoryStatus.setUnitId(findinventory.getUnitId());
+//
+//                inventoryStatus.setPppId(findinventory.getPppId());
+//                inventoryStatus.setInventorynumbers(findinventory.getInventorynumbers());
+//
+//                inventoryStatus.setDeleteNo(0);
+//                inventoryStatus.setState(0);
+//                inventoryStatusList.add(inventoryStatus);
+//            }else{
+//                surplusquantity = countInventoryStatus1.getInventorysum() + pickingStock.getQuantityChoose();
+//                countInventoryStatus1.setInventorysum(surplusquantity);//更改数量
+//                inventoryStatusList.add(countInventoryStatus1);
+//            }
+//
+//            //调拨-取出记录
+//            InventoryRecord inventoryRecord = new InventoryRecord();
+//            inventoryRecord.setProductDetailid(findinventory.getProductId());
+//            inventoryRecord.setRecordType(warehouseService.getrecordType("db"));//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+//            inventoryRecord.setCreateTime(System.currentTimeMillis());
+//            inventoryRecord.setChangequantity("-"+pickingStock.getQuantityChoose());
+//            inventoryRecord.setSurplusquantity(intsum);
+//            inventoryRecord.setInventoryType(warehouseService.getInventoryType("stock"));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+//            inventoryRecord.setRemark("生产领料");
+//            inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
+//
+//            inventoryRecord.setStockName(findinventory.getStockName());
+//            inventoryRecord.setStockNumber(findinventory.getStockNumber());
+//            inventoryRecord.setStockModel(findinventory.getStockModel());
+//            inventoryRecord.setStandards(findinventory.getStandards());
+//            inventoryRecord.setUnitId(findinventory.getUnitId());
+//            inventoryRecordList.add(inventoryRecord);
+//
+//            //调拨-存入记录
+//            InventoryRecord inventoryRecord1 = new InventoryRecord();
+//            inventoryRecord1.setProductDetailid(findinventory.getProductId());
+//            inventoryRecord1.setRecordType(warehouseService.getrecordType("db"));//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+//            inventoryRecord1.setCreateTime(System.currentTimeMillis());
+//            inventoryRecord1.setChangequantity("+"+pickingStock.getQuantityChoose());
+//            inventoryRecord1.setSurplusquantity(surplusquantity);
+//            inventoryRecord1.setInventoryType(warehouseService.getInventoryType("stock"));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+//            inventoryRecord1.setRemark("生产领料调拨");
+//            inventoryRecord1.setWarehouseId(pickingStock.getWarehourseId());
+//
+//            inventoryRecord1.setStockName(findinventory.getStockName());
+//            inventoryRecord1.setStockNumber(findinventory.getStockNumber());
+//            inventoryRecord1.setStockModel(findinventory.getStockModel());
+//            inventoryRecord1.setStandards(findinventory.getStandards());
+//            inventoryRecord1.setUnitId(findinventory.getUnitId());
+//
+//            inventoryRecordList.add(inventoryRecord1);
+//
+//        }
+//        inventoryStatusRepository.saveAll(inventoryStatusList);
+//        inventoryRecordRepository.saveAll(inventoryRecordList);
 
     }
 

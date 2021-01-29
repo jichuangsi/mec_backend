@@ -12,6 +12,7 @@ import com.jichuangsi.mes.entity.TTeam;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.mapper.IProductionMapper;
+import com.jichuangsi.mes.model.EquipmentVo;
 import com.jichuangsi.mes.model.MapVo;
 import com.jichuangsi.mes.model.PPProductsVo;
 import com.jichuangsi.mes.model.SelectModel;
@@ -83,7 +84,9 @@ public class ProductionDataService {
         jsonObject.put("productionList",list);// 生产工序
 
         jsonObject.put("ProcessTechnology",suitRepository.findByid(productPlan.getSuitId()));//工艺参数 根据套模id
-        jsonObject.put("equipmentInfo",iProductionMapper.findEquipmentByEquipmentId(ppProduction.getEquipmentId()));//设备信息
+
+        EquipmentVo equipmentVo = iProductionMapper.findEquipmentByEquipmentId(ppProduction.getEquipmentId());
+        jsonObject.put("equipmentInfo",StringUtils.isEmpty(equipmentVo) ? new EquipmentVo() : equipmentVo);//设备信息
         jsonObject.put("OperationInfo",iProductionMapper.findGXSchedulingByPPIdAndGXIdAndSfId(ppProduct.getPpId(),ppProduction.getGXId(),ppProduction.getStaffId()));//操作信息
 
         jsonObject.put("PPProductionInfo", ppProduction);//熔炼信息
@@ -92,7 +95,7 @@ public class ProductionDataService {
         Integer id = ppProduction.getId()%10;
 
         jsonObject.put("twoListName",ppProduction.getGxName());//本班工序名称
-        jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id));//本班产物
+        jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id,0));//本班产物
 
         return jsonObject;
     }
@@ -129,7 +132,7 @@ public class ProductionDataService {
         Integer id = ppProduction.getId()%10;
 
         jsonObject.put("twoListName",ppProduction.getGxName());//本班工序名称
-        jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id));//本班产物
+        jsonObject.put("twoList",iProductionMapper.findProductsVoByPPPId(ppProduction.getId(),id,0));//本班产物
 
         return jsonObject;
     }

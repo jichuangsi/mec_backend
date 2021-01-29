@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.mapper;
 
 
+import com.jichuangsi.mes.entity.ProductionStock;
 import com.jichuangsi.mes.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -81,22 +82,57 @@ public interface INewProductionMapper {
             "</script>")
     List<ProductionStockVo> findPickingStocksByPPIId(@Param("deId")Integer deId);
 
-
 //---------------------------【新】-生产管理数据-----------------------------------------------------------------
 
-    //查询生产表
+    //查询生产表 (除了退火工序的生产表)
     @Select(value = "<script>SELECT ppp.id as id,\n" +
             "pp.pp_number as ppNumber, ppp.production_number as productionNumber,\n" +
-            "ppp.gx_name as GXName,tt.team_name as teamName\n" +
+            "ppp.gx_name as GXName\n" +
             "FROM pp_production ppp\n" +
             "LEFT JOIN pp_product pr ON pr.id = ppp.pproduct_id\n" +
             "LEFT JOIN product_plan pp ON pp.id = pr.pp_id\n" +
-            "LEFT JOIN t_team tt ON tt.id = ppp.team_id\n" +
-            "WHERE ppp.delete_no = 0 and ppp.gxid = #{deId}\n"+
+            "WHERE ppp.delete_no = 0 and (ppp.state != 0 and ppp.gxid = #{deId}) or ( ppp.gxid = #{dId} and  ppp.state = 2)\n"+
             "<if test='pname != null'>AND ppp.production_number LIKE CONCAT('%', #{pname},'%')</if>\n"+
             "ORDER BY ppp.id DESC\n" +
             "</script>")
-    List<PPPVo> findAllPPProduction(@Param("deId")Integer deId,@Param("pname")String pname);
+    List<PPPVo> findAllPPProduction(@Param("deId")Integer deId,@Param("dId")Integer dId,@Param("pname")String pname);
+
+    //查询生产表 -退火的时候状态是4
+    @Select(value = "<script>SELECT ppp.id as id,\n" +
+            "pp.pp_number as ppNumber, ppp.production_number as productionNumber,\n" +
+            "ppp.gx_name as GXName\n" +
+            "FROM pp_production ppp\n" +
+            "LEFT JOIN pp_product pr ON pr.id = ppp.pproduct_id\n" +
+            "LEFT JOIN product_plan pp ON pp.id = pr.pp_id\n" +
+            "WHERE ppp.delete_no = 0 and (ppp.state != 0 and ppp.gxid = #{deId}) or (ppp.state = #{state})\n"+
+            "<if test='pname != null'>AND ppp.production_number LIKE CONCAT('%', #{pname},'%')</if>\n"+
+            "ORDER BY ppp.id DESC\n" +
+            "</script>")
+    List<PPPVo> findAllPPProductionAnnealing(@Param("deId")Integer deId,@Param("pname")String pname,@Param("state")Integer state);
+
+    //生产熔炼-根据生产计划单id查询领料的原材料
+    @Select(value = "<script>SELECT ps.id as id,ps.ppiid as PPPId,ps.inventory_status_id as inventoryStatusId,\n" +
+            "ps.quantity_choose as quantityChoose,ps.total_net as totalNet,sd.`name` as unitName,\n" +
+            "st.standards as standards,ts.stock_name as stockName,ts.stock_model as stockModel," +
+            "ts.stock_number as stockNumber,ps.warehourse_id as warehourseId," +
+            " tw.warehousen_name as warehourseName,ps.delete_no as deleteNo\n" +
+            "FROM picking_stock ps\n" +
+            "LEFT JOIN production_picking pi ON pi.id = ps.ppiid\n" +
+            "LEFT JOIN inventory_status ns ON ns.id = ps.inventory_status_id\n" +
+            "LEFT JOIN t_standards st ON st.id = ns.product_id\n" +
+            "LEFT JOIN t_stock ts ON ts.id = st.material_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id =ts.dictionarier_id\n" +
+            "LEFT JOIN t_warehouse tw ON tw.id = ps.warehourse_id\n" +
+            "WHERE ps.delete_no = 0 and ps.state = 0 AND pi.ppid = #{deId}" +
+            "</script>")
+    List<ProductionStockVo> findPickingStocksByPPId(@Param("deId")Integer deId);
+
+
+    //   生产管理-根据id修改领料的状态为已使用
+    @Select(value = "<script>UPDATE picking_stock SET state = 1 WHERE  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item.id}</foreach>\n" +
+            "</script>")
+    void updatePickingStockstateByIds(@Param("ids")List<ProductionStockVo> ids);
 
 
 }

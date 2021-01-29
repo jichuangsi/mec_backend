@@ -11,7 +11,7 @@ public interface TSuitdetailRepository  extends JpaRepository<TSuitdetail,Intege
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE t_suitdetail SET delete_no = 1 AND suit_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE t_suitdetail SET delete_no = 1 WHERE suit_id = ?1",nativeQuery = true)
     void updateSuitDetailBySuitId(Integer suitId);
 
 }

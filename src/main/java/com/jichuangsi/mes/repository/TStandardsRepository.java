@@ -16,6 +16,6 @@ public interface TStandardsRepository   extends JpaRepository<TStandards,Integer
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE t_standards SET delete_no = 1 AND material_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE t_standards SET delete_no = 1 WHERE material_id = ?1",nativeQuery = true)
     void updateByOrderId(Integer orderId);
 }

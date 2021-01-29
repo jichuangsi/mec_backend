@@ -13,8 +13,13 @@ public interface PickingStockRepository   extends JpaRepository<PickingStock,Int
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE picking_stock SET delete_no = 1 AND ppiid = ?1",nativeQuery = true)
+    @Query(value = "UPDATE picking_stock SET delete_no = 1 WHERE ppiid = ?1",nativeQuery = true)
     void updateByPPIId(Integer orderId);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE picking_stock SET state = 1 WHERE ppiid = ?1",nativeQuery = true)
+    void updateStateByPPIId(Integer orderId);//把状态改为已使用
 
 
     List<PickingStock> findByPPIId(Integer id);

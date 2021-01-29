@@ -28,6 +28,7 @@ public class PPProductionVo {
     private String beginName;//始端
     private String endName;//末端
     private String bobbinName;//成品线轴
+    private String productUnit;//产品单位
 
     private BigDecimal elStart;//延伸率EL
     private BigDecimal elEnd;//延伸率EL
@@ -40,6 +41,15 @@ public class PPProductionVo {
 //    private Integer towParameters;//牵引参数
 //    private Integer stopTime;//停止时间 min
 //    private BigDecimal waterTemp;//水温℃
+
+
+    public String getProductUnit() {
+        return productUnit;
+    }
+
+    public void setProductUnit(String productUnit) {
+        this.productUnit = productUnit;
+    }
 
     public Integer getId() {
         return id;

@@ -12,6 +12,6 @@ public interface TPurchasedetailRepository  extends JpaRepository<TPurchasedetai
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE t_purchasedetail SET delete_no = 1 AND purchase_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE t_purchasedetail SET delete_no = 1 where purchase_id = ?1",nativeQuery = true)
     void updatepurchasedetailByOrderId(Integer orderId);
 }
