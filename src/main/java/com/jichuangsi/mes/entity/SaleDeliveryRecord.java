@@ -2,6 +2,7 @@ package com.jichuangsi.mes.entity;
 
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "t_saleDelivery_record")
@@ -16,7 +17,7 @@ public class SaleDeliveryRecord {
     private String stockNumber;//编号
     private String updateRemark;//线轴
     private String standards;//长度m
-    private Integer pageNum;//改变数量
+    private BigDecimal pageNum;//改变数量
 
     public String getUpdateRemark() {
         return updateRemark;
@@ -74,11 +75,11 @@ public class SaleDeliveryRecord {
         this.standards = standards;
     }
 
-    public Integer getPageNum() {
+    public BigDecimal getPageNum() {
         return pageNum;
     }
 
-    public void setPageNum(Integer pageNum) {
+    public void setPageNum(BigDecimal pageNum) {
         this.pageNum = pageNum;
     }
 }

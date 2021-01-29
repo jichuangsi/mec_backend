@@ -735,10 +735,12 @@ public interface IMesMapper {
             "\tWHEN ire.record_type =4 then \"销售\" \n" +
             "\tWHEN ire.record_type =5 then \"采购\" \n" +
             "\tWHEN ire.record_type =7 then \"生产出库\" \n" +
-            "\tWHEN ire.record_type =6 then \"盘点\" end) as recordType\n" +
+            "\tWHEN ire.record_type =6 then \"盘点\" end) as recordType," +
+            "ppp.production_number as productionNumber,ppp.gx_name as gxName\n" +
             "FROM inventory_record ire\n" +
             "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
             "LEFT JOIN  s_dictionarier sd ON sd.id = ire.unit_id\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ire.ppp_id\n" +
             "WHERE  ire.inventory_type =#{modelNameId}   \n"+
             "<if test='name != null'>AND ire.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null'>AND ire.product_detailid =#{deId} </if>\n"+
@@ -899,7 +901,8 @@ public interface IMesMapper {
 
     //库存管理-出入库管理-调拨/出库数据根据id查询（半成品、废料、成品）
     @Select(value = "<script>SELECT ins.id as updateID,tb.bobbin_name as updateRemark,\n" +
-            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId,sd.`name` as updateType\n" +
+            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId," +
+            "sd.`name` as updateType,pp.axle_number as  axleNumber\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
@@ -1619,5 +1622,16 @@ public interface IMesMapper {
             "ORDER BY ts.id DESC \n" +
             "</script>")
     Integer countByBobbinDetailInfo(@Param("deId")Integer deId);
+
+
+
+
+    //   库存管理-根据ids加入生产编号
+    @Select(value = "<script>UPDATE inventory_status SET picking_no = 1,picking_number = #{pickingNumber} WHERE  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    void updateinventoryStatusPickingNumberByIds(@Param("ids")List<Integer> ids,@Param("pickingNumber")String pickingNumber);
+
+
 
 }

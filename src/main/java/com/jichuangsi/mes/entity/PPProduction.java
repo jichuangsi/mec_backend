@@ -14,6 +14,7 @@ public class PPProduction {
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//生产管理
     private Integer Fid;//生产管理上班id
+    private Integer NGXId;//转下班的工序
     private String productionNumber;//生产批号（年+月+日+当天第几个+产品型号）
 
     private Integer finishNum;//实际生产数量(米)
@@ -52,6 +53,14 @@ public class PPProduction {
     private Date createTime;//创建时间
     private Integer deleteNo;//删除否
 
+
+    public Integer getNGXId() {
+        return NGXId;
+    }
+
+    public void setNGXId(Integer NGXId) {
+        this.NGXId = NGXId;
+    }
 
     public BigDecimal getCompressionRate12() {
         return compressionRate12;

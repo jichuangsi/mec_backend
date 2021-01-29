@@ -662,14 +662,14 @@ public class PurchaseService {
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
         for(TPurchasedetailModel tPurchasedetailModel : listdetail){
             InventoryStatus countInventoryStatus=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(tPurchasedetailModel.getStockId(),purchase.getWarehouseiId(),InventoryRecordReturnCode.InventoryType_YL);
-            Integer surplusquantity = 0;
+            BigDecimal surplusquantity ;
             if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(tPurchasedetailModel.getStockId());//产品/原料明细Id
                 inventoryStatus.setWarehouseId(purchase.getWarehouseiId());//仓库Id
 //                inventoryStatus.setRecordType(InventoryRecordReturnCode.RecordType_CG);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
                 inventoryStatus.setInventoryType(InventoryRecordReturnCode.InventoryType_YL);//库存类型(1 原料 2 产品 )
-                surplusquantity = tPurchasedetailModel.getStockAmount();
+                surplusquantity =new BigDecimal(tPurchasedetailModel.getStockAmount()) ;
                 inventoryStatus.setInventorysum(surplusquantity);
 
                 inventoryStatus.setStockName(tPurchasedetailModel.getStockName());
@@ -683,7 +683,7 @@ public class PurchaseService {
                 inventoryStatusList.add(inventoryStatus);
 
             }else{
-                surplusquantity = countInventoryStatus.getInventorysum() + tPurchasedetailModel.getStockAmount();
+                surplusquantity = countInventoryStatus.getInventorysum().add(new BigDecimal(tPurchasedetailModel.getStockAmount()));
                 countInventoryStatus.setInventorysum(surplusquantity);//更改数量
                 inventoryStatusList.add(countInventoryStatus);
             }

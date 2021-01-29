@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.entity;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 //熔炼原料表
 @Entity
@@ -12,8 +13,8 @@ public class ProductionStock {
     private Integer id;//熔炼原料ID
     private Integer PPPId;//生产id
     private Integer inventoryStatusId;//库存原料ID
-    private Integer quantityChoose;//选择数量
-    private Integer totalNet;//总净数g
+    private BigDecimal quantityChoose;//选择数量
+    private BigDecimal totalNet;//总净数g
     private Integer deleteNo;//删除否
 
     public Integer getId() {
@@ -40,19 +41,19 @@ public class ProductionStock {
         this.inventoryStatusId = inventoryStatusId;
     }
 
-    public Integer getQuantityChoose() {
+    public BigDecimal getQuantityChoose() {
         return quantityChoose;
     }
 
-    public void setQuantityChoose(Integer quantityChoose) {
+    public void setQuantityChoose(BigDecimal quantityChoose) {
         this.quantityChoose = quantityChoose;
     }
 
-    public Integer getTotalNet() {
+    public BigDecimal getTotalNet() {
         return totalNet;
     }
 
-    public void setTotalNet(Integer totalNet) {
+    public void setTotalNet(BigDecimal totalNet) {
         this.totalNet = totalNet;
     }
 

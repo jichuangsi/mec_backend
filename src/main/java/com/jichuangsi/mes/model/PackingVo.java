@@ -1,16 +1,14 @@
-package com.jichuangsi.mes.entity;
+package com.jichuangsi.mes.model;
 
+import com.jichuangsi.mes.entity.TPacking;
 
-import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
-//包装
-@Entity
-@Table(name = "t_packing")
-public class TPacking {
+public class PackingVo {
 
-    @Id
-    @GeneratedValue(strategy =GenerationType.IDENTITY)
+
     private Integer id;//包装id
     private String packingName;//包装编号
     private Integer PPPId;//生产id
@@ -21,25 +19,13 @@ public class TPacking {
 
 
     private Date createTime;//包装日期
+    private String productionNumber;//生产批号（年+月+日+当天第几个+产品型号）
+    private String productModel;//产品型号
+    private BigDecimal lengthM;//长度m
 
 
     private String productids;//关联的库存产品
 
-    public Date getProductTime() {
-        return productTime;
-    }
-
-    public void setProductTime(Date productTime) {
-        this.productTime = productTime;
-    }
-
-    public Integer getPPPId() {
-        return PPPId;
-    }
-
-    public void setPPPId(Integer PPPId) {
-        this.PPPId = PPPId;
-    }
 
     public Integer getId() {
         return id;
@@ -57,12 +43,20 @@ public class TPacking {
         this.packingName = packingName;
     }
 
-    public Date getCreateTime() {
-        return createTime;
+    public Integer getPPPId() {
+        return PPPId;
     }
 
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
+    public void setPPPId(Integer PPPId) {
+        this.PPPId = PPPId;
+    }
+
+    public Date getProductTime() {
+        return productTime;
+    }
+
+    public void setProductTime(Date productTime) {
+        this.productTime = productTime;
     }
 
     public Date getQualityTime() {
@@ -87,6 +81,38 @@ public class TPacking {
 
     public void setCartonsNumber(String cartonsNumber) {
         this.cartonsNumber = cartonsNumber;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getProductionNumber() {
+        return productionNumber;
+    }
+
+    public void setProductionNumber(String productionNumber) {
+        this.productionNumber = productionNumber;
+    }
+
+    public String getProductModel() {
+        return productModel;
+    }
+
+    public void setProductModel(String productModel) {
+        this.productModel = productModel;
+    }
+
+    public BigDecimal getLengthM() {
+        return lengthM;
+    }
+
+    public void setLengthM(BigDecimal lengthM) {
+        this.lengthM = lengthM;
     }
 
     public String getProductids() {

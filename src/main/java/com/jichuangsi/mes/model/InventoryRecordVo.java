@@ -13,12 +13,31 @@ public class InventoryRecordVo {
     private String remark;//备注
 
 
+    private String productionNumber;//生产批号（年+月+日+当天第几个+产品型号）
+    private String gxName;//工序类型名称
+
     private String warehousenName;//备注
     private String stockName;//名称
     private String stockModel;//模型
     private String stockNumber;//编号
     private String standards;//规格
     private String unitName;//单位
+
+    public String getProductionNumber() {
+        return productionNumber;
+    }
+
+    public void setProductionNumber(String productionNumber) {
+        this.productionNumber = productionNumber;
+    }
+
+    public String getGxName() {
+        return gxName;
+    }
+
+    public void setGxName(String gxName) {
+        this.gxName = gxName;
+    }
 
     public Integer getId() {
         return id;

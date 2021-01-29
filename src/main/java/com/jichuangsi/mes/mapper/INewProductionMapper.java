@@ -1,7 +1,6 @@
 package com.jichuangsi.mes.mapper;
 
 
-import com.jichuangsi.mes.entity.ProductionStock;
 import com.jichuangsi.mes.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -91,24 +90,12 @@ public interface INewProductionMapper {
             "FROM pp_production ppp\n" +
             "LEFT JOIN pp_product pr ON pr.id = ppp.pproduct_id\n" +
             "LEFT JOIN product_plan pp ON pp.id = pr.pp_id\n" +
-            "WHERE ppp.delete_no = 0 and (ppp.state != 0 and ppp.gxid = #{deId}) or ( ppp.gxid = #{dId} and  ppp.state = 2)\n"+
+            "WHERE ppp.delete_no = 0 and ngxid = #{deId} \n"+//and (ppp.state = 1 and ppp.gxid = #{deId}) or ( ppp.gxid = #{dId} and  ppp.state = 2)
+            "<if test='deId == 43'>or ngxid = 90</if>\n"+
             "<if test='pname != null'>AND ppp.production_number LIKE CONCAT('%', #{pname},'%')</if>\n"+
             "ORDER BY ppp.id DESC\n" +
             "</script>")
-    List<PPPVo> findAllPPProduction(@Param("deId")Integer deId,@Param("dId")Integer dId,@Param("pname")String pname);
-
-    //查询生产表 -退火的时候状态是4
-    @Select(value = "<script>SELECT ppp.id as id,\n" +
-            "pp.pp_number as ppNumber, ppp.production_number as productionNumber,\n" +
-            "ppp.gx_name as GXName\n" +
-            "FROM pp_production ppp\n" +
-            "LEFT JOIN pp_product pr ON pr.id = ppp.pproduct_id\n" +
-            "LEFT JOIN product_plan pp ON pp.id = pr.pp_id\n" +
-            "WHERE ppp.delete_no = 0 and (ppp.state != 0 and ppp.gxid = #{deId}) or (ppp.state = #{state})\n"+
-            "<if test='pname != null'>AND ppp.production_number LIKE CONCAT('%', #{pname},'%')</if>\n"+
-            "ORDER BY ppp.id DESC\n" +
-            "</script>")
-    List<PPPVo> findAllPPProductionAnnealing(@Param("deId")Integer deId,@Param("pname")String pname,@Param("state")Integer state);
+    List<PPPVo> findAllPPProduction(@Param("deId")Integer deId,@Param("pname")String pname);
 
     //生产熔炼-根据生产计划单id查询领料的原材料
     @Select(value = "<script>SELECT ps.id as id,ps.ppiid as PPPId,ps.inventory_status_id as inventoryStatusId,\n" +
@@ -134,5 +121,44 @@ public interface INewProductionMapper {
             "</script>")
     void updatePickingStockstateByIds(@Param("ids")List<ProductionStockVo> ids);
 
+
+
+
+
+    //包装管理-查询所有
+    @Select(value = "<script>SELECT pa.id,pa.cartons_number as cartonsNumber,pa.create_time as createTime,\n" +
+            "pa.packing_name as packingName,pa.productids as productids,pa.quality_time as qualityTime,\n" +
+            "pa.stock as stock,pa.pppid as PPPId,pa.product_time as productTime,\n" +
+            "ppp.production_number as productionNumber\n" +
+            "FROM t_packing pa\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = pa.pppid" +
+            "<if test='name != null'>Where ppp.production_number LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "LIMIT #{pageNum},#{pageSize}</script>")
+    List<PackingVo> findAllPicking(@Param("name")String name, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
+
+    //包装管理-查询-总数
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM t_packing pa\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = pa.pppid" +
+            "<if test='name != null'>Where ppp.production_number LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "</script>")
+    Integer countByAllPicking(@Param("name")String name);
+
+    //  包装管理-根据库存id查询明细
+    @Select(value = "<script>SELECT ins.id as id,ins.stock_model as productModel,\n" +
+            "ins.standards as standards,\n" +
+            "tb.bobbin_name as bobbinName,pp.axle_number as axleNumber,pp.lengthm as lengthm,\n" +
+            "ins.inventorysum as inventorysum\n" +
+            "FROM ppp_products#{id}  pp\n" +
+            "LEFT JOIN inventory_status ins ON ins.product_id = pp.id \n" +
+            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id \n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id \n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id \n" +
+            "WHERE  ins.inventory_type = 2 \n" +
+            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "and pp.id IN\n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    List<PackingDetailVo> findDetailsByPackingId(@Param("id")Integer id,@Param("ids")List<Integer> ids);
 
 }

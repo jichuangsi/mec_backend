@@ -14,6 +14,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -331,9 +332,9 @@ public class WarehouseService {
                 Integer recordType =getrecordType("rk") ;
 
                 InventoryStatus getnventoryStatuss = inventoryStatusRepository.findByid(updateModel.getUpdateID());
-                Integer surplusquantity = 0;
+                BigDecimal surplusquantity;
                 if(!StringUtils.isEmpty(getnventoryStatuss)){//如果不为空就修改 如果为空就报异常。
-                    surplusquantity = getnventoryStatuss.getInventorysum() + updateModel.getUpdateNum();
+                    surplusquantity = getnventoryStatuss.getInventorysum().add(updateModel.getUpdateNum()) ;
                     getnventoryStatuss.setInventorysum(surplusquantity);//更改数量
                     inventoryStatusList.add(getnventoryStatuss);
 
@@ -370,7 +371,7 @@ public class WarehouseService {
                 Integer inventoruType = getInventoryType(updateModel.getFindModelName());
 
                 InventoryStatus countInventoryStatus=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(updateModel.getUpdateID(),updateModel.getUpdateWarehourseID(),inventoruType);
-                Integer surplusquantity = 0;
+                BigDecimal surplusquantity;
                 if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
                     InventoryStatus inventoryStatus = new InventoryStatus();
                     inventoryStatus.setProductId(updateModel.getUpdateID());//产品/原料明细Id
@@ -391,7 +392,7 @@ public class WarehouseService {
                     inventoryStatusList.add(inventoryStatus);
 
                 }else{
-                    surplusquantity = countInventoryStatus.getInventorysum() + updateModel.getUpdateNum();
+                    surplusquantity = countInventoryStatus.getInventorysum().add(updateModel.getUpdateNum());
                     countInventoryStatus.setInventorysum(surplusquantity);//更改数量
                     inventoryStatusList.add(countInventoryStatus);
                 }
@@ -514,8 +515,8 @@ public class WarehouseService {
 
             InventoryStatus findinventory = inventoryStatusRepository.findByid(updateModel.getUpdateID());//根据库存id查找出相对应的信息。
 
-            Integer intsum = findinventory.getInventorysum() -updateModel.getUpdateNum();
-            if(intsum<0){//判断库存数量是否足够
+            BigDecimal intsum = findinventory.getInventorysum().subtract(updateModel.getUpdateNum());
+            if(intsum.compareTo(BigDecimal.ZERO) == -1){//判断库存数量是否足够
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
             }
@@ -524,14 +525,14 @@ public class WarehouseService {
 
             //获取调取仓库是否有此库存。如果有就修改，没有就新增
             InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),updateModel.getUpdateWarehourseID(),getInventoryType(updateModel.getFindModelName()));
-            Integer surplusquantity =  0;//调转仓库修改的数量
+            BigDecimal surplusquantity;//调转仓库修改的数量
             if(StringUtils.isEmpty(countInventoryStatus1)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(findinventory.getProductId());//产品/原料明细Id
                 inventoryStatus.setWarehouseId(updateModel.getUpdateWarehourseID());//仓库Id
                 inventoryStatus.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
                 surplusquantity = updateModel.getUpdateNum();
-                inventoryStatus.setInventorysum(updateModel.getUpdateNum());
+                inventoryStatus.setInventorysum(surplusquantity);
 
                 inventoryStatus.setStockName(updateModel.getStockName());
                 inventoryStatus.setStockNumber(updateModel.getStockNumber());
@@ -546,7 +547,7 @@ public class WarehouseService {
                 inventoryStatus.setState(0);
                 inventoryStatusList.add(inventoryStatus);
             }else{
-                surplusquantity = countInventoryStatus1.getInventorysum() + updateModel.getUpdateNum();
+                surplusquantity = countInventoryStatus1.getInventorysum().add(updateModel.getUpdateNum());
                 countInventoryStatus1.setInventorysum(surplusquantity);//更改数量
                 inventoryStatusList.add(countInventoryStatus1);
             }
@@ -561,6 +562,7 @@ public class WarehouseService {
             inventoryRecord.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord.setRemark(updateModel.getUpdateRemark());
             inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
+            inventoryRecord.setPppId(findinventory.getPppId());
 
             inventoryRecord.setStockName(updateModel.getStockName());
             inventoryRecord.setStockNumber(updateModel.getStockNumber());
@@ -579,6 +581,7 @@ public class WarehouseService {
             inventoryRecord1.setInventoryType(getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord1.setRemark(updateModel.getUpdateRemark());
             inventoryRecord1.setWarehouseId(updateModel.getUpdateWarehourseID());
+            inventoryRecord1.setPppId(findinventory.getPppId());
 
             inventoryRecord1.setStockName(updateModel.getStockName());
             inventoryRecord1.setStockNumber(updateModel.getStockNumber());
@@ -611,8 +614,8 @@ public class WarehouseService {
 
             InventoryStatus findinventory = inventoryStatusRepository.findByid(updateModel.getUpdateID());//根据库存id查找出相对应的信息。
 
-            Integer intsum = findinventory.getInventorysum() -updateModel.getUpdateNum();
-            if(intsum<0){//判断库存数量是否足够
+            BigDecimal intsum = findinventory.getInventorysum().subtract(updateModel.getUpdateNum());
+            if(intsum.compareTo(BigDecimal.ZERO) == -1){//判断库存数量是否足够
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
             }
@@ -837,7 +840,7 @@ public class WarehouseService {
 
         InventoryStatus findinventory = inventoryStatusRepository.findByid(model.getUpdateID());//根据库存id查找出相对应的信息。
 
-        Integer intsum = model.getUpdateNum();
+        BigDecimal intsum =model.getUpdateNum() ;
         findinventory.setInventorysum(intsum);//修改库存数量
 
         //盘点记录

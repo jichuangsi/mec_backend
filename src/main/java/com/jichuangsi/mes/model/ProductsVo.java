@@ -46,9 +46,84 @@ public class ProductsVo {
     private BigDecimal totalLength;//总长度（长度*数量）
     private BigDecimal netWeightgSum;//总净重g(净重*数量)
 
+
+    private String windingProcedure ;//绕线程序
+    private String tensionProgram ;//张力程序
+    private BigDecimal elongation;//延伸率%
+    private String breakingForce ;//拉断力cN
+    private String bobbinType;//线轴类型
+    private BigDecimal bobbindiameter;//线轴直径
+    private String bobbinColor;//线轴颜色
+    private String identification;//首尾标识
+
+
     private Integer state;//使用否 0否 1是（默认0）
 
     private Integer deleteNo;//删除否
+
+    public String getWindingProcedure() {
+        return windingProcedure;
+    }
+
+    public void setWindingProcedure(String windingProcedure) {
+        this.windingProcedure = windingProcedure;
+    }
+
+    public String getTensionProgram() {
+        return tensionProgram;
+    }
+
+    public void setTensionProgram(String tensionProgram) {
+        this.tensionProgram = tensionProgram;
+    }
+
+    public BigDecimal getElongation() {
+        return elongation;
+    }
+
+    public void setElongation(BigDecimal elongation) {
+        this.elongation = elongation;
+    }
+
+    public String getBreakingForce() {
+        return breakingForce;
+    }
+
+    public void setBreakingForce(String breakingForce) {
+        this.breakingForce = breakingForce;
+    }
+
+    public String getBobbinType() {
+        return bobbinType;
+    }
+
+    public void setBobbinType(String bobbinType) {
+        this.bobbinType = bobbinType;
+    }
+
+    public BigDecimal getBobbindiameter() {
+        return bobbindiameter;
+    }
+
+    public void setBobbindiameter(BigDecimal bobbindiameter) {
+        this.bobbindiameter = bobbindiameter;
+    }
+
+    public String getBobbinColor() {
+        return bobbinColor;
+    }
+
+    public void setBobbinColor(String bobbinColor) {
+        this.bobbinColor = bobbinColor;
+    }
+
+    public String getIdentification() {
+        return identification;
+    }
+
+    public void setIdentification(String identification) {
+        this.identification = identification;
+    }
 
     public Integer getLPPId() {
         return LPPId;

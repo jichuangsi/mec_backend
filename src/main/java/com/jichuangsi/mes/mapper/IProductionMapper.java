@@ -208,8 +208,11 @@ public interface IProductionMapper {
             "pp.total_length as totalLength,\n" +
             "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
             "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo," +
-            "pp.straight_line as straightLine\n" +
+            "pp.straight_line as straightLine,\n" +
+
+            "pw.bobbin_color as bobbinColor\n" +
             "FROM ppp_products#{id} pp\n" +
+            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
             "WHERE pp.pppid = #{deId} and  pp.lppid = #{dId} AND pp.delete_no = 0 " +
@@ -249,9 +252,11 @@ public interface IProductionMapper {
             "pp.numbers as numbers,\n" +
             "pp.total_length as totalLength, \n" +
             "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo, \n" +
-            "pw.straight_line as straightLine,pw.surface as surface,\n" +
+//            "pw.straight_line as straightLine,pw.surface as surface,\n" +
             "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
-            "pw.setting_out as payingOff,pw.flat_cable as flatCable\n" +
+//            "pw.setting_out as payingOff,pw.flat_cable as flatCable,\n" +
+
+            "pw.bobbin_color as bobbinColor\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
@@ -271,8 +276,8 @@ public interface IProductionMapper {
             "pp.numbers as numbers,\n" +
             "pp.total_length as totalLength, \n" +
             "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo, \n" +
-            "pw.straight_line as straightLine,pw.surface as surface,\n" +
-            "pw.setting_out as payingOff,pw.flat_cable as flatCable\n" +
+//            "pw.straight_line as straightLine,pw.surface as surface,\n" +
+//            "pw.setting_out as payingOff,pw.flat_cable as flatCable\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
@@ -386,15 +391,20 @@ public interface IProductionMapper {
 
     //绕线/改绕工序-回填-查询产物(上班/本班)  sd.`name` as gxName,
     @Select(value = "<script>SELECT pp.id as id,pp.gx_id as gxId,\n" +
-            "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId,tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
+            "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId," +
+            "tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
             "pp.wire_diameter_um as wireDiameterUm,pp.lengthm as lengthM," +
             "pp.gross_weight as grossWeight,pp.net_weightg as netWeightg,\n" +
             "pp.wastageg as wastageg,pp.lossg as lossg," +
             "pp.slip as Slip,pp.traction_speed as tractionSpeed," +
             "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
             "pp.surface as surface,pp.paying_off as payingOff," +
+            "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
             "pp.total_length as totalLength,\n" +
-            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,pw.straight_line as straightLine\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo," +
+//            "pw.straight_line as straightLine,\n" +
+
+            "pw.bobbin_color as bobbinColor\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +

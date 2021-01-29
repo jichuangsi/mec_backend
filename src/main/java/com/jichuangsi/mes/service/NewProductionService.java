@@ -69,6 +69,10 @@ public class NewProductionService {
     @Resource
     private ProductionDiaryReportRepository productionDiaryReportRepository;//生产日报汇总表
 
+//    输入毛重和轴重，净重自动计算
+//    损耗 = 总毛重-总轴重-总废料
+//    净重= 毛重-轴重
+
     /**
      * 【新】-生产管理-熔炼- 新增/编辑页面根据生产计划单id获取生产计划单数据and原材料数据
      * @param
@@ -118,18 +122,7 @@ public class NewProductionService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        //如果是退火/中间退火
-        if(selectModel.getFindById() == ProductionStateChange.Production_IntermediateAnnealing || selectModel.getFindById() == ProductionStateChange.Production_FinishedAnnealing){
-            // 根据生产计划单id查询领料数据
-            job.put("LData",iNewProductionMapper.findAllPPProductionAnnealing(ProductionStateChange.getGXIdByGXType(selectModel.getFindById()),   selectModel.getFindName(),3));//领料信息
-        }else if(selectModel.getFindById() == ProductionStateChange.Production_PPWinding){
-            // 根据生产计划单id查询领料数据
-            job.put("LData",iNewProductionMapper.findAllPPProductionAnnealing(ProductionStateChange.getGXIdByGXType(selectModel.getFindById()),selectModel.getFindName(),4));//领料信息
-        }else{
-            // 根据生产计划单id查询领料数据
-            job.put("LData",iNewProductionMapper.findAllPPProduction( ProductionStateChange.getGXIdByGXType2(selectModel.getFindById()),ProductionStateChange.getGXIdByGXType(selectModel.getFindById()),   selectModel.getFindName()));//领料信息
-        }
-
+        job.put("LData",iNewProductionMapper.findAllPPProduction(ProductionStateChange.getGXIdByGXType(selectModel.getFindById()),   selectModel.getFindName()));//领料信息
         return job;
     }
 

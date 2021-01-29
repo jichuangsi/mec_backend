@@ -160,8 +160,8 @@ public class ProductionInventoryService {
             pickingStock.setWarehourseId(findinventory.getWarehouseId());//出库仓库id
 
 
-            Integer intsum = findinventory.getInventorysum() - pickingStock.getQuantityChoose().intValue();
-            if(intsum<0){//判断库存数量是否足够
+            BigDecimal intsum = findinventory.getInventorysum().subtract(pickingStock.getQuantityChoose());
+            if(intsum.compareTo(BigDecimal.ZERO) == -1){//判断库存数量是否足够
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
             }
@@ -170,13 +170,13 @@ public class ProductionInventoryService {
 
             //获取调取仓库是否有此库存。如果有就修改，没有就新增
             InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),productionPicking1.getWarehouseId(),warehouseService.getInventoryType("stock"));
-            Integer surplusquantity =  0;//调转仓库修改的数量
+            BigDecimal surplusquantity ;//调转仓库修改的数量
             if(StringUtils.isEmpty(countInventoryStatus1)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(findinventory.getProductId());//产品/原料明细Id
                 inventoryStatus.setWarehouseId(productionPicking1.getWarehouseId());//存入的仓库Id
                 inventoryStatus.setInventoryType(warehouseService.getInventoryType("stock"));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
-                surplusquantity = pickingStock.getQuantityChoose().intValue();
+                surplusquantity = pickingStock.getQuantityChoose();
                 inventoryStatus.setInventorysum(surplusquantity);
 
                 inventoryStatus.setStockName(findinventory.getStockName());
@@ -192,7 +192,7 @@ public class ProductionInventoryService {
                 inventoryStatus.setState(0);
                 inventoryStatusList.add(inventoryStatus);
             }else{
-                surplusquantity = countInventoryStatus1.getInventorysum() + pickingStock.getQuantityChoose().intValue();
+                surplusquantity = countInventoryStatus1.getInventorysum().add(pickingStock.getQuantityChoose());
                 countInventoryStatus1.setInventorysum(surplusquantity);//更改数量
                 inventoryStatusList.add(countInventoryStatus1);
             }

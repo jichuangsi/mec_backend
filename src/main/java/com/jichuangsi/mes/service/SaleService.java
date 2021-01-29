@@ -669,8 +669,8 @@ public class SaleService {
 
             InventoryStatus findinventory = inventoryStatusRepository.findByid(updateModel.getUpdateID());//根据库存id查找出相对应的信息。
 
-            Integer intsum = findinventory.getInventorysum() -updateModel.getUpdateNum();
-            if(intsum<0){//判断库存数量是否足够
+            BigDecimal intsum = findinventory.getInventorysum().subtract(updateModel.getUpdateNum());
+            if(intsum.compareTo(BigDecimal.ZERO)== -1){//判断库存数量是否足够
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
             }
@@ -735,9 +735,9 @@ public class SaleService {
             Integer inventoryStautsId = updateModel.getInventoryStautsId();
 
             InventoryStatus getnventoryStatuss = inventoryStatusRepository.findByid(inventoryStautsId);
-            Integer surplusquantity = 0;
+            BigDecimal surplusquantity;
             if(!StringUtils.isEmpty(getnventoryStatuss)){//如果不为空就修改 如果为空就报异常。
-                surplusquantity = getnventoryStatuss.getInventorysum() + updateModel.getPageNum();
+                surplusquantity = getnventoryStatuss.getInventorysum().add(updateModel.getPageNum());
                 getnventoryStatuss.setInventorysum(surplusquantity);//更改数量
                 inventoryStatusList.add(getnventoryStatuss);
 
