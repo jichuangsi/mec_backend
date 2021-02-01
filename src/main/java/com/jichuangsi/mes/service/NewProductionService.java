@@ -256,6 +256,8 @@ public class NewProductionService {
 
         iProductionMapper.UpdatePPPProductsLPPPIdByPPPId(ppProduction1.getFid()%10,pid,ppProductionModel.getTwoList());//绑定本次生产的上班产物
 
+        mesMapper.updateStateByProductIdAndInventoryType(ppProductionModel.getTwoList(),ppProduction1.getFid());//库存管理-根据库存ids修改状态为已用
+
     }
 
 }

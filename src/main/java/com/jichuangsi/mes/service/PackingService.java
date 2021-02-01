@@ -58,6 +58,7 @@ public class PackingService {
         tPacking.setPPPId(inventoryStatusRepository.findByid(listInt.get(0)).getPppId());//pppid
         tPacking.setPackingName(strNumber);//包装编号
         tPacking.setCreateTime(new Date());
+        tPacking.setState(0);//入库否
 
         tPackingRepository.save(tPacking);
 

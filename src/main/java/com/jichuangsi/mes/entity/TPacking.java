@@ -25,6 +25,17 @@ public class TPacking {
 
     private String productids;//关联的库存产品
 
+
+    private Integer state;//入库否（0 未入库  1已入库）
+
+    public Integer getState() {
+        return state;
+    }
+
+    public void setState(Integer state) {
+        this.state = state;
+    }
+
     public Date getProductTime() {
         return productTime;
     }

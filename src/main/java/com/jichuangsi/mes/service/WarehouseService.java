@@ -504,10 +504,6 @@ public class WarehouseService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        //如果是成品或者废料或者半成品调拨
-//        if(models.get(0).getFindModelName().equals("product") || models.get(0).getFindModelName().equals("waste") ||  models.get(0).getFindModelName().equals("nofinished") ){
-//
-//        }
         for (UpdateModel updateModel:models) {
             if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())|| StringUtils.isEmpty(updateModel.getUnitId())){
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -534,11 +530,17 @@ public class WarehouseService {
                 surplusquantity = updateModel.getUpdateNum();
                 inventoryStatus.setInventorysum(surplusquantity);
 
-                inventoryStatus.setStockName(updateModel.getStockName());
-                inventoryStatus.setStockNumber(updateModel.getStockNumber());
-                inventoryStatus.setStockModel(updateModel.getStockModel());
-                inventoryStatus.setStandards(updateModel.getStandards());
-                inventoryStatus.setUnitId(updateModel.getUnitId());
+                inventoryStatus.setStockName(findinventory.getStockName());
+                inventoryStatus.setStockNumber(findinventory.getStockNumber());
+                inventoryStatus.setStockModel(findinventory.getStockModel());
+                inventoryStatus.setStandards(findinventory.getStandards());
+                inventoryStatus.setUnitId(findinventory.getUnitId());
+
+//                inventoryStatus.setStockName(updateModel.getStockName());
+//                inventoryStatus.setStockNumber(updateModel.getStockNumber());
+//                inventoryStatus.setStockModel(updateModel.getStockModel());
+//                inventoryStatus.setStandards(updateModel.getStandards());
+//                inventoryStatus.setUnitId(updateModel.getUnitId());
 
                 inventoryStatus.setPppId(findinventory.getPppId());
                 inventoryStatus.setInventorynumbers(findinventory.getInventorynumbers());
@@ -564,11 +566,11 @@ public class WarehouseService {
             inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
             inventoryRecord.setPppId(findinventory.getPppId());
 
-            inventoryRecord.setStockName(updateModel.getStockName());
-            inventoryRecord.setStockNumber(updateModel.getStockNumber());
-            inventoryRecord.setStockModel(updateModel.getStockModel());
-            inventoryRecord.setStandards(updateModel.getStandards());
-            inventoryRecord.setUnitId(updateModel.getUnitId());
+            inventoryRecord.setStockName(findinventory.getStockName());
+            inventoryRecord.setStockNumber(findinventory.getStockNumber());
+            inventoryRecord.setStockModel(findinventory.getStockModel());
+            inventoryRecord.setStandards(findinventory.getStandards());
+            inventoryRecord.setUnitId(findinventory.getUnitId());
             inventoryRecordList.add(inventoryRecord);
 
             //调拨-存入记录
@@ -583,11 +585,11 @@ public class WarehouseService {
             inventoryRecord1.setWarehouseId(updateModel.getUpdateWarehourseID());
             inventoryRecord1.setPppId(findinventory.getPppId());
 
-            inventoryRecord1.setStockName(updateModel.getStockName());
-            inventoryRecord1.setStockNumber(updateModel.getStockNumber());
-            inventoryRecord1.setStockModel(updateModel.getStockModel());
-            inventoryRecord1.setStandards(updateModel.getStandards());
-            inventoryRecord1.setUnitId(updateModel.getUnitId());
+            inventoryRecord1.setStockName(findinventory.getStockName());
+            inventoryRecord1.setStockNumber(findinventory.getStockNumber());
+            inventoryRecord1.setStockModel(findinventory.getStockModel());
+            inventoryRecord1.setStandards(findinventory.getStandards());
+            inventoryRecord1.setUnitId(findinventory.getUnitId());
 
             inventoryRecordList.add(inventoryRecord1);
 

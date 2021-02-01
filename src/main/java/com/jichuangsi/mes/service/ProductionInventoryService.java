@@ -2,6 +2,7 @@ package com.jichuangsi.mes.service;
 
 
 import cn.hutool.core.date.DateUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.jichuangsi.mes.common.ProductionStateChange;
@@ -23,8 +24,10 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductionInventoryService {
@@ -389,7 +392,7 @@ public class ProductionInventoryService {
 
 
     /**
-     * 生产管理-修改状态(delete_no)
+     * 生产库存管理-修改状态(delete_no)
      * @param
      * @param model
      * @throws PassportException
@@ -406,5 +409,180 @@ public class ProductionInventoryService {
 
         productionPicking.setDeleteNo(productionPicking.getDeleteNo() == 0 ? 1 :0);
         productionPickingRepository.save(productionPicking);
+    }
+
+
+
+
+
+
+
+    /**
+     * 生产库存管理-生产入库-查询车间库存
+     * @param
+     * @throws PassportException
+     */
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public JSONObject getWorkshopInventory()throws PassportException {
+        JSONObject jsonObject = new JSONObject();
+
+        List<PackingVo> packingVoList = iNewProductionMapper.findHavePackingInfo();
+        for (PackingVo packingvo:packingVoList) {
+            //库存id转 List<Integer>
+            List<Integer> listInt = Arrays.stream(packingvo.getProductids().split(","))
+                    .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+            List<PackingDetailVo> packingDetailVoList = iNewProductionMapper.findHavePackingInfoById(packingvo.getPPPId()%10,listInt);
+
+            packingvo.setLengthM(packingDetailVoList.stream().map(PackingVo->PackingVo.getLengthm()).reduce(BigDecimal.ZERO,BigDecimal::add));//总长度
+            packingvo.setTotalNet(packingDetailVoList.stream().map(PackingVo->PackingVo.getInventorysum()).reduce(BigDecimal.ZERO,BigDecimal::add));//总净重
+        }
+        jsonObject.put("LData",packingVoList);
+
+        return jsonObject;
+
+    }
+
+
+    /**
+     * 生产库存管理-生产入库-根据id查询车间库存
+     * getFindById:生产id
+     * getFindName 关联的库存id
+     * @param
+     * @throws PassportException
+     */
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public JSONObject getWorkshopInventoryById(SelectModel selectModel)throws PassportException {
+        JSONObject jsonObject = new JSONObject();
+
+        if(StringUtils.isEmpty(selectModel.getFindById()) || StringUtils.isEmpty(selectModel.getFindName())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        List<Integer> listInt = Arrays.stream(selectModel.getFindName().split(","))
+                .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+
+        jsonObject.put("RData",iNewProductionMapper.findHavePackingInfoById(selectModel.getFindById()%10,listInt));
+
+        return jsonObject;
+    }
+
+    /**
+     * 生产库存管理-生产入库-入库操作（其实就是调拨）
+     * @param
+     * @throws PassportException
+     *
+     * getFindById:包装id
+     * findIdOne:仓库id
+     */
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public void UpdateWareHouseId(SelectModel selectModel)throws PassportException {
+
+        if(StringUtils.isEmpty(selectModel.getFindName()) || StringUtils.isEmpty(selectModel.getFindIdOne())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        Integer warehourseId = selectModel.getFindIdOne();
+
+        List<Integer> listInt = Arrays.stream(selectModel.getFindName().split(",")).mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());//分解包装id
+
+        //根据包装id查询关联的库存id
+        List<Integer> integerList = Arrays.stream(iNewProductionMapper.findProductidsByPaId(listInt).split(","))
+                .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+
+        List<InventoryStatus> inventoryStatusList = new ArrayList<>();
+        List<InventoryRecord> inventoryRecordList = new ArrayList<>();
+
+        for (Integer id:integerList) {
+            InventoryStatus findinventory = inventoryStatusRepository.findByid(id);//根据库存id查找出相对应的信息。
+
+            findinventory.setInventorysum(BigDecimal.ZERO);//修改库存数量
+            inventoryStatusList.add(findinventory);//修改掉原来仓库的库存
+
+            //获取调取仓库是否有此库存。如果有就修改，没有就新增
+            InventoryStatus countInventoryStatus1=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(findinventory.getProductId(),warehourseId,2);
+            BigDecimal surplusquantity;//调转仓库修改的数量
+            if(StringUtils.isEmpty(countInventoryStatus1)){//如果为空就是新增。如果不为空就是修改咯
+                InventoryStatus inventoryStatus = new InventoryStatus();
+                inventoryStatus.setProductId(findinventory.getProductId());//产品/原料明细Id
+                inventoryStatus.setWarehouseId(warehourseId);//仓库Id
+                inventoryStatus.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+                surplusquantity = findinventory.getInventorysum();
+                inventoryStatus.setInventorysum(surplusquantity);
+
+                inventoryStatus.setStockName(findinventory.getStockName());
+                inventoryStatus.setStockNumber(findinventory.getStockNumber());
+                inventoryStatus.setStockModel(findinventory.getStockModel());
+                inventoryStatus.setStandards(findinventory.getStandards());
+                inventoryStatus.setUnitId(findinventory.getUnitId());
+
+                inventoryStatus.setPppId(findinventory.getPppId());
+                inventoryStatus.setInventorynumbers(findinventory.getInventorynumbers());
+
+                inventoryStatus.setDeleteNo(0);
+                inventoryStatus.setState(0);
+                inventoryStatusList.add(inventoryStatus);
+            }else{
+                surplusquantity = countInventoryStatus1.getInventorysum().add(findinventory.getInventorysum());
+                countInventoryStatus1.setInventorysum(surplusquantity);//更改数量
+                inventoryStatusList.add(countInventoryStatus1);
+            }
+
+            //调拨-取出记录
+            InventoryRecord inventoryRecord = new InventoryRecord();
+            inventoryRecord.setProductDetailid(findinventory.getProductId());
+            inventoryRecord.setRecordType(3);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+            inventoryRecord.setCreateTime(System.currentTimeMillis());
+            inventoryRecord.setChangequantity("-"+findinventory.getInventorysum());
+            inventoryRecord.setSurplusquantity(findinventory.getInventorysum());
+            inventoryRecord.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+            inventoryRecord.setRemark("生产出库");
+            inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
+            inventoryRecord.setPppId(findinventory.getPppId());
+
+            inventoryRecord.setStockName(findinventory.getStockName());
+            inventoryRecord.setStockNumber(findinventory.getStockNumber());
+            inventoryRecord.setStockModel(findinventory.getStockModel());
+            inventoryRecord.setStandards(findinventory.getStandards());
+            inventoryRecord.setUnitId(findinventory.getUnitId());
+            inventoryRecordList.add(inventoryRecord);
+
+            //调拨-存入记录
+            InventoryRecord inventoryRecord1 = new InventoryRecord();
+            inventoryRecord1.setProductDetailid(findinventory.getProductId());
+            inventoryRecord1.setRecordType(3);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+            inventoryRecord1.setCreateTime(System.currentTimeMillis());
+            inventoryRecord1.setChangequantity("+"+findinventory.getInventorysum());
+            inventoryRecord1.setSurplusquantity(surplusquantity);
+            inventoryRecord1.setInventoryType(2);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+            inventoryRecord1.setRemark("生产入库");
+            inventoryRecord1.setWarehouseId(warehourseId);
+            inventoryRecord1.setPppId(findinventory.getPppId());
+
+            inventoryRecord1.setStockName(findinventory.getStockName());
+            inventoryRecord1.setStockNumber(findinventory.getStockNumber());
+            inventoryRecord1.setStockModel(findinventory.getStockModel());
+            inventoryRecord1.setStandards(findinventory.getStandards());
+            inventoryRecord1.setUnitId(findinventory.getUnitId());
+
+            inventoryRecordList.add(inventoryRecord1);
+
+        }
+
+        // 根据包装管理修改状态
+        iNewProductionMapper.updatetpackingStateByIds(listInt);
+
+        inventoryStatusRepository.saveAll(inventoryStatusList);
+        inventoryRecordRepository.saveAll(inventoryRecordList);
+
+//        根据包装id添加入库历史
+        addRKHistory(listInt);
+    }
+
+
+    public void addRKHistory(List<Integer> listInt){
+        for (Integer id:listInt) {
+
+        }
+
     }
 }

@@ -452,29 +452,56 @@ public interface IProductionMapper {
 //            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
 //            "WHERE inventory_type =2\n" +
 //            "GROUP BY ppp_id</script>")
-    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as ppNumber,\n" +
-            "ins.stock_model as productModel,ins.standards as stockName,\n" +
+//    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as ppNumber,\n" +
+//            "ins.stock_model as productModel,ins.standards as stockName,\n" +
+//            "sd.`name` as stockRemarks\n" +
+//            "FROM inventory_status ins\n" +
+//            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
+//            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
+//            "WHERE ins.inventory_type = 2 AND ins.delete_no = 0 AND ins.state = 0 AND ins.picking_no != 1\n" +
+//            "GROUP BY ppp.production_number\n"+
+//            "ORDER BY ppp.id DESC</script>")
+//    List<PPProductionVo> findAllFinished();
+
+    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as stockNumber,\n" +
+            "ins.stock_model as stockModel,ins.standards as stockName,ins.unit_id as dictionarierId,\n" +
             "sd.`name` as stockRemarks\n" +
             "FROM inventory_status ins\n" +
             "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
-            "WHERE ins.inventory_type = 2 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "WHERE ins.inventory_type = 2 AND ins.warehouse_id =9 AND ins.delete_no = 0 AND ins.state = 0" +
+            " AND ins.picking_no != 1\n" +
             "GROUP BY ppp.production_number\n"+
             "ORDER BY ppp.id DESC</script>")
-    List<PPProductionVo> findAllFinished();
+    List<StockModel> findAllFinished();
+
 
 
     //工序-回填-根据库存数据查询绕线数量
-    @Select(value = "<script>SELECT pp.id as id,tb.bobbin_name as bobbinName,\n" +
-            "pp.lengthm as lengthM,ins.inventorysum as numbers\n" +
+//    @Select(value = "<script>SELECT pp.id as id,tb.bobbin_name as bobbinName,\n" +
+//            "pp.lengthm as lengthM,ins.inventorysum as numbers\n" +
+//            "FROM ppp_products#{id} pp\n" +
+//            "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
+//            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+//            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+//            "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = 2 \n" +
+//            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+//            "</script>")
+//    List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
+
+    @Select(value = "<script>SELECT ins.id as updateID,tb.bobbin_name as updateRemark,\n" +
+            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId," +
+            "sd.`name` as updateType,pp.axle_number as  axleNumber\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = ins.unit_id\n" +
             "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = 2 \n" +
-            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0" +
+            " AND ins.picking_no != 1\n" +
             "</script>")
-    List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
+    List<UpdateModel> findAllInventoryStateByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 
 
 //    ===========生产数据===============

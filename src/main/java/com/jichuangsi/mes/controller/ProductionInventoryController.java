@@ -84,13 +84,50 @@ public class ProductionInventoryController {
         }
     }
 
-    @ApiOperation("生产管理-修改状态(delete_no)")
+    @ApiOperation("生产库存管理-修改状态(delete_no)")
     @ApiImplicitParams({})
     @PostMapping("/updatePPIByPPIId")
     @OperLog(operModul = "修改状态",operType = "2",operDesc = "修改状态(delete_no)")
     public ResponseModel updatePPIByPPIId(@RequestBody UpdateModel updateModel){
         try {
             productionInventoryService.updatePPIByPPIId(updateModel);
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+        return ResponseModel.sucessWithEmptyData("");
+    }
+
+
+
+    @ApiOperation("生产库存管理-生产入库-查询车间库存")
+    @ApiImplicitParams({})
+    @PostMapping("/getWorkshopInventory")
+    public ResponseModel getWorkshopInventory(){
+        try {
+            return ResponseModel.sucess("",productionInventoryService.getWorkshopInventory());
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
+    @ApiOperation("生产库存管理-生产入库-根据id查询车间库存")
+    @ApiImplicitParams({})
+    @PostMapping("/getWorkshopInventoryById")
+    public ResponseModel getWorkshopInventoryById(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",productionInventoryService.getWorkshopInventoryById(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+    @ApiOperation("生产库存管理-生产入库-入库操作")
+    @ApiImplicitParams({})
+    @PostMapping("/UpdateWareHouseId")
+    public ResponseModel UpdateWareHouseId(@RequestBody SelectModel selectModel){
+        try {
+            productionInventoryService.UpdateWareHouseId(selectModel);
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

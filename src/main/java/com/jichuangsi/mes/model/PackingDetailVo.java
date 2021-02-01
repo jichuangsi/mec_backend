@@ -5,13 +5,21 @@ import java.math.BigDecimal;
 public class PackingDetailVo {
 
     private Integer id;//包装明细id
+    private String productionNumber;//生产批号
     private String productModel;//模型
     private String standards;//规格
     private String bobbinName;//线轴名称
     private String axleNumber;//编号
     private BigDecimal lengthm;//长度m
-    private Integer inventorysum;//库存总数
+    private BigDecimal inventorysum;//库存总数
 
+    public String getProductionNumber() {
+        return productionNumber;
+    }
+
+    public void setProductionNumber(String productionNumber) {
+        this.productionNumber = productionNumber;
+    }
 
     public Integer getId() {
         return id;
@@ -61,11 +69,11 @@ public class PackingDetailVo {
         this.lengthm = lengthm;
     }
 
-    public Integer getInventorysum() {
+    public BigDecimal getInventorysum() {
         return inventorysum;
     }
 
-    public void setInventorysum(Integer inventorysum) {
+    public void setInventorysum(BigDecimal inventorysum) {
         this.inventorysum = inventorysum;
     }
 }

@@ -132,7 +132,8 @@ public interface INewProductionMapper {
             "ppp.production_number as productionNumber\n" +
             "FROM t_packing pa\n" +
             "LEFT JOIN pp_production ppp ON ppp.id = pa.pppid" +
-            "<if test='name != null'>Where ppp.production_number LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='name != null'>Where pa.packing_name LIKE CONCAT('%', #{name},'%')</if>\n" +
+            "ORDER BY pa.id DESC\n"+
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<PackingVo> findAllPicking(@Param("name")String name, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
 
@@ -148,7 +149,7 @@ public interface INewProductionMapper {
     @Select(value = "<script>SELECT ins.id as id,ins.stock_model as productModel,\n" +
             "ins.standards as standards,\n" +
             "tb.bobbin_name as bobbinName,pp.axle_number as axleNumber,pp.lengthm as lengthm,\n" +
-            "ins.inventorysum as inventorysum\n" +
+            "ins.inventorysum as inventorysum,ppp.production_number as productionNumber\n" +
             "FROM ppp_products#{id}  pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id \n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id \n" +
@@ -156,9 +157,58 @@ public interface INewProductionMapper {
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id \n" +
             "WHERE  ins.inventory_type = 2 \n" +
             "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
-            "and pp.id IN\n" +
+            "and ins.id IN\n" +
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
             "</script>")
     List<PackingDetailVo> findDetailsByPackingId(@Param("id")Integer id,@Param("ids")List<Integer> ids);
+
+
+
+
+
+    //  生产入库-根据已包装的查询车间库存(查询未调库的数据)
+    @Select(value = "<script>SELECT pa.id as id, pa.packing_name as packingName,ppp.production_number as productionNumber,\n" +
+            "LENGTH( pa.productids ) - LENGTH( REPLACE ( pa.productids, ',', '' ) ) as  productidsNum," +
+            "pa.productids as productids,pa.pppid as PPPId\n" +
+            "FROM t_packing pa\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = pa.pppid\n" +
+            "where pa.state = 0 " +
+            "</script>")
+    List<PackingVo> findHavePackingInfo();
+
+    //  包装管理-根据库存id查询明细
+    @Select(value = "<script>SELECT pp.axle_number as axleNumber," +
+            "pp.wire_diameter_um as standards,\n" +
+            "pp.lengthm as lengthm,\n" +
+            "ins.inventorysum as inventorysum\n" +
+            "FROM ppp_products#{id}  pp\n" +
+            "LEFT JOIN inventory_status ins ON ins.product_id = pp.id \n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id \n" +
+            "WHERE  ins.inventory_type = 2 \n" +
+            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "and ins.id IN\n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    List<PackingDetailVo> findHavePackingInfoById(@Param("id")Integer id,@Param("ids")List<Integer> ids);
+
+
+
+    //  包装管理-根据库存id查询明细
+    @Select(value = "<script>SELECT GROUP_CONCAT(DISTINCT pa.productids)\n" +
+            "FROM t_packing pa\n" +
+            "WHERE  pa.state = 0 \n" +
+            "and pa.id IN\n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    String findProductidsByPaId(@Param("ids")List<Integer> ids);
+
+
+    //   库存管理-根据生产包装ids修改生产入库状态
+    @Select(value = "<script>UPDATE t_packing SET state = 1 WHERE  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    void updatetpackingStateByIds(@Param("ids")List<Integer> ids);
+
+
 
 }

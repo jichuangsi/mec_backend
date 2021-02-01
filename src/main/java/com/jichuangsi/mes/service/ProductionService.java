@@ -473,7 +473,8 @@ public class ProductionService {
         //1、先把该生产管理该工序所有改变掉状态
         iProductionMapper.UpdatePPPProductsByPPPId(LId,pppid);
 
-        inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),3);//把上批的产物状态改变
+//        mesMapper.updateStateByProductIdAndInventoryType(list,ppProduction.getFid(),3);//根据上批选择的产物，把上批的产物状态改变
+//        inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),3);//把上批的产物状态改变(这个是改变全部的。现在是要根据选择的产物改变)
         inventoryStatusRepository.updateDeleteNoByProductIdAndInventoryType(pppid,inventoryType);//把本批的产物删除
 
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();//成品/半成品
@@ -1139,7 +1140,9 @@ public class ProductionService {
                 upd = iProductionMapper.findBasicInfoById(ppProduct.getId());
             }
 
-            inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
+
+            mesMapper.updateStateByProductIdAndInventoryType(ppProductionModel.getTwoList(),ppProduction.getFid());//库存管理-根据库存ids修改状态为已用
+//            inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
             for (int i = 0; i < list.size(); i++) {
                 ProductsVo pppProducts = list.get(i);
 
@@ -1198,10 +1201,7 @@ public class ProductionService {
     public JSONObject getAllFinished()throws PassportException {
         JSONObject jsonObject = new JSONObject();
 
-        List<PPProductionVo> list = iProductionMapper.findAllFinished();
-
-        jsonObject.put("oneList",list);//根据生产id查询本班产物list
-        jsonObject.put("twoList",list.size() > 0 ? iProductionMapper.findKuCunProductsVoByPPPId(list.get(0).getId(),list.get(0).getId()%10) :"");//根据生产id查询本班产物list
+        jsonObject.put("LData",iProductionMapper.findAllFinished());//根据生产id查询本班产物list
 
         return jsonObject;
     }
@@ -1216,7 +1216,7 @@ public class ProductionService {
         if(StringUtils.isEmpty(selectModel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        jsonObject.put("twoList",iProductionMapper.findKuCunProductsVoByPPPId(selectModel.getFindById(),selectModel.getFindById()%10));//根据生产id查询本班产物list
+        jsonObject.put("RData",iProductionMapper.findAllInventoryStateByPPPId(selectModel.getFindById(),selectModel.getFindById()%10));//根据生产id查询本班产物list
 
         return jsonObject;
     }

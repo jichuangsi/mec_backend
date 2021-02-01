@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.List;
 
 public class PackingVo {
-
-
     private Integer id;//包装id
     private String packingName;//包装编号
     private Integer PPPId;//生产id
@@ -21,11 +19,28 @@ public class PackingVo {
     private Date createTime;//包装日期
     private String productionNumber;//生产批号（年+月+日+当天第几个+产品型号）
     private String productModel;//产品型号
-    private BigDecimal lengthM;//长度m
+    private BigDecimal lengthM;//长度m/总长度
+    private BigDecimal totalNet;//净重
 
 
     private String productids;//关联的库存产品
+    private Integer productidsNum;//关联的库存产品数量
 
+    public Integer getProductidsNum() {
+        return productidsNum;
+    }
+
+    public void setProductidsNum(Integer productidsNum) {
+        this.productidsNum = productidsNum;
+    }
+
+    public BigDecimal getTotalNet() {
+        return totalNet;
+    }
+
+    public void setTotalNet(BigDecimal totalNet) {
+        this.totalNet = totalNet;
+    }
 
     public Integer getId() {
         return id;
