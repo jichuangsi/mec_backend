@@ -319,7 +319,7 @@ public class SysService {
      * @throws PassportException
      */
     public void addDepartment(Department adddepartment,HttpServletRequest request,InputStream inputStream)throws PassportException {
-        if (StringUtil.isEmpty(adddepartment.getDepartmentName()) || StringUtils.isEmpty(adddepartment.getStaffId())){
+        if (StringUtil.isEmpty(adddepartment.getDepartmentName()) || StringUtils.isEmpty(adddepartment.getStaffId())|| StringUtils.isEmpty(adddepartment.getState())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
@@ -333,7 +333,7 @@ public class SysService {
      * @throws PassportException
      */
     public void addMesPost(MesPost mesPost,HttpServletRequest request,InputStream inputStream)throws PassportException {
-        if (StringUtil.isEmpty(mesPost.getPostName()) || StringUtils.isEmpty(mesPost.getPostLevel())){
+        if (StringUtil.isEmpty(mesPost.getPostName()) || StringUtils.isEmpty(mesPost.getPostLevel())|| StringUtils.isEmpty(mesPost.getPostState())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
@@ -347,7 +347,7 @@ public class SysService {
      * @throws PassportException
      */
     public void addTeam(TTeam tteam)throws PassportException {
-        if (StringUtil.isEmpty(tteam.getTeamName()) || StringUtils.isEmpty(tteam.getStaffId())|| StringUtils.isEmpty(tteam.getFrequency())){
+        if (StringUtil.isEmpty(tteam.getTeamName()) || StringUtils.isEmpty(tteam.getStaffId())|| StringUtils.isEmpty(tteam.getFrequency())|| StringUtils.isEmpty(tteam.getState())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
@@ -361,7 +361,7 @@ public class SysService {
      * @throws PassportException
      */
     public void addRole(SRole sRole)throws PassportException {
-        if (StringUtil.isEmpty(sRole.getRoleName())){
+        if (StringUtil.isEmpty(sRole.getRoleName()) || StringUtils.isEmpty(sRole.getState())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
@@ -648,6 +648,12 @@ public class SysService {
         if(sdictionarierRepository.countByNameAndDictFID(sDictionarier.getName(),sDictionarier.getDictFID()) > 0 ){
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_MSG);
         }
+
+//        做一下限制，如果是工序的话手动限制一下
+        if(sDictionarier.getDictFID() == 37){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         sDictionarier.setDeleteNo(0);
         sDictionarier.setCreateTime(new Date());
         sDictionarier.setStaffId(Integer.valueOf(userInfoForToken.getUserId()));

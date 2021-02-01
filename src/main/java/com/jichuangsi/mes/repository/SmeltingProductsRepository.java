@@ -12,7 +12,7 @@ public interface SmeltingProductsRepository extends JpaRepository<SmeltingProduc
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE smelting_products SET delete_no = 1 AND pppid = ?1",nativeQuery = true)
+    @Query(value = "UPDATE smelting_products SET delete_no = 1 WHERE pppid = ?1",nativeQuery = true)
     void updateByPPPId(Integer orderId);
 
 

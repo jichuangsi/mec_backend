@@ -6,23 +6,28 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "t_saleorderdetail")
 public class TSaleorderdetail {
+
+//    合计(数量)：长度*数量
+//    合计（元）：长度*单价
     @Id
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//
     private Integer saleorderId;//销售订单id
     private Integer productId;//产品id
-    private Integer unitId;//单位Id
-    private Integer productNum;//数量
+//    private Integer unitId;//单位Id
+    private BigDecimal lengthM;//长度/(m/轴)
+    private Integer productNum;//数量(轴)
     private BigDecimal productPrice;//单价
     private String remark;//备注
     private Integer deleteNo;
 
-    public Integer getUnitId() {
-        return unitId;
+
+    public BigDecimal getLengthM() {
+        return lengthM;
     }
 
-    public void setUnitId(Integer unitId) {
-        this.unitId = unitId;
+    public void setLengthM(BigDecimal lengthM) {
+        this.lengthM = lengthM;
     }
 
     public Integer getId() {

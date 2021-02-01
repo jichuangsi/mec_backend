@@ -15,6 +15,17 @@ import java.util.List;
 
 @Mapper
 public interface IProductionMapper {
+
+    //    根据工序查询对应线轴下拉框
+    @Select(value = "<script>SELECT id as MapKey,bobbin_number as MapValue,bobbin_name as MapValue2\n" +
+            "FROM t_bobbin WHERE delete_no = 0 and state = 0 and procedure_id LIKE CONCAT('%', #{gxId},'%') </script>")
+    List<MapVo> findXiaLaBobbinBygxId(@Param("gxId")Integer gxId);
+
+    //    查询设备下拉框(因为设备是多选，所以用了根据工序id模糊查询设备)
+    @Select(value = "<script>SELECT id as MapKey,equipment_number as MapValue,equipment_name as MapValue2  FROM t_equipment " +
+            "WHERE delete_no = 0 and state = 0 and equipment_type_id LIKE CONCAT('%', #{gxId},'%') </script>")
+    List<MapVo> findXiaLaEquipmentBygxId(@Param("gxId")Integer gxId);
+
 //    不关联销售订单的产物明细
     @Select(value = "<script>SELECT ppp.id as id,tp.product_model as productModel,tp.product_name as productName,tp.product_number as productNumber, tpr.um_start as standards,sd.`name` as ppUnit,ppp.quantum as quantum\n" +
             "FROM pp_product ppp \n" +
@@ -66,7 +77,7 @@ public interface IProductionMapper {
             "tp.product_model as productModel,tp.product_name as productName,\n" +
             "tp.product_number as productNumber,\n" +
             "ppp.quantum as quantum,ppp.length as length,(ppp.quantum * ppp.length) as planNum,0 as finishNum,\n" +
-            "xz.`name` as bobbinName,sd.`name` as beginName,md.`name` as endName,\n" +
+            "xz.`name` as bobbinName,sd.`name` as beginName,md.`name` as endName,dw.`name` as productUnit,\n" +
             "tpr.um_start as umStart,tpr.mil_start as milStart,\n" +
             "tpr.el_start as elStart,tpr.el_end as elEnd,tpr.bl_start as blStart,tpr.bl_eend as blEend\n" +
             "FROM pp_product ppp\n" +
@@ -75,6 +86,7 @@ public interface IProductionMapper {
             "LEFT JOIN t_saleorder tsa ON tsa.id = ts.saleorder_id \n" +
             "LEFT JOIN t_prostandard tpr ON tpr.id = ts.product_id \n" +
             "LEFT JOIN t_product tp ON tp.id = tpr.product_id \n" +
+            "LEFT JOIN s_dictionarier dw ON dw.id = tp.product_unit_id \n" +
             "LEFT JOIN s_dictionarier xz ON xz.id = tp.bobbin_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tp.begin_id \n" +
             "LEFT JOIN s_dictionarier md ON sd.id = tp.end_id \n" +
@@ -89,13 +101,14 @@ public interface IProductionMapper {
             "tp.product_model as productModel,tp.product_name as productName,\n" +
             "tp.product_number as productNumber,\n" +
             "ppp.quantum as quantum,ppp.length as length,(ppp.quantum * ppp.length) as planNum,0 as finishNum,\n" +
-            "xz.`name` as bobbinName,sd.`name` as beginName,md.`name` as endName,\n" +
+            "xz.`name` as bobbinName,sd.`name` as beginName,md.`name` as endName,dw.`name` as productUnit,\n" +
             "tpr.um_start as umStart,tpr.mil_start as milStart,\n" +
             "tpr.el_start as elStart,tpr.el_end as elEnd,tpr.bl_start as blStart,tpr.bl_eend as blEend\n" +
             "FROM pp_product ppp\n" +
             "LEFT JOIN product_plan pp ON pp.id = ppp.pp_id \n" +
             "LEFT JOIN t_prostandard tpr ON tpr.id = ppp.product_detail_id \n" +
             "LEFT JOIN t_product tp ON tp.id = tpr.product_id \n" +
+            "LEFT JOIN s_dictionarier dw ON dw.id = tp.product_unit_id \n" +
             "LEFT JOIN s_dictionarier xz ON xz.id = tp.bobbin_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tp.begin_id \n" +
             "LEFT JOIN s_dictionarier md ON sd.id = tp.end_id\n" +
@@ -143,10 +156,10 @@ public interface IProductionMapper {
             "FROM pp_production ppp\n" +
             "LEFT JOIN pp_product pr ON pr.id = ppp.pproduct_id\n" +
             "LEFT JOIN product_plan pp ON pp.id = pr.pp_id\n" +
-//            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
+//            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +   and ppp.state != -1
             "LEFT JOIN t_team tt ON tt.id = ppp.team_id\n" +
-            "WHERE ppp.delete_no = 0 and ppp.gxid = #{deId}\n"+
-            "<if test='deIdnew != 0'>or ppp.gxid = #{deIdnew}</if>\n"+
+            "WHERE ppp.delete_no = 0  and ppp.gxid = #{deId}\n"+
+            "<if test='deIdnew != 0'> or  ppp.delete_no = 0 and ppp.gxid = #{deIdnew}</if>\n"+
             "<if test='name != null'>AND pp.pp_number LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='pname != null'>AND ppp.production_number LIKE CONCAT('%', #{pname},'%')</if>\n"+
             "<if test='beginfindDate != null and endfindDate != null'>AND ppp.create_time BETWEEN #{beginfindDate} AND #{endfindDate}</if>\n"+
@@ -183,7 +196,7 @@ public interface IProductionMapper {
     List<ProductionStockVo> findSmeltingStocksByPPPId(@Param("deId")Integer deId);
 
 
-    //工序-回填-查询产物(上班/本班)  sd.`name` as gxName,
+    //工序-回填-根据该生产id查询上班有联系绑定的产物
     @Select(value = "<script>SELECT pp.id as id,pp.gx_id as gxId,\n" +
             "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId,tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
             "pp.wire_diameter_um as wireDiameterUm,pp.lengthm as lengthM," +
@@ -193,16 +206,42 @@ public interface IProductionMapper {
             "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
             "pp.surface as surface,pp.paying_off as payingOff," +
             "pp.total_length as totalLength,\n" +
-            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,\n" +
-            "pw.straight_line as straightLine\n" +
+            "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo," +
+            "pp.straight_line as straightLine,\n" +
+
+            "pw.bobbin_color as bobbinColor\n" +
             "FROM ppp_products#{id} pp\n" +
-            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
+            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
+            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "WHERE pp.pppid = #{deId} and  pp.lppid = #{dId} AND pp.delete_no = 0 " +
+            "</script>")
+    List<ProductsVo> findProductsVoByLPPId(@Param("deId")Integer deId,@Param("dId")Integer dId,@Param("id")Integer id);
+
+    //工序-回填-查询产物(上班/本班)  sd.`name` as gxName,
+    @Select(value = "<script>SELECT pp.id as id,pp.gx_id as gxId,\n" +
+            "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId,tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
+            "pp.wire_diameter_um as wireDiameterUm,pp.lengthm as lengthM," +
+            "pp.gross_weight as grossWeight,pp.net_weightg as netWeightg,\n" +
+            "pp.wastageg as wastageg,pp.lossg as lossg," +
+            "pp.slip as Slip,pp.traction_speed as tractionSpeed," +
+            "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
+            "pp.surface as surface,pp.paying_off as payingOff," +
+            "pp.total_length as totalLength," +
+            "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo," +
+            "pp.straight_line as straightLine\n" +
+//            "pw.straight_line as straightLine\n" +
+            "FROM ppp_products#{id} pp\n" +
+//            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
 //            "LEFT JOIN s_dictionarier sd ON sd.id = pp.gx_id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 \n" +
+            "<if test='state == 1'>AND pp.state = 0</if>\n" +
             "</script>")
-    List<ProductsVo> findProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
+    List<ProductsVo> findProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id,@Param("state")Integer state);
 
     //绕线-回填-查询产物(上班/本班)  sd.`name` as gxName,
     @Select(value = "<script>SELECT pp.id as id,pp.gx_id as gxId, pp.create_time as createTime,\n" +
@@ -213,13 +252,17 @@ public interface IProductionMapper {
             "pp.numbers as numbers,\n" +
             "pp.total_length as totalLength, \n" +
             "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo, \n" +
-            "pw.straight_line as straightLine,pw.surface as surface,\n" +
-            "pw.setting_out as payingOff,pw.flat_cable as flatCable\n" +
+//            "pw.straight_line as straightLine,pw.surface as surface,\n" +
+            "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
+//            "pw.setting_out as payingOff,pw.flat_cable as flatCable,\n" +
+
+            "pw.bobbin_color as bobbinColor\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.pppid = #{deId} AND pw.pppid = #{deId} AND pp.delete_no = 0 \n" +
+            "GROUP BY pp.id" +
             "</script>")
     List<ProductsVo> findProductsVoByPPPId2(@Param("deId")Integer deId,@Param("id")Integer id);
 
@@ -229,18 +272,19 @@ public interface IProductionMapper {
             "ts.standards as standards, pp.wire_diameter_um as wireDiameterUm,\n" +
             "pp.lengthm as lengthM,pp.gross_weight as grossWeight,\n" +
             "pp.net_weightg as netWeightg,\n" +
+            "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
             "pp.numbers as numbers,\n" +
             "pp.total_length as totalLength, \n" +
             "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo, \n" +
-            "pw.straight_line as straightLine,pw.surface as surface,\n" +
-            "pw.setting_out as payingOff,pw.flat_cable as flatCable\n" +
+//            "pw.straight_line as straightLine,pw.surface as surface,\n" +
+//            "pw.setting_out as payingOff,pw.flat_cable as flatCable\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.fid\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.id = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.id = #{deId} AND pw.pppid = #{pppId} AND pp.delete_no = 0 " +
             "</script>")
-    ProductsVo findProductsVoById(@Param("deId")Integer deId,@Param("id")Integer id);
+    ProductsVo findProductsVoById(@Param("deId")Integer deId,@Param("pppId")Integer pppId,@Param("id")Integer id);
 
 
     //工序-新增产物成功后查询自增的id
@@ -252,8 +296,10 @@ public interface IProductionMapper {
 
     @Transactional
     @Modifying
-    @Select(value = "<script>INSERT INTO ppp_products#{id}(pppid,slip,bobbin_detail_id,create_time,delete_no,gross_weight,gx_id,lengthm,lossg,net_weightg,net_weightg_sum," +
-            "paying_off,straight_line,surface,take_up_speed,total_length,traction_speed,wastageg,wire_diameter_um,numbers,flat_cable,tension,oddmentsG,state,fid) values \n" +
+    @Select(value = "<script>INSERT INTO ppp_products#{id}(pppid,slip,bobbin_detail_id,create_time,delete_no,gross_weight," +
+            "gx_id,lengthm,lossg,net_weightg,net_weightg_sum," +
+            "paying_off,straight_line,surface,take_up_speed,total_length,traction_speed,wastageg,wire_diameter_um,numbers," +
+            "flat_cable,tension,oddmentsG,state,fid,axle_number,axleload_weight) values \n" +
             "<foreach collection='list' item='item' separator=','>"+
 //            "(<if test=\"item.id != null\">#{item.id},</if>"+
             " (<if test=\"item.PPPId != null\">#{item.PPPId},</if>"+
@@ -280,8 +326,10 @@ public interface IProductionMapper {
             " #{item.flatCable},"+
             " #{item.tension},"+
             " #{item.oddmentsG},"+
-            " #{item.state},"+
-            " #{item.Fid}"+
+            "0,"+
+            " #{item.Fid},"+
+            " #{item.axleNumber},"+
+            " #{item.axleloadWeight}"+
             ")"+
             "</foreach>" +
             "ON DUPLICATE KEY UPDATE\n" +
@@ -290,8 +338,10 @@ public interface IProductionMapper {
             "gross_weight = values(gross_weight),gx_id = values(gx_id),lengthm = values(lengthm),lossg = values(lossg)," +
             "net_weightg = values(net_weightg),net_weightg_sum = values(net_weightg_sum)," +
             "paying_off = values(paying_off),straight_line = values(straight_line),surface = values(surface),take_up_speed = values(take_up_speed)," +
-            "total_length = values(total_length),traction_speed = values(traction_speed),wastageg = values(wastageg),wire_diameter_um = values(wire_diameter_um)," +
-            "numbers = values(numbers),flat_cable = values(flat_cable),tension = values(tension),oddmentsg = values(oddmentsg),state = values(state),fid = values(fid)" +
+            "total_length = values(total_length),traction_speed = values(traction_speed),wastageg = values(wastageg)," +
+            "wire_diameter_um = values(wire_diameter_um)," +
+            "numbers = values(numbers),flat_cable = values(flat_cable),tension = values(tension),oddmentsg = values(oddmentsg)," +
+            "state = values(state),fid = values(fid),axle_number = values(axle_number),axleload_weight = values(axleload_weight)" +
             "</script>")
     void insertPPPProducts(@Param("list")List<PPPProducts0> pppProducts0List,@Param("id")Integer id);
 
@@ -299,9 +349,18 @@ public interface IProductionMapper {
     @Transactional
     @Modifying
     @Select(value = "<script>" +
-            "UPDATE ppp_products#{id} SET delete_no = 1 AND pppid = #{deId}"+
+            "UPDATE ppp_products#{id} SET delete_no = 1 where pppid = #{deId}"+
             "</script>")
     void UpdatePPPProductsByPPPId(@Param("id")Integer id,@Param("deId")Integer deId);
+
+    //更改产物list状态
+    @Transactional
+    @Modifying
+    @Select(value = "<script>" +
+            "UPDATE ppp_products#{id} SET lppid = #{deId} , state = 1 where id IN"+
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item.id}</foreach>\n" +
+            "</script>")
+    void UpdatePPPProductsLPPPIdByPPPId(@Param("id")Integer id,@Param("deId")Integer deId,@Param("ids")List<PPPProducts0> ids);
 
     //退火-同批次生产-根据生产批次跟工序 查询生产表
     @Select(value = "<script>SELECT ppp.id as id,ppp.create_time as createTime,  ppp.gx_name as GXName," +
@@ -332,15 +391,20 @@ public interface IProductionMapper {
 
     //绕线/改绕工序-回填-查询产物(上班/本班)  sd.`name` as gxName,
     @Select(value = "<script>SELECT pp.id as id,pp.gx_id as gxId,\n" +
-            "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId,tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
+            "pp.create_time as createTime,pp.bobbin_detail_id as bobbinDetailId," +
+            "tb.bobbin_name as bobbinName,ts.standards as standards,\n" +
             "pp.wire_diameter_um as wireDiameterUm,pp.lengthm as lengthM," +
             "pp.gross_weight as grossWeight,pp.net_weightg as netWeightg,\n" +
             "pp.wastageg as wastageg,pp.lossg as lossg," +
             "pp.slip as Slip,pp.traction_speed as tractionSpeed," +
             "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
             "pp.surface as surface,pp.paying_off as payingOff," +
+            "pp.axle_number as axleNumber,pp.axleload_weight as axleloadWeight,\n" +
             "pp.total_length as totalLength,\n" +
-            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,pw.straight_line as straightLine\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo," +
+//            "pw.straight_line as straightLine,\n" +
+
+            "pw.bobbin_color as bobbinColor\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
@@ -388,29 +452,56 @@ public interface IProductionMapper {
 //            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
 //            "WHERE inventory_type =2\n" +
 //            "GROUP BY ppp_id</script>")
-    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as ppNumber,\n" +
-            "ins.stock_model as productModel,ins.standards as stockName,\n" +
+//    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as ppNumber,\n" +
+//            "ins.stock_model as productModel,ins.standards as stockName,\n" +
+//            "sd.`name` as stockRemarks\n" +
+//            "FROM inventory_status ins\n" +
+//            "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
+//            "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
+//            "WHERE ins.inventory_type = 2 AND ins.delete_no = 0 AND ins.state = 0 AND ins.picking_no != 1\n" +
+//            "GROUP BY ppp.production_number\n"+
+//            "ORDER BY ppp.id DESC</script>")
+//    List<PPProductionVo> findAllFinished();
+
+    @Select(value = "<script>SELECT ins.ppp_id as id,ppp.production_number as stockNumber,\n" +
+            "ins.stock_model as stockModel,ins.standards as stockName,ins.unit_id as dictionarierId,\n" +
             "sd.`name` as stockRemarks\n" +
             "FROM inventory_status ins\n" +
             "LEFT JOIN pp_production ppp ON ppp.id = ins.ppp_id\n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = ppp.gxid\n" +
-            "WHERE ins.inventory_type = 2 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "WHERE ins.inventory_type = 2 AND ins.warehouse_id =9 AND ins.delete_no = 0 AND ins.state = 0" +
+            " AND ins.picking_no != 1\n" +
             "GROUP BY ppp.production_number\n"+
             "ORDER BY ppp.id DESC</script>")
-    List<PPProductionVo> findAllFinished();
+    List<StockModel> findAllFinished();
+
 
 
     //工序-回填-根据库存数据查询绕线数量
-    @Select(value = "<script>SELECT pp.id as id,tb.bobbin_name as bobbinName,\n" +
-            "pp.lengthm as lengthM,ins.inventorynumbers as numbers\n" +
+//    @Select(value = "<script>SELECT pp.id as id,tb.bobbin_name as bobbinName,\n" +
+//            "pp.lengthm as lengthM,ins.inventorysum as numbers\n" +
+//            "FROM ppp_products#{id} pp\n" +
+//            "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
+//            "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
+//            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+//            "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = 2 \n" +
+//            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+//            "</script>")
+//    List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
+
+    @Select(value = "<script>SELECT ins.id as updateID,tb.bobbin_name as updateRemark,\n" +
+            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId," +
+            "sd.`name` as updateType,pp.axle_number as  axleNumber\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = ins.unit_id\n" +
             "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = 2 \n" +
-            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0\n" +
+            "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0" +
+            " AND ins.picking_no != 1\n" +
             "</script>")
-    List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
+    List<UpdateModel> findAllInventoryStateByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 
 
 //    ===========生产数据===============
@@ -489,13 +580,13 @@ public interface IProductionMapper {
             "pp.take_up_speed as takeUpSpeed,pp.numbers as numbers,\n" +
             "pp.surface as surface,pp.paying_off as payingOff," +
             "pp.total_length as totalLength,\n" +
-            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo,\n" +
-            "pw.straight_line as straightLine\n" +
+            "pp.net_weightg_sum as netWeightgSum,pp.delete_no as deleteNo\n" +
+//            ",pw.straight_line as straightLine\n" +
             "FROM ppp_products_detour pp\n" +
-            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
+//            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" + AND pw.pppid =  #{deId}
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
-            "WHERE pp.pppid = #{deId} AND pp.delete_no = 0 " +
+            "WHERE pp.pppid = #{deId}  AND pp.delete_no = 0 " +
             "</script>")
     List<ProductsVo> findDetourProductsVoByPPPId(@Param("deId")Integer deId);
 
@@ -570,7 +661,7 @@ public interface IProductionMapper {
 
     //    生产任务-根据情况查询 （待开始、进行中、已完成、预警等）
     @Select(value = "<script>SELECT ppp.id as id,ppp.gxid as GXId, \n" +
-            "ppp.gx_name as GXName,\n" +
+            "ppp.gx_name as GXName,ppp.production_number as productionNumber,\n" +
             "pp.create_time as createTime,pp.finished_time as finishedTime,\n" +
             "tt.team_name as teamName\n" +
             "FROM pp_production ppp\n" +

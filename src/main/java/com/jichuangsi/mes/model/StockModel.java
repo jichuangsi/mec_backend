@@ -18,6 +18,16 @@ public class StockModel {
 
     private String gxName;//工序名称
 
+    private String standards;//规格
+
+    public String getStandards() {
+        return standards;
+    }
+
+    public void setStandards(String standards) {
+        this.standards = standards;
+    }
+
     public String getGxName() {
         return gxName;
     }

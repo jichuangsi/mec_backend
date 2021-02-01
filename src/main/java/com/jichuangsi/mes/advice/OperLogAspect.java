@@ -183,8 +183,8 @@ public class OperLogAspect {
                     }
                 }
             }else{
-                final JWTVerifier verifier=JWT.require(tokenAlgorithm).build();
-                verifier.verify(accessToken);
+//                final JWTVerifier verifier=JWT.require(tokenAlgorithm).build();
+//                verifier.verify(accessToken);
                 DecodedJWT jwt=JWT.decode(accessToken);
                 String userId=jwt.getClaim(userClaim).asString();
                 UserInfoForToken userInfo=JSONObject.parseObject(userId,UserInfoForToken.class);
@@ -306,8 +306,8 @@ public class OperLogAspect {
                     }
                 }
             }else{
-                final JWTVerifier verifier=JWT.require(tokenAlgorithm).build();
-                verifier.verify(accessToken);
+//                final JWTVerifier verifier=JWT.require(tokenAlgorithm).build();
+//                verifier.verify(accessToken);
                 DecodedJWT jwt=JWT.decode(accessToken);
                 String userId=jwt.getClaim(userClaim).asString();
                 UserInfoForToken userInfo=JSONObject.parseObject(userId,UserInfoForToken.class);

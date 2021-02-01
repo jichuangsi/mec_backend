@@ -12,7 +12,7 @@ public class TBobbin {
     private String bobbinNumber;//线轴编号
     private String bobbinName;// 名称
     private String bobbinModel;//型号
-    private Integer procedureId;//工序ID
+    private String procedureId;//工序IDs (要求线轴也要有多个工序可查)
     private Integer bobbintypeId;//线轴类型ID== 线别类型
     private String remark;//说明
     private Integer dictionarierId;//单位ID
@@ -51,11 +51,11 @@ public class TBobbin {
         this.bobbinModel = bobbinModel;
     }
 
-    public Integer getProcedureId() {
+    public String getProcedureId() {
         return procedureId;
     }
 
-    public void setProcedureId(Integer procedureId) {
+    public void setProcedureId(String procedureId) {
         this.procedureId = procedureId;
     }
 

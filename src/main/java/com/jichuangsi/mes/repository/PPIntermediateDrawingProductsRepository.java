@@ -11,6 +11,6 @@ public interface PPIntermediateDrawingProductsRepository  extends JpaRepository<
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE pp_intermediateDrawingProducts SET delete_no = 1 AND pppid = ?1",nativeQuery = true)
+    @Query(value = "UPDATE pp_intermediateDrawingProducts SET delete_no = 1 WHERE pppid = ?1",nativeQuery = true)
     void updateByPPPId(Integer orderId);
 }

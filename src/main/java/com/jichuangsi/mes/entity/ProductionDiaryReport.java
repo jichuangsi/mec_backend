@@ -19,7 +19,7 @@ public class ProductionDiaryReport {
 
 
     private String productModel;//产品型号
-    private Integer incomeHeavy;//来料重g （在新增熔炼的时候产生）
+    private BigDecimal incomeHeavy;//来料重g （在新增熔炼的时候产生）
     private Integer numbers;//数量
 
     private BigDecimal noFinishEdP;//半成品g
@@ -78,11 +78,11 @@ public class ProductionDiaryReport {
         this.productModel = productModel;
     }
 
-    public Integer getIncomeHeavy() {
+    public BigDecimal getIncomeHeavy() {
         return incomeHeavy;
     }
 
-    public void setIncomeHeavy(Integer incomeHeavy) {
+    public void setIncomeHeavy(BigDecimal incomeHeavy) {
         this.incomeHeavy = incomeHeavy;
     }
 

@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.entity;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -26,7 +27,7 @@ public class InventoryRecord {
     private Integer recordType;//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购 6盘点 7 生产出库等)
     private long createTime= new Date().getTime();//创建时间
     private String changequantity ;//发生数量
-    private Integer surplusquantity;//剩余数量
+    private BigDecimal surplusquantity;//剩余数量
     private Integer inventoryType;//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
     private String remark;//备注
 
@@ -126,11 +127,11 @@ public class InventoryRecord {
         this.changequantity = changequantity;
     }
 
-    public Integer getSurplusquantity() {
+    public BigDecimal getSurplusquantity() {
         return surplusquantity;
     }
 
-    public void setSurplusquantity(Integer surplusquantity) {
+    public void setSurplusquantity(BigDecimal surplusquantity) {
         this.surplusquantity = surplusquantity;
     }
 

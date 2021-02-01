@@ -18,10 +18,8 @@ import javax.servlet.http.HttpSession;
 @RequestMapping("/ProductionPlanController")
 public class ProductionPlanController {
 
-
     @Resource
     private ProductionPlanService productionPlanService;
-
 
     @ApiOperation("生产计划单- 新增/编辑页面获取下拉框数据")
     @ApiImplicitParams({})

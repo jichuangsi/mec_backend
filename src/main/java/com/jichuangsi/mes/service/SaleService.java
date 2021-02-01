@@ -11,6 +11,7 @@ import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.repository.*;
+import com.jichuangsi.mes.utill.MappingEntityModelCoverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -31,6 +32,8 @@ public class SaleService {
     private IMesMapper mesMapper;
     @Resource
     private WarehouseService warehouseService;
+    @Resource
+    private PurchaseService purchaseService;
 
 
     @Resource
@@ -65,6 +68,10 @@ public class SaleService {
     private InventoryStatusRepository inventoryStatusRepository;
     @Resource
     private InventoryRecordRepository inventoryRecordRepository;
+    @Resource
+    private SaleDeliveryRecordRepository saleDeliveryRecordRepository;//出库记录
+    @Resource
+    private SummaryRecordRepository summaryRecordRepository;//日汇总
 
     /**
      * 销售订单管理- 新增/编辑页面获取下拉框数据
@@ -145,19 +152,20 @@ public class SaleService {
         List<TSaleorderdetail> listdetail = new ArrayList<>();
         for (int i = 0; i < listpur.size(); i++) {
             TSaleorderdetail tSaleorderdetail =new TSaleorderdetail();
-            if(StringUtils.isEmpty(listpur.get(i).getProductNum()) || StringUtils.isEmpty(listpur.get(i).getProductPrice())){
+            if(StringUtils.isEmpty(listpur.get(i).getProductNum()) || StringUtils.isEmpty(listpur.get(i).getProductPrice())|| StringUtils.isEmpty(listpur.get(i).getLengthM())){
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
-
             }
 
+            tSaleorderdetail.setLengthM(listpur.get(i).getLengthM());//长度（轴）
             tSaleorderdetail.setProductNum(listpur.get(i).getProductNum());//数量
             tSaleorderdetail.setProductPrice(listpur.get(i).getProductPrice());//价格
             tSaleorderdetail.setRemark(listpur.get(i).getRemark());//备注
-            tSaleorderdetail.setDeleteNo(0);
             tSaleorderdetail.setProductId(listpur.get(i).getProductdetailId());
             tSaleorderdetail.setSaleorderId(pid);
+            tSaleorderdetail.setDeleteNo(0);
             listdetail.add(tSaleorderdetail);
+
         }
         tSaleorderdetailRepository.saveAll(listdetail);
 
@@ -273,10 +281,13 @@ public class SaleService {
         List<TSaleorderdetailVo>  listdetail = mesMapper.findSaleDetailById(smodel.getFindById());
         BigDecimal total = listdetail.stream().map(TSaleorderdetailVo->TSaleorderdetailVo.getProductSum()).reduce(BigDecimal.ZERO,BigDecimal::add);//统计list明细里面的金额总数
 
+        List<SaleDeliveryRecord> saleDeliveryRecordList = saleDeliveryRecordRepository.findBySaleOrderId(smodel.getFindById());
+
         jsonObject.put("saleorder",tSaleorder);
         jsonObject.put("checkState",map.get("checkState"));
         jsonObject.put("orderState",map.get("orderstate"));
         jsonObject.put("saleOrderDetail",listdetail);
+        jsonObject.put("saleRecordList",saleDeliveryRecordList);//销售出库记录
         jsonObject.put("detailSize",listdetail.size());
         jsonObject.put("sumMoney",total);
 
@@ -510,6 +521,9 @@ public class SaleService {
                 if(getinttypeId == OrderStateChange.Sale_OrderAudit_Finished_Passed){
                     newstateId = OrderStateChange.Sale_OrderAudit_Returning_NotAudit;
                     straudtiSetting = "销售退回";
+
+                    //订单入库操作
+
                 }else{
                     throw new PassportException(ResultCode.PARAM_ERR_MSG);
                 }
@@ -568,6 +582,11 @@ public class SaleService {
                 orderAuditPocessId =Integer.valueOf(map.get("id"));
                 newstateId = newstateId> 0 ? newstateId:tSaleorder.getOrderStateId();
 
+                if(newstateId == OrderStateChange.Sale_OrderAudit_NOTDelivered_NotSURE){//如果是待出库状态，就是钱到账了
+                    purchaseService.saveSummaryRecord(2,tSaleorder.getId(),"+",tSaleorder.getPayType());
+                }else if(newstateId == OrderStateChange.Sale_OrderAudit_Returned_Passed){//如果是退回审核通过了之后，就出账
+                    purchaseService.saveSummaryRecord(2,tSaleorder.getId(),"-",tSaleorder.getPayType());
+                }
                 break;
             case "F"://不通过
                 if(tSaleorder.getOrderStateId() == OrderStateChange.Sale_OrderAudit_AuditING){//销售订单审核：任何一个审核不通过都是返回到未提交状态
@@ -581,6 +600,7 @@ public class SaleService {
                 }
 
                 levelName ="在-----"+levelName+ "------中被驳回";
+
                 break;
             default:
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
@@ -604,27 +624,94 @@ public class SaleService {
      * 销售订单-新增销售订单出库
      * 此处出库的主要操作有，1、让订单状态显示已出库 2、新增库存管理-库存状况数据 3、新增库存管理-出入库数据
      * @param
-     * @param model
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void updateMaterialOuter(UserInfoForToken userInfoForToken, UpdateModel model,List<UpdateModel> updateModelList)throws PassportException {
-        if(StringUtils.isEmpty(model.getUpdateID()) || StringUtils.isEmpty(model.getUpdateRemark())){
+    public void updateMaterialOuter(UserInfoForToken userInfoForToken,  Integer updateId,List<UpdateModel> updateModelList)throws PassportException {
+        if(StringUtils.isEmpty(updateId) ){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
+        TSaleorder tSaleorder = tsaleorderRepository.findByid(updateId);
 
-        warehouseService.updateWarehouseOut(updateModelList);//批量出库
-//        saleInventory(OrderStateChange.Sale_OrderAudit_Delivered_Sured,InventoryRecordReturnCode.RecordType_CK,InventoryRecordReturnCode.InventoryType_CP,model.getUpdateID(),model.getUpdateRemark());
+        if (StringUtils.isEmpty(tSaleorder)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
+
+        if(updateModelList.size() == 0){
+            throw new PassportException("新增出库数据为空,不能出库！！！");
+        }
+
+        updateWarehouseOut(updateModelList,updateId);//批量出库
 
         //新增审核流程
         AuditPocess auditPocess = new AuditPocess();
-        auditPocess.setAuditOrderId(model.getUpdateID());//审核单子ID
+        auditPocess.setAuditOrderId(updateId);//审核单子ID
         auditPocess.setAuditSettingId(0);//处理的过程Id
         auditPocess.setAuditSetting("出库");
-        auditPocess.setRemark(model.getUpdateRemark());
+        auditPocess.setRemark("销售成品出库");
         auditPocess.setDeleteNo(0);
         auditPocess.setAuditStaffId(Integer.valueOf(userInfoForToken.getUserId()));//员工id
         auditPocessRepository.save(auditPocess);
+
+        tSaleorder.setOrderStateId(OrderStateChange.Sale_OrderAudit_Delivered_Sured);
+        tsaleorderRepository.save(tSaleorder);//修改订单状态
+    }
+
+
+    //    销售出库操作
+    public  void updateWarehouseOut(List<UpdateModel> updateModelList,Integer orderId)throws PassportException{
+        List<InventoryStatus> inventoryStatusList = new ArrayList<>();
+        List<InventoryRecord> inventoryRecordList = new ArrayList<>();
+
+        List<SaleDeliveryRecord> saleDeliveryRecordList = new ArrayList<>();
+        for (UpdateModel updateModel:updateModelList) {
+            if(StringUtils.isEmpty(updateModel.getUpdateID()) || StringUtils.isEmpty(updateModel.getUpdateRemark())){
+                throw new PassportException(ResultCode.PARAM_MISS_MSG);
+            }
+
+            InventoryStatus findinventory = inventoryStatusRepository.findByid(updateModel.getUpdateID());//根据库存id查找出相对应的信息。
+
+            BigDecimal intsum = findinventory.getInventorysum().subtract(updateModel.getUpdateNum());
+            if(intsum.compareTo(BigDecimal.ZERO)== -1){//判断库存数量是否足够
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();//手动回滚
+                throw new PassportException(ResultCode.NUM_NOENOUGH_MSG);
+            }
+            findinventory.setInventorysum(intsum);//修改库存数量
+            inventoryStatusList.add(findinventory);//修改掉原来仓库的库存
+
+            //出库-取出记录
+            InventoryRecord inventoryRecord = new InventoryRecord();
+            inventoryRecord.setProductDetailid(findinventory.getProductId());
+            inventoryRecord.setRecordType(warehouseService.getrecordType("ck"));//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
+            inventoryRecord.setCreateTime(System.currentTimeMillis());
+            inventoryRecord.setChangequantity("-"+updateModel.getUpdateNum());
+            inventoryRecord.setSurplusquantity(intsum);
+            inventoryRecord.setInventoryType(warehouseService.getInventoryType(updateModel.getFindModelName()));//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
+            inventoryRecord.setRemark(updateModel.getUpdateRemark());
+            inventoryRecord.setWarehouseId(findinventory.getWarehouseId());
+
+            inventoryRecord.setStockName(findinventory.getStockName());
+            inventoryRecord.setStockNumber(findinventory.getStockNumber());
+            inventoryRecord.setStockModel(findinventory.getStockModel());
+            inventoryRecord.setStandards(findinventory.getStandards());
+            inventoryRecord.setUnitId(findinventory.getUnitId());
+            inventoryRecord.setPppId(orderId);//多添加一个orderid
+            inventoryRecordList.add(inventoryRecord);
+
+
+            SaleDeliveryRecord saleDeliveryRecord = new SaleDeliveryRecord();
+            saleDeliveryRecord.setSaleOrderId(orderId);
+            saleDeliveryRecord.setInventoryStautsId(updateModel.getUpdateID());
+            saleDeliveryRecord.setStockNumber(updateModel.getStockNumber());
+            saleDeliveryRecord.setStockModel(updateModel.getStockModel());
+            saleDeliveryRecord.setStandards(updateModel.getStandards());
+            saleDeliveryRecord.setUpdateRemark(updateModel.getUpdateRemark());
+            saleDeliveryRecord.setPageNum(updateModel.getUpdateNum());
+
+            saleDeliveryRecordList.add(saleDeliveryRecord);
+        }
+
+        saleDeliveryRecordRepository.saveAll(saleDeliveryRecordList);
+        inventoryStatusRepository.saveAll(inventoryStatusList);
+        inventoryRecordRepository.saveAll(inventoryRecordList);//批量保存
     }
 
     /**
@@ -635,51 +722,74 @@ public class SaleService {
         TSaleorder tSaleorder = tsaleorderRepository.findByid(updateOrderId);
 
         if (StringUtils.isEmpty(tSaleorder)){ throw new PassportException(ResultCode.ACCOUNT_NOTEXIST_MSG);}
-
-        if((recordType == InventoryRecordReturnCode.RecordType_CK && tSaleorder.getOrderStateId() == OrderStateChange.Sale_OrderAudit_NOTDelivered_NotSURE) || (recordType == InventoryRecordReturnCode.RecordType_TH && tSaleorder.getOrderStateId() == OrderStateChange.Sale_OrderAudit_Returning_AuditING)){//判断是销售退回还是出库
-            throw new PassportException(ResultCode.NO_ACCESS);
-        }
-
-        List<TSaleorderdetailVo>  listdetail =  mesMapper.findSaleDetailById(updateOrderId);
-
         List<InventoryStatus> inventoryStatusList = new ArrayList<>();
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
-        for(TSaleorderdetailVo tsaleorderdetailVo : listdetail){
-            InventoryStatus countInventoryStatus=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(tsaleorderdetailVo.getProductId(),tSaleorder.getWarehouseId(),inventoryType);
-            Integer surplusquantity = 0;
-            if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
-                InventoryStatus inventoryStatus = new InventoryStatus();
-                inventoryStatus.setProductId(tsaleorderdetailVo.getProductId());//产品/原料明细Id
-                inventoryStatus.setWarehouseId(tSaleorder.getWarehouseId());//仓库Id
-                inventoryStatus.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
-                surplusquantity = tsaleorderdetailVo.getProductNum();
-                inventoryStatus.setInventorysum(surplusquantity);
-                inventoryStatusList.add(inventoryStatus);
+
+        List<SaleDeliveryRecord> saleDeliveryRecordList = saleDeliveryRecordRepository.findBySaleOrderId(updateOrderId);
+
+        for(SaleDeliveryRecord updateModel : saleDeliveryRecordList){
+            if(StringUtils.isEmpty(updateModel.getInventoryStautsId()) ||  StringUtils.isEmpty(updateModel.getStockModel())){
+                throw new PassportException(ResultCode.PARAM_MISS_MSG);
+            }
+
+            Integer inventoryStautsId = updateModel.getInventoryStautsId();
+
+            InventoryStatus getnventoryStatuss = inventoryStatusRepository.findByid(inventoryStautsId);
+            BigDecimal surplusquantity;
+            if(!StringUtils.isEmpty(getnventoryStatuss)){//如果不为空就修改 如果为空就报异常。
+                surplusquantity = getnventoryStatuss.getInventorysum().add(updateModel.getPageNum());
+                getnventoryStatuss.setInventorysum(surplusquantity);//更改数量
+                inventoryStatusList.add(getnventoryStatuss);
 
             }else{
-                surplusquantity = recordType == 1 ? countInventoryStatus.getInventorysum() - tsaleorderdetailVo.getProductNum():countInventoryStatus.getInventorysum() + tsaleorderdetailVo.getProductNum();
-                countInventoryStatus.setInventorysum(surplusquantity);//更改数量
-                inventoryStatusList.add(countInventoryStatus);
+                throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
             }
 
             //存入记录
             InventoryRecord inventoryRecord = new InventoryRecord();
-            inventoryRecord.setProductDetailid(tsaleorderdetailVo.getProductId());
-            inventoryRecord.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购 6销售退回等)
+            inventoryRecord.setProductDetailid(inventoryStautsId);
+            inventoryRecord.setRecordType(recordType);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
             inventoryRecord.setCreateTime(System.currentTimeMillis());
-            inventoryRecord.setChangequantity(recordType == 1 ? "-"+tsaleorderdetailVo.getProductNum() : "+"+tsaleorderdetailVo.getProductNum());
+            inventoryRecord.setChangequantity("+"+updateModel.getPageNum());
             inventoryRecord.setSurplusquantity(surplusquantity);
-            inventoryRecord.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 )
+            inventoryRecord.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryRecord.setRemark(remarks);
-            inventoryRecord.setWarehouseId(tSaleorder.getWarehouseId());
+            inventoryRecord.setWarehouseId(getnventoryStatuss.getWarehouseId());
+
+            inventoryRecord.setStockName(getnventoryStatuss.getStockName());//材料名称
+            inventoryRecord.setStockModel(getnventoryStatuss.getStockModel());//模型
+            inventoryRecord.setStockNumber(getnventoryStatuss.getStockNumber());//编号
+            inventoryRecord.setStandards(getnventoryStatuss.getStandards());//规格
+            inventoryRecord.setUnitId(getnventoryStatuss.getUnitId());//单位id
             inventoryRecordList.add(inventoryRecord);
         }
 
         inventoryRecordRepository.saveAll(inventoryRecordList);//批量保存
         inventoryStatusRepository.saveAll(inventoryStatusList);
 
-
         tSaleorder.setOrderStateId(orderstateId);
         tsaleorderRepository.save(tSaleorder);//修改订单状态
+    }
+
+    /**
+     * 对账单(日汇总)-条件分页查询
+     * @param model
+     * @return
+     */
+    public PageInfo getAllByCreateTimeAndPage(SelectModel model){
+
+        PageInfo page=new PageInfo();
+
+        if(model.getFindModelName().equals("day")){
+            page.setList(mesMapper.findAllByCreateTimeAndPage(model.getFindDate(),(model.getPageNum()-1)*model.getPageSize(),model.getPageSize()));
+            page.setTotal(mesMapper.countAllByCreateTimeAndPage(model.getFindDate()));
+        }else{
+            page.setList(mesMapper.findSummaryRecordByMonth((model.getPageNum()-1)*model.getPageSize(),model.getPageSize()));
+            page.setTotal(mesMapper.countBySummaryRecordByMonth());
+        }
+        page.setPageSize(model.getPageSize());
+        page.setPageNum(model.getPageNum());
+        return page;
+
     }
 }

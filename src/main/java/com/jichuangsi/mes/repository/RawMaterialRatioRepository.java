@@ -11,6 +11,6 @@ public interface RawMaterialRatioRepository extends JpaRepository<RawMaterialRat
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE rawmaterial_ratio SET delete_no = 1 AND product_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE rawmaterial_ratio SET delete_no = 1 where product_id = ?1",nativeQuery = true)
     void updateratioByOrderId(Integer orderId);
 }

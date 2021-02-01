@@ -11,6 +11,6 @@ public interface ProductionStockRepository extends JpaRepository<ProductionStock
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE production_stock SET delete_no = 1 AND pppid = ?1",nativeQuery = true)
+    @Query(value = "UPDATE production_stock SET delete_no = 1 where pppid = ?1",nativeQuery = true)
     void updateByPPPId(Integer orderId);
 }

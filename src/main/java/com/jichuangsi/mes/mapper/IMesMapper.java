@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Select;
 import org.springframework.data.jpa.repository.Modifying;
 
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -90,6 +91,11 @@ public interface IMesMapper {
     @Select(value = "<script>SELECT id as MapKey,bobbin_number as MapValue,bobbin_name as MapValue2\n" +
             "FROM t_bobbin WHERE delete_no = 0 and state = 0 </script>")
     List<MapVo> findAllBobbinByXiaLa();
+
+    //    根据线轴id查询线轴下拉框
+    @Select(value = "<script>SELECT id as MapKey,standards as MapValue\n" +
+            "FROM t_standards WHERE material_id = #{deId} and delete_no = 0 </script>")
+    List<MapVo> findAllBobbinByBobbinId(@Param("deId")Integer deId);
 
     //    查询设备下拉框
     @Select(value = "<script>SELECT id as MapKey,equipment_number as MapValue,equipment_name as MapValue2  FROM t_equipment WHERE delete_no = 0 and state = 0 </script>")
@@ -424,6 +430,20 @@ public interface IMesMapper {
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<PurchaseModel> findAllPurchase(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
+    //根据采购订单id查询采购总金额
+    @Select(value = "<script>SELECT SUM(stock_unit_price*stock_amount)\n" +
+            "FROM t_purchasedetail\n" +
+            "WHERE purchase_id = #{orderId}\n"+
+            "</script>")
+    BigDecimal findPurchaseMoneyById(@Param("orderId")Integer orderId);
+
+    //根据销售订单id查询销售总金额
+    @Select(value = "<script>SELECT SUM(product_num*product_price)\n" +
+            "FROM t_saleorderdetail\n" +
+            "WHERE saleorder_id = #{orderId}\n"+
+            "</script>")
+    BigDecimal findSaleMoneyById(@Param("orderId")Integer orderId);
+
     //订单审核(采购管理)-查询
     @Select(value = "<script>SELECT tp.id as id,tp.purchase_order as purchaseOrder,\n" +
             "sc.customer_name as customerName,sf.staff_name as staffName,\n" +
@@ -524,7 +544,7 @@ public interface IMesMapper {
             "ts.order_state_id as orderStateId,\n" +
             "sc.customer_name as customer,\n" +
             "ts.receive_address as remark,sf.staff_name as staffName,\n" +
-            "SUM(tsdetail.product_price*tsdetail.product_num) as orderSum\n" +
+            "SUM(tsdetail.product_price*tsdetail.product_num*tsdetail.lengthm) as orderSum\n" +
             "FROM t_saleorder ts\n" +
             "LEFT JOIN s_staff sf ON sf.id = ts.staff_id\n" +
             "LEFT JOIN s_customer sc ON sc.id = ts.customer_id\n" +
@@ -571,7 +591,7 @@ public interface IMesMapper {
 
     //根据销售订单Id查询销售订单
     @Select(value = "<script>SELECT tsde.id as id,tsde.saleorder_id as saleorderId," +
-            "tsde.product_id as productdetailId,tpro.product_id as productId, \n" +
+            "tsde.product_id as productdetailId,tpro.product_id as productId,tsde.lengthm as lengthM, \n" +
             "tp.product_name as productName,tp.product_model as productModel,tp.product_number as productNumber,\n" +
             "tpro.um_start as umStart,tsde.unit_id as unitId,\n" +
             "sd.`name` as unitName,tsde.product_num as productNum,\n" +
@@ -621,7 +641,7 @@ public interface IMesMapper {
             "LEFT JOIN s_staff sf ON sf.id = ft.staff_id\n" +
             "WHERE ft.delete_no = 0\n"+
             "<if test='name != null'>AND ft.file_name LIKE CONCAT('%', #{name},'%')</if>\n"+
-            "ORDER BY ft.id DESC LIMIT #{pageNum},#{pageSize}</script>")
+            "ORDER BY ft.create_time DESC LIMIT #{pageNum},#{pageSize}</script>")
     List<fileTableVo> findAllFile(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
     //查询文件信息总数
@@ -643,7 +663,8 @@ public interface IMesMapper {
             "FROM s_notice sn\n" +
             "LEFT JOIN s_staff sf ON sf.id = sn.staff_id\n" +
             "WHERE sn.delete_no = 0\n"+
-            "<if test='name != null'>AND sn.notice_name LIKE CONCAT('%', #{name},'%')</if>\n"+
+            "<if test='name != null'>AND sn.notice_name LIKE CONCAT('%', #{name},'%')</if>\n" +
+            "ORDER BY create_time DESC \n"+
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<NoticeVo> findAllNotice(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
@@ -714,10 +735,12 @@ public interface IMesMapper {
             "\tWHEN ire.record_type =4 then \"销售\" \n" +
             "\tWHEN ire.record_type =5 then \"采购\" \n" +
             "\tWHEN ire.record_type =7 then \"生产出库\" \n" +
-            "\tWHEN ire.record_type =6 then \"盘点\" end) as recordType\n" +
+            "\tWHEN ire.record_type =6 then \"盘点\" end) as recordType," +
+            "ppp.production_number as productionNumber,ppp.gx_name as gxName\n" +
             "FROM inventory_record ire\n" +
             "LEFT JOIN t_warehouse tw ON tw.id = ire.warehouse_id\n" +
             "LEFT JOIN  s_dictionarier sd ON sd.id = ire.unit_id\n" +
+            "LEFT JOIN pp_production ppp ON ppp.id = ire.ppp_id\n" +
             "WHERE  ire.inventory_type =#{modelNameId}   \n"+
             "<if test='name != null'>AND ire.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null'>AND ire.product_detailid =#{deId} </if>\n"+
@@ -835,11 +858,14 @@ public interface IMesMapper {
 
     //库存管理-出入库管理-调拨/出库数据根据id查询明细
     @Select(value = "<script>SELECT \n" +
-            "ts.standards as updateRemark,inventory_status.id as updateID,inventory_status.inventorysum as updateNum\n" +
+            "ts.standards as updateRemark,inventory_status.id as updateID," +
+            "inventory_status.inventorysum as updateNum," +
+            "tw.warehousen_name as  findModelName\n" +
             "FROM inventory_status\n" +
             "LEFT JOIN t_standards ts ON ts.id = inventory_status.product_id\n" +
             "LEFT JOIN t_stock st ON st.id = ts.material_id\n" +
-            "WHERE inventory_status.inventory_type  = #{deId}\n" +
+            "LEFT JOIN t_warehouse tw ON tw.id =  inventory_status.warehouse_id\n" +
+            "WHERE inventory_status.inventory_type  = #{deId} and inventory_status.state = 0 and inventory_status.delete_no = 0 \n" +
             "<if test='warehourseId != null and warehourseId != 0'>AND inventory_status.warehouse_id =#{warehourseId} </if>\n"+
             "AND ts.material_id = #{materialId}</script>")
     List<UpdateModel> findAllInventoryStateByCDDataId(@Param("deId")Integer deId, @Param("materialId")Integer materialId,@Param("warehourseId")Integer warehourseId);
@@ -852,7 +878,7 @@ public interface IMesMapper {
             "LEFT JOIN t_standards ts ON ts.id = inventory_status.product_id \n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tb.dictionarier_id\n" +
-            "WHERE inventory_status.inventory_type  = 5 \n" +
+            "WHERE inventory_status.inventory_type  = 5 and inventory_status.state = 0 and inventory_status.delete_no = 0 \n" +
             "<if test='name != null'>AND tb.bobbin_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='warehourseId != null and warehourseId != 0'>AND inventory_status.warehouse_id =#{warehourseId} </if>\n"+
             "GROUP BY ts.material_id</script>")
@@ -875,7 +901,8 @@ public interface IMesMapper {
 
     //库存管理-出入库管理-调拨/出库数据根据id查询（半成品、废料、成品）
     @Select(value = "<script>SELECT ins.id as updateID,tb.bobbin_name as updateRemark,\n" +
-            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId,sd.`name` as updateType\n" +
+            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId," +
+            "sd.`name` as updateType,pp.axle_number as  axleNumber\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
@@ -912,7 +939,7 @@ public interface IMesMapper {
             "FROM inventory_status invs\n" +
             "LEFT JOIN t_warehouse tw ON tw.id = invs.warehouse_id\n" +
             "LEFT JOIN  s_dictionarier sd ON sd.id = invs.unit_id\n" +
-            "WHERE  invs.inventory_type =#{modelNameId}   \n"+
+            "WHERE  invs.inventory_type =#{modelNameId} and invs.state = 0 and invs.delete_no = 0   \n"+
             "<if test='name != null'>AND invs.stock_name LIKE CONCAT('%', #{name},'%')</if>\n"+
             "</script>")
     Integer countByInventoryStates(@Param("modelNameId")Integer modelNameId,@Param("name")String name);
@@ -984,11 +1011,12 @@ public interface IMesMapper {
     //库存管理-库存管理-根据规格id查询线轴参数
     @Select(value = "<script>SELECT ts.id as id, tb.bobbin_number as stockNumber, \n" +
             "tb.bobbin_name as stockName,tb.remark as stockRemarks, \n" +
-            "tb.bobbin_model as stockModel, sd.`name` as dictionarier,sdd.`name` as stockType\n" +
+            "tb.bobbin_model as stockModel, sd.`name` as dictionarier," +
+            "sdd.`name` as stockType,ts.standards as standards\n" +
             "FROM t_standards ts \n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tb.dictionarier_id\n" +
-            "LEFT JOIN s_dictionarier sdd ON sdd.id = ts.material_id\n" +
+            "LEFT JOIN s_dictionarier sdd ON sdd.id = tb.bobbintype_id\n" +
             "WHERE ts.material_type = 2 and ts.id =#{deId} \n"+
             "</script>")
     StockModel findByBobbinDetailId(@Param("deId")Integer deId);
@@ -997,14 +1025,18 @@ public interface IMesMapper {
     //查询所有设备信息
     @Select(value = "<script>SELECT te.id as id,te.equipment_name as equipmentName,\n" +
             "te.equipment_model as equipmentModel,te.equipment_number as equipmentNumber,\n" +
-            "te.state as state\n" +
+            "te.state as state,\n" +
+            "(SELECT count(1) FROM t_equipmentcheckrecord \n" +
+            "WHERE check_year = #{checkYear} and check_month= #{checkMonth} \n" +
+            "and check_day =#{checkDay} and equipment_id = te.id) AS checkNo\n" +
             "FROM t_equipment te\n" +
             "WHERE te.delete_no = 0 \n"+
             "<if test='name != null'>AND te.equipment_model LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null and deId != 2'>AND te.check_no = #{deId} </if>\n"+
             "ORDER BY te.id DESC \n" +
             "LIMIT #{pageNum},#{pageSize}</script>")
-    List<Equipment> findAllEquipment(@Param("name")String name, @Param("deId")Integer deId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
+    List<Equipment> findAllEquipment(@Param("name")String name, @Param("deId")Integer deId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize,
+                                     @Param("checkYear")Integer checkYear,@Param("checkMonth")Integer checkMonth,@Param("checkDay")Integer checkDay);
 
     //统计所有设备信息
     @Select(value = "<script>SELECT count(1)\n" +
@@ -1017,7 +1049,7 @@ public interface IMesMapper {
 
     //设备检修-根据设备id查询当前检修数据
     @Select(value = "<script>SELECT te.id as id,te.equipment_name as equipmentName,te.equipment_number as equipmentNumber,\n" +
-            "te.state as state,\n" +
+            "te.state as state,te.equipment_model as equipmentModel,\n" +
             "(SELECT count(1) FROM t_equipmentcheckrecord \n" +
             "WHERE check_year = #{checkYear} and check_month= #{checkMonth} \n" +
             "and check_day =#{checkDay} and equipment_id = #{deId}) AS checkNo\n" +
@@ -1042,7 +1074,7 @@ public interface IMesMapper {
     @Modifying
     @Select(value = "<script>INSERT INTO t_equipmentoverhaul(equipment_item_id,equipment_id,equipment_time) \n" +
             "SELECT id,#{orderId},#{createtime} FROM t_equipmentitems\n" +
-            "WHERE t_equipmentitems.equipment_id = #{orderId}" +
+            "WHERE t_equipmentitems.equipment_id = #{orderId} and t_equipmentitems.delete_no = 0" +
             "</script>")
     void insertEquipmentOverhaul(@Param("orderId")Integer orderId, @Param("createtime")String createtime);
 
@@ -1055,20 +1087,17 @@ public interface IMesMapper {
     List<EquipmentItems> findEquipmentoverhaulByEquipmentIdAndTime(@Param("equipmentId")Integer equipmentId, @Param("createtime")String createtime);
 
     //设备管理：查询该设备所有日期
-    @Select(value = "<script>SELECT SUM(te.user_time) as userTime,GROUP_CONCAT(ed.overhaul_state) as overhaulState,\n" +
-            "ed.equipment_overhaul_id as equipmentOverhaulId,te.check_year as checkYear," +
-            "te.check_month as checkMonth,te.check_day as checkDay,\n" +
-            "(CASE SUM(te.frequency) \n" +
-            "    WHEN 1 THEN \"B\"\n" +
-            "\t\tWHEN 2 THEN \"Y\"\n" +
-            "\t\tWHEN 3 THEN \"BY\"\n" +
-            "END) as frequencystr,sf.staff_name as staffName\n" +
-            "FROM t_equipmentcheckrecord te\n" +
-            "LEFT JOIN t_equipmentcheckdetailrecord ed ON ed.equipment_check_record_id = te.id\n" +
-            "LEFT JOIN s_staff sf ON sf.id = te.staff_id\n" +
+    @Select(value = "<script>SELECT SUM(te.user_time) as userTime,GROUP_CONCAT(ed.overhaul_state ORDER BY te.frequency, ed.id ASC) as overhaulState," +
+            "ed.equipment_overhaul_id as equipmentOverhaulId,\n" +
+            "(CASE SUM(te.frequency) WHEN 1 THEN \"B\" WHEN 2 THEN \"Y\" WHEN 3 THEN \"BY\" END) as frequencystr,\n" +
+            "te.check_year as checkYear,te.check_month as checkMonth,\n" +
+            "te.check_day as checkDay, sf.staff_name as staffName\n" +
+            "FROM t_equipmentcheckrecord te \n" +
+            "LEFT JOIN t_equipmentcheckdetailrecord ed ON ed.equipment_check_record_id = te.id \n" +
+            "LEFT JOIN s_staff sf ON sf.id = te.staff_id \n" +
             "WHERE te.check_year = #{checkYear} AND te.check_month = #{checkMonth}\n" +
             "AND te.equipment_id = #{equipmentId}\n" +
-            "GROUP BY ed.equipment_overhaul_id\n"+
+            "GROUP BY  te.check_year,te.check_month,te.check_day,ed.equipment_overhaul_id\n"+
             "</script>")
     List<EquipmentRecordVo> findCheckRecordByEquipmentIdAndTime(@Param("equipmentId")Integer equipmentId, @Param("checkYear")Integer checkYear, @Param("checkMonth")Integer checkMonth);
 
@@ -1085,6 +1114,7 @@ public interface IMesMapper {
             "WHERE tr.delete_no = 0 and tr.equipment_id = #{equipmentId}  \n"+
             "<if test='name != null'>AND tr.repair_report_number LIKE CONCAT('%', #{name},'%')</if>\n"+
             "<if test='deId != null and deId != 4'>AND tr.state = #{deId} </if>\n"+
+            "ORDER BY tr.id DESC\n " +
             "LIMIT #{pageNum},#{pageSize}</script>")
     List<EquipmentVo> getAllRepairReport(@Param("name")String name, @Param("deId")Integer deId,@Param("equipmentId")Integer equipmentId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
 
@@ -1289,6 +1319,23 @@ public interface IMesMapper {
             "</script>")
     List<TSuitdetailVo> findTSuitDetailById(@Param("deId")Integer deId);
 
+
+    //预览组合，查看明细模具
+    @Select(value = "<script>SELECT ts.id as id,ts.mould_type as mouldType,ts.mould_detail_id as mouldDetailId," +
+            "tm.mould_model as mouldModel,tm.mould_number as mouldNumber,ts.composite_type_id as compositeTypeId,\n" +
+            "(CASE WHEN ts.mould_type = 0 THEN \"不使用模具\"\n" +
+            "WHEN ts.mould_type = 1 THEN \"成品模具\"\n" +
+            "WHEN ts.mould_type = 2 THEN \"成套模具\" END)as mouldTypes,\n" +
+            "(CASE WHEN ts.composite_type_id = 1 THEN \"粗拉\"\n" +
+            "WHEN ts.composite_type_id = 2 THEN \"中拉\"\n" +
+            "WHEN ts.composite_type_id = 3 THEN \"细拉\"\n" +
+            "WHEN ts.composite_type_id = 4 THEN \"超细拉\" END)as compositeType\n" +
+            "FROM t_suitdetail ts\n" +
+            "LEFT JOIN t_mould tm ON tm.id = ts.mould_id\n" +
+            "WHERE ts.delete_no = 0 and ts.suit_id = #{deId} \n" +
+            "</script>")
+    List<TSuitdetailVo> findPreviewTSuitDetailById(@Param("deId")Integer deId);
+
     //根据子模具ids查询子模具名称
     @Select(value = "<script>SELECT GROUP_CONCAT(sonmould_model)\n" +
             "FROM t_moulddetail \n" +
@@ -1303,6 +1350,12 @@ public interface IMesMapper {
     //    查询班组下拉框
     @Select(value = "<script>SELECT id as MapKey,team_name as MapValue FROM t_team WHERE delete_no = 0 and state = 0 </script>")
     List<MapVo> findAllTTeamByXiaLa();
+
+    //    查询模具下拉框
+    @Select(value = "<script>SELECT id as MapKey,mould_number as MapValue," +
+            "mould_model as MapValue2,mould_name as Mapliandong  " +
+            "FROM t_mould WHERE delete_no = 0 and scrap_no = 0 and cuffingmould_nno = #{typeId} </script>")
+    List<MapVo> findAllTmouldByXiaLa(@Param("typeId")Integer typeId);
 
 
     //计划单-关联销售订单-查询所有销售订单
@@ -1471,12 +1524,12 @@ public interface IMesMapper {
             "</script>")
     List<SStaff> findTeamStaffsBystaffIds(@Param("ids")List<Integer> ids);
 
-    //   角色管理-查询节点的数据
+    //   角色管理-查询节点的数据  is_node = 0 AND
     @Select(value = "<script>SELECT id \n" +
             "FROM s_rolepower \n" +
-            "WHERE is_node = 0 AND id IN \n" +
+            "WHERE delete_no = 0  AND id IN \n" +
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
-            "</script>")
+            "ORDER BY sort ASC</script>")
     List<Integer> findRolePowerIsNotNodeByIds(@Param("ids")List<Integer> ids);
 
     //   权限管理-根据用户id查询用户角色id
@@ -1491,9 +1544,102 @@ public interface IMesMapper {
     @Select(value = "<script>SELECT id as id,role_power_name as rolePowerName,fid as Fid," +
             "role_code_url as roleCodeUrl,is_node as isNode,state as state,sys_type as sysType \n" +
             "FROM s_rolepower \n" +
-            "WHERE delete_no = 0 and  id IN \n" +
+            "WHERE delete_no = 0 and sys_type = #{sysType} and is_node = 1  and  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "ORDER BY sort ASC </script>")
+    List<RolePower> findRolePowerByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType);
+
+
+    //   权限管理-根据用户id查询用户功能数据
+    @Select(value = "<script>SELECT id as id \n" +
+            "FROM s_rolepower \n" +
+            "WHERE delete_no = 0 and sys_type = #{sysType} and is_node = 0  and  id IN \n" +
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
             "</script>")
-    List<RolePower> findRolePowerByroleIds(@Param("ids")List<Integer> ids);
+    List<Integer> findRolePowerDetailByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType);
+
+
+
+
+
+
+
+    //日汇总
+    @Select(value = "<script>SELECT create_time as createTime,order_id as orderId,order_type as orderType," +
+            "settlement_account as settlementAccount,amount_incurred as amountIncurred" +
+            "  FROM t_summary_record \n" +
+            "<if test='name != null'>WHERE create_time LIKE CONCAT('%', #{name},'%')</if>\n" +
+            "order by create_time DESC\n"+
+            "LIMIT #{pageNum},#{pageSize}\n"+
+            "</script>")
+    List<SummaryRecord> findAllByCreateTimeAndPage(@Param("name")String name,@Param("pageNum")Integer pageNum, @Param("pageSize")Integer pageSize);
+
+    //日汇总-总数
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM t_summary_record\n" +
+            "<if test='name != null'>WHERE create_time LIKE CONCAT('%', #{name},'%')</if>\n" +
+            "</script>")
+    Integer countAllByCreateTimeAndPage(@Param("name")String name);
+
+
+
+    //月汇总
+    @Select(value = "<script>SELECT SUM(amount_incurred) as amountIncurred,date_format(create_time,'%Y-%m-%d') as createTime\n" +
+            "FROM t_summary_record\n" +
+            "GROUP BY date_format(create_time,'%Y-%m-%d') \n" +
+            "order by create_time DESC \n" +
+            "LIMIT #{pageNum},#{pageSize}\n"+
+            "</script>")
+    List<SummaryRecord> findSummaryRecordByMonth(@Param("pageNum")Integer pageNum, @Param("pageSize")Integer pageSize);
+
+    @Select(value = "<script>SELECT count(1) FROM (SELECT * FROM t_summary_record GROUP BY date_format(create_time,'%Y-%m-%d'))a\n" +
+            "</script>")
+    Integer countBySummaryRecordByMonth();
+
+
+
+
+    //查询所有线轴信息
+    @Select(value = "<script>SELECT ts.id as id, tb.bobbin_name as stockName,tb.bobbin_model as stockModel," +
+            "tb.bobbin_number as stockNumber,\n" +
+            "ts.standards as standards,sd.`name` as stockType,tb.remark as stockRemarks,\n" +
+            "(SELECT count(1) FROM t_bobbin_detail WHERE delete_no = 0 AND standard_id =ts.id ) as state\n" +
+            "FROM t_standards ts\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "LEFT JOIN s_dictionarier sd ON sd.id = tb.procedure_id\n" +
+            "WHERE ts.material_type = 2\n " +
+            "<if test='deId != 0'>AND ts.id = #{deId}</if>\n" +
+            "ORDER BY ts.id DESC \n" +
+            "LIMIT #{pageNum},#{pageSize}</script>")
+    List<StockModel> findAllBobbinDetailInfo(@Param("deId")Integer deId, @Param("pageNum")int pageNum, @Param("pageSize")int pageSize);
+
+    //查询所有线轴信息-总数
+    @Select(value = "<script>SELECT count(1)\n" +
+            "FROM t_standards ts\n" +
+            "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "WHERE ts.material_type = 2 \n" +
+            "<if test='deId != 0'>AND ts.id = #{deId}</if>\n" +
+            "ORDER BY ts.id DESC \n" +
+            "</script>")
+    Integer countByBobbinDetailInfo(@Param("deId")Integer deId);
+
+
+
+
+    //   库存管理-根据ids加入生产编号
+    @Select(value = "<script>UPDATE inventory_status SET picking_no = 1,picking_number = #{pickingNumber} WHERE  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    void updateinventoryStatusPickingNumberByIds(@Param("ids")List<Integer> ids,@Param("pickingNumber")String pickingNumber);
+
+
+
+
+    //   库存管理-根据库存ids修改状态
+    @Select(value = "<script>UPDATE inventory_status SET state = 1 where ppp_id = #{pppId} WHERE  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item.id}</foreach>\n" +
+            "</script>")
+    void updateStateByProductIdAndInventoryType(@Param("ids")List<PPPProducts0> ids,@Param("pppId")Integer pppId);
+
 
 }

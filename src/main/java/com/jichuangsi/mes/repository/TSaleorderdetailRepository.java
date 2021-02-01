@@ -11,6 +11,6 @@ public interface TSaleorderdetailRepository   extends JpaRepository<TSaleorderde
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE t_saleorderdetail SET delete_no = 1 AND saleorder_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE t_saleorderdetail SET delete_no = 1 where saleorder_id = ?1",nativeQuery = true)
     void updatesaleorderdetailByOrderId(Integer orderId);
 }

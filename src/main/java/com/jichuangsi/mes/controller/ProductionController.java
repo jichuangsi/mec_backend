@@ -271,49 +271,49 @@ public class ProductionController {
         }
     }
 
-    @ApiOperation(" 生产管理（改绕）- 根据选择需要改绕的数据查询详情信息")
-    @ApiImplicitParams({})
-    @PostMapping("/getPDetourDetailByChooseIds")
-    public ResponseModel getPDetourDetailByChooseIds(UserInfoForToken userInfoForToken,@RequestBody List<SelectModel> selectModel) {
-        try {
-            return ResponseModel.sucess("",productionService.getPDetourDetailByChooseIds(userInfoForToken,selectModel));
-        }catch (PassportException e){
-            return ResponseModel.fail("",e.getMessage());
-        }
-    }
-
-    @ApiOperation("生产管理（改绕）- 根据生产管理id查询详情信息")
-    @ApiImplicitParams({})
-    @PostMapping("/getPDetourDetailByPPPId")
-    public ResponseModel getPDetourDetailByPPPId(@RequestBody SelectModel selectModel) {
-        try {
-            return ResponseModel.sucess("",productionService.getPDetourDetailByPPPId(selectModel));
-        }catch (PassportException e){
-            return ResponseModel.fail("",e.getMessage());
-        }
-    }
-
-    @ApiOperation("生产管理(改绕)- 保存操作-新增/编辑")
-    @ApiImplicitParams({})
-    @PostMapping("/savePDetour")
-    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "生产管理(改绕)- 保存操作")
-    public ResponseModel savePDetour(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody PPProductionModel ppProductionModel) {
-        try {
-            productionService.savePDetour(userInfoForToken,ppProductionModel);
-        }catch (PassportException e){
-            return ResponseModel.fail("",e.getMessage());
-        }
-        return ResponseModel.sucessWithEmptyData("");
-    }
-
-    @ApiOperation("生产管理（改绕）-新增改绕页面- 根据待改绕查询详情")
-    @ApiImplicitParams({})
-    @PostMapping("/getPDetourDetailByPPDetourDetailId")
-    public ResponseModel getPDetourDetailByPPDetourDetailId(@RequestBody SelectModel selectModel) {
-        try {
-            return ResponseModel.sucess("",productionService.getPDetourDetailByPPDetourDetailId(selectModel));
-        }catch (PassportException e){
-            return ResponseModel.fail("",e.getMessage());
-        }
-    }
+//    @ApiOperation(" 生产管理（改绕）- 根据选择需要改绕的数据查询详情信息")
+//    @ApiImplicitParams({})
+//    @PostMapping("/getPDetourDetailByChooseIds")
+//    public ResponseModel getPDetourDetailByChooseIds(UserInfoForToken userInfoForToken,@RequestBody List<SelectModel> selectModel) {
+//        try {
+//            return ResponseModel.sucess("",productionService.getPDetourDetailByChooseIds(userInfoForToken,selectModel));
+//        }catch (PassportException e){
+//            return ResponseModel.fail("",e.getMessage());
+//        }
+//    }
+//
+//    @ApiOperation("生产管理（改绕）- 根据生产管理id查询详情信息")
+//    @ApiImplicitParams({})
+//    @PostMapping("/getPDetourDetailByPPPId")
+//    public ResponseModel getPDetourDetailByPPPId(@RequestBody SelectModel selectModel) {
+//        try {
+//            return ResponseModel.sucess("",productionService.getPDetourDetailByPPPId(selectModel));
+//        }catch (PassportException e){
+//            return ResponseModel.fail("",e.getMessage());
+//        }
+//    }
+//
+//    @ApiOperation("生产管理(改绕)- 保存操作-新增/编辑")
+//    @ApiImplicitParams({})
+//    @PostMapping("/savePDetour")
+//    @OperLog(operModul = "新增/编辑",operType = "2",operDesc = "生产管理(改绕)- 保存操作")
+//    public ResponseModel savePDetour(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody PPProductionModel ppProductionModel) {
+//        try {
+//            productionService.savePDetour(userInfoForToken,ppProductionModel);
+//        }catch (PassportException e){
+//            return ResponseModel.fail("",e.getMessage());
+//        }
+//        return ResponseModel.sucessWithEmptyData("");
+//    }
+//
+//    @ApiOperation("生产管理（改绕）-新增改绕页面- 根据待改绕查询详情")
+//    @ApiImplicitParams({})
+//    @PostMapping("/getPDetourDetailByPPDetourDetailId")
+//    public ResponseModel getPDetourDetailByPPDetourDetailId(@RequestBody SelectModel selectModel) {
+//        try {
+//            return ResponseModel.sucess("",productionService.getPDetourDetailByPPDetourDetailId(selectModel));
+//        }catch (PassportException e){
+//            return ResponseModel.fail("",e.getMessage());
+//        }
+//    }
 }

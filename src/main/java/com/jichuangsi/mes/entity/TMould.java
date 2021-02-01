@@ -21,10 +21,10 @@ public class TMould {
     private String wiredrawgDown;//拉丝量参考范围g下限
     private String warnRacc;//预警参考量
     private String wiredrawSum;//累计拉丝量
-    private Integer modelusedId;//适用机型ID
+    private Integer modelusedId;//适用机型ID/设备id
     private String remark;//备注
     private Integer cuffingmouldNno;//成品模具否(有成套模具就有模具套装)
-    private Integer scrapNo;//报废否
+    private Integer scrapNo;//报废否 0 开启 1关闭 2报废
     private Integer deleteNo;//删除否
 
     public Integer getId() {

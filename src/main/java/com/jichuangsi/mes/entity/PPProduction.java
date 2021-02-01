@@ -14,6 +14,7 @@ public class PPProduction {
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//生产管理
     private Integer Fid;//生产管理上班id
+    private Integer NGXId;//转下班的工序
     private String productionNumber;//生产批号（年+月+日+当天第几个+产品型号）
 
     private Integer finishNum;//实际生产数量(米)
@@ -28,8 +29,15 @@ public class PPProduction {
     private Integer stopTime;//停止时间 min
     private BigDecimal waterTemp;//水温℃
 
+    //    中拉的时候的数据
+    private BigDecimal compressionRate12 ;//1~2轴压缩率%
+    private BigDecimal compressionRate34 ;//3~4轴压缩率%
+    private BigDecimal elongationRate;//延伸率
+    private BigDecimal lineSpacing;//排线间距mm
+    private BigDecimal drawingSpeed;//拉丝速度
+
 //    成品时候的数据
-    private BigDecimal slipRate;//滑动率%
+    private BigDecimal slipRate;//滑动率%(中拉的时候也有)
     private BigDecimal speedM;//速度m/s
     private BigDecimal payTension;//放线张力
     private BigDecimal PV;//PV
@@ -44,6 +52,55 @@ public class PPProduction {
     private Integer state;//完成情况 (0 草稿 未完成 1 转下班 已完成 2 重复当前工序)
     private Date createTime;//创建时间
     private Integer deleteNo;//删除否
+
+
+    public Integer getNGXId() {
+        return NGXId;
+    }
+
+    public void setNGXId(Integer NGXId) {
+        this.NGXId = NGXId;
+    }
+
+    public BigDecimal getCompressionRate12() {
+        return compressionRate12;
+    }
+
+    public void setCompressionRate12(BigDecimal compressionRate12) {
+        this.compressionRate12 = compressionRate12;
+    }
+
+    public BigDecimal getCompressionRate34() {
+        return compressionRate34;
+    }
+
+    public void setCompressionRate34(BigDecimal compressionRate34) {
+        this.compressionRate34 = compressionRate34;
+    }
+
+    public BigDecimal getElongationRate() {
+        return elongationRate;
+    }
+
+    public void setElongationRate(BigDecimal elongationRate) {
+        this.elongationRate = elongationRate;
+    }
+
+    public BigDecimal getLineSpacing() {
+        return lineSpacing;
+    }
+
+    public void setLineSpacing(BigDecimal lineSpacing) {
+        this.lineSpacing = lineSpacing;
+    }
+
+    public BigDecimal getDrawingSpeed() {
+        return drawingSpeed;
+    }
+
+    public void setDrawingSpeed(BigDecimal drawingSpeed) {
+        this.drawingSpeed = drawingSpeed;
+    }
 
     public String getGxName() {
         return gxName;

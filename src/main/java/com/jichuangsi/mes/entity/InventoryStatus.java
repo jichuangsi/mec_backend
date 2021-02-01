@@ -1,6 +1,7 @@
 package com.jichuangsi.mes.entity;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 /**
  * 库存状况表
@@ -14,6 +15,7 @@ public class InventoryStatus {
     private Integer id;//库存状况Id
     private Integer productId;//产品ID /
     private Integer pppId;//生产id
+    private String pickingNumber;//包装编号
 
     private String stockName;//名称
     private String stockModel;//模型
@@ -22,14 +24,31 @@ public class InventoryStatus {
     private Integer unitId;//单位
 
     private Integer warehouseId;//仓库ID
-    private Integer inventorysum;//库存总数
-    private Integer inventorynumbers;//库存数量
+    private BigDecimal inventorysum;//库存总数
+    private BigDecimal inventorynumbers;//库存数量
 //    private Integer recordType;//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购 6销售退回等)
     private Integer inventoryType;//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他 )
 
 
+    private Integer pickingNo;//包装否（0 未包装 1已包装）
     private Integer state;//状态 （0 最新 1不是最新）
     private Integer deleteNo;//删除否(0 未删除、有用的  1已删除、没有用的)
+
+    public String getPickingNumber() {
+        return pickingNumber;
+    }
+
+    public void setPickingNumber(String pickingNumber) {
+        this.pickingNumber = pickingNumber;
+    }
+
+    public Integer getPickingNo() {
+        return pickingNo;
+    }
+
+    public void setPickingNo(Integer pickingNo) {
+        this.pickingNo = pickingNo;
+    }
 
     public Integer getState() {
         return state;
@@ -47,12 +66,12 @@ public class InventoryStatus {
         this.deleteNo = deleteNo;
     }
 
-    public Integer getInventorynumbers() {
-        return inventorynumbers;
+    public BigDecimal getInventorysum() {
+        return inventorysum;
     }
 
-    public void setInventorynumbers(Integer inventorynumbers) {
-        this.inventorynumbers = inventorynumbers;
+    public void setInventorysum(BigDecimal inventorysum) {
+        this.inventorysum = inventorysum;
     }
 
     public Integer getPppId() {
@@ -135,11 +154,13 @@ public class InventoryStatus {
         this.warehouseId = warehouseId;
     }
 
-    public Integer getInventorysum() {
-        return inventorysum;
+
+
+    public BigDecimal getInventorynumbers() {
+        return inventorynumbers;
     }
 
-    public void setInventorysum(Integer inventorysum) {
-        this.inventorysum = inventorysum;
+    public void setInventorynumbers(BigDecimal inventorynumbers) {
+        this.inventorynumbers = inventorynumbers;
     }
 }

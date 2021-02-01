@@ -12,9 +12,7 @@ import com.jichuangsi.mes.entity.ProductionDiaryReport;
 import com.jichuangsi.mes.exception.PassportException;
 import com.jichuangsi.mes.mapper.IMesMapper;
 import com.jichuangsi.mes.mapper.IProductionMapper;
-import com.jichuangsi.mes.model.MapVo;
-import com.jichuangsi.mes.model.SelectModel;
-import com.jichuangsi.mes.model.UserInfoForToken;
+import com.jichuangsi.mes.model.*;
 import com.jichuangsi.mes.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -202,7 +200,8 @@ public class HomeService {
      * @return
      * @throws PassportException
      */
-    public List getMyRolePower(UserInfoForToken userInfoForToken)throws PassportException{
+    public JSONObject getMyRolePower(UserInfoForToken userInfoForToken,BackUserLoginModel loginModel)throws PassportException{
+        JSONObject jsonObject =  new JSONObject();
         Integer staffId = Integer.valueOf(userInfoForToken.getUserId());
 
         List<String> listAll = new ArrayList<>(new HashSet<>(iMesMapper.findRolePowerIdsByStaffId(staffId)));
@@ -212,6 +211,9 @@ public class HomeService {
             List<Integer> idList = Arrays.stream(string.split(",")).map(Integer::valueOf).collect(Collectors.toList());
             idAllList.addAll(idList);
         }
-        return new TreeBeanUtil().menuList(iMesMapper.findRolePowerByroleIds(idAllList));
+
+        jsonObject.put("list",new TreeBeanUtil().menuList(iMesMapper.findRolePowerByroleIds(idAllList,loginModel.getSysType())));//节点数据
+        jsonObject.put("rolePowerList",iMesMapper.findRolePowerDetailByroleIds(idAllList,loginModel.getSysType()));//功能数据
+        return jsonObject;
     }
 }

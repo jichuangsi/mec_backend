@@ -93,7 +93,7 @@ public class FileService {
             file.transferTo(dest);// 文件写入
 
             jsonObject.put("path",uri+fileName);
-            jsonObject.put("fileName",fileName);
+            jsonObject.put("fileName",file.getOriginalFilename());
         } catch (IllegalStateException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -259,7 +259,7 @@ public class FileService {
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
     public void saveSysAnnouncement(UserInfoForToken userInfoForToken, SNotice sNotice)throws PassportException {
-        if (StringUtil.isEmpty(sNotice.getNoticeName())||StringUtil.isEmpty(sNotice.getNoticeRoute())){
+        if (StringUtil.isEmpty(sNotice.getNoticeName())){//||StringUtil.isEmpty(sNotice.getNoticeRoute())
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 

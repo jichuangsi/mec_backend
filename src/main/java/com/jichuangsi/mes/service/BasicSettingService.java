@@ -1,10 +1,14 @@
 package com.jichuangsi.mes.service;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.util.StringUtil;
+import com.jichuangsi.mes.common.OrderStateChange;
 import com.jichuangsi.mes.common.RepairReportStateChange;
 import com.jichuangsi.mes.common.getDateConfig;
 import com.jichuangsi.mes.constant.ResultCode;
@@ -21,7 +25,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -75,6 +82,14 @@ public class BasicSettingService {
     private AuditPocessRepository auditPocessRepository;
     @Resource
     private OrderAuditPocessRepository orderAuditPocessRepository;
+    @Resource
+    private TMouldRepository mouldRepository;
+
+
+    @Resource
+    private TBobbinDetailRepository bobbinDetailRepository;
+    @Resource
+    private TBobbinHistoryRepository bobbinHistoryRepository;
 
     /**
      * 基础设置-查询(产品型号规格，原材料型号规格，线轴型号规格，其他型号规格等)
@@ -245,7 +260,8 @@ public class BasicSettingService {
 //        }
 
         if(StringUtils.isEmpty(tProduct.getId())){
-            tProduct.setProductNumber("TP000"+(tpRepository.findLastId()+1));
+            Integer getLastId =  tpRepository.findLastId();
+            tProduct.setProductNumber("TP000"+(StringUtils.isEmpty(getLastId) ? 1: getLastId+1));
         }
 
         tProduct.setState(0);
@@ -477,7 +493,159 @@ public class BasicSettingService {
         }
     }
 
-//--------------------------------------------------------------------------仪器设备管理维护-----------------------------------------------------
+//    ---------------------------------线轴管理维护----------------------------------------------------------------
+    /**
+     * 线轴管理-查询
+     * @param
+     * @throws PassportException
+     */
+    public PageInfo getAllTbobbinInfo(SelectModel smodel)throws PassportException{
+        PageInfo page=new PageInfo();
+        if(StringUtils.isEmpty(smodel.getPageNum()) || StringUtils.isEmpty(smodel.getPageSize())){
+            throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        List<StockModel> list = mesMapper.findAllBobbinDetailInfo(smodel.getFindById(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+
+        page.setList(list);
+        page.setTotal(mesMapper.countByBobbinDetailInfo(smodel.getFindById()));
+        page.setPageSize(smodel.getPageSize());
+        page.setPageNum(smodel.getPageNum());
+        return page;
+    }
+
+    /**
+     * 线轴管理维护- 新增/编辑设备页面获取下拉框数据
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinBasicInfo()throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinXiaLa",mesMapper.findAllBobbinByXiaLa());//线轴下拉框
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑设备页面根据线轴id获取线轴规格
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinBasicInfoByBobbinId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinDetailXiaLa",mesMapper.findAllBobbinByBobbinId(selectModel.getFindById()));//根据线轴id查询线轴规格
+
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑设备页面根据线轴id获取线轴规格
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinInfoBystandardsId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinInfo",mesMapper.findByBobbinDetailId(selectModel.getFindById()));//根据线轴的规格id查询线轴信息
+
+        List<TBobbinDetailVo> tBobbinDetailVoList = new ArrayList<>();
+
+        List<TBobbinDetail> list = bobbinDetailRepository.findByStandardIdAndDeleteNo(selectModel.getFindById(),0);
+        for (TBobbinDetail tbobbinDetail:list) {
+
+            List<TBobbinHistory> bobbinHistoryList = bobbinHistoryRepository.findByBobbinDetailIdOrderByCreateTimeDesc(tbobbinDetail.getId());
+
+            TBobbinDetailVo tBobbinDetailVo = new TBobbinDetailVo();
+
+            tBobbinDetailVo.setId(tbobbinDetail.getId());
+            tBobbinDetailVo.setStandardId(tbobbinDetail.getStandardId());
+            tBobbinDetailVo.setAxisNumber(tbobbinDetail.getAxisNumber());
+            tBobbinDetailVo.setNewBobbinWeight(tbobbinDetail.getNewBobbinWeight());
+
+            tBobbinDetailVo.setBobbinWeight1(tbobbinDetail.getNewBobbinWeight());
+
+            if(bobbinHistoryList.size() >=2){
+                tBobbinDetailVo.setBobbinWeight2(bobbinHistoryList.get(1).getHistoryBobbinWeight());
+            }else if(bobbinHistoryList.size() >=3){
+                tBobbinDetailVo.setBobbinWeight3(bobbinHistoryList.size() >=3? BigDecimal.ZERO:bobbinHistoryList.get(2).getHistoryBobbinWeight());
+            }else if(bobbinHistoryList.size() >=4){
+                tBobbinDetailVo.setBobbinWeight4(bobbinHistoryList.size() >=4? BigDecimal.ZERO:bobbinHistoryList.get(3).getHistoryBobbinWeight());
+            }else if(bobbinHistoryList.size() >=5){
+                tBobbinDetailVo.setBobbinWeight5(bobbinHistoryList.size() >=5? BigDecimal.ZERO:bobbinHistoryList.get(4).getHistoryBobbinWeight());
+            }
+
+
+//            tBobbinDetailVo.setBobbinWeight2(bobbinHistoryList.size() >=2 ? BigDecimal.ZERO:bobbinHistoryList.get(1).getHistoryBobbinWeight());
+//            tBobbinDetailVo.setBobbinWeight3(bobbinHistoryList.size() >=3? BigDecimal.ZERO:bobbinHistoryList.get(2).getHistoryBobbinWeight());
+//            tBobbinDetailVo.setBobbinWeight4(bobbinHistoryList.size() >=4? BigDecimal.ZERO:bobbinHistoryList.get(3).getHistoryBobbinWeight());
+//            tBobbinDetailVo.setBobbinWeight5(bobbinHistoryList.size() >=5? BigDecimal.ZERO:bobbinHistoryList.get(4).getHistoryBobbinWeight());
+
+            tBobbinDetailVo.setState(tbobbinDetail.getState());
+            tBobbinDetailVo.setDeleteNo(tbobbinDetail.getDeleteNo());
+
+            tBobbinDetailVoList.add(tBobbinDetailVo);
+
+        }
+        job.put("bobbinDetail",tBobbinDetailVoList);//查询库存线轴信息
+
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑线轴明细-根据线轴明细查询线轴明细历史
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getBobbinHistoryByBobbinDetailId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("bobbinHistoryData",bobbinHistoryRepository.findByBobbinDetailIdOrderByCreateTimeDesc(selectModel.getFindById()));//查询线轴明细历史数据
+        return job;
+    }
+
+
+    /**
+     * 线轴管理维护- 新增/编辑线轴明细操作
+     *
+     * 1、判断一下该id是否存在，如果存在就是修改，不存在就是新增
+     * 2、新增历史记录
+     *
+     * @param
+     * @throws PassportException
+     */
+    public void saveBobbinDetail(List<TBobbinDetail> tBobbinDetailList)throws PassportException {
+
+        for (TBobbinDetail tBobbinDetail:tBobbinDetailList) {
+            if(StringUtils.isEmpty(tBobbinDetail.getStandardId()) || StringUtils.isEmpty(tBobbinDetail.getAxisNumber()) || StringUtils.isEmpty(tBobbinDetail.getNewBobbinWeight())){
+                throw new PassportException(ResultCode.PARAM_MISS_MSG);
+            }
+
+            tBobbinDetail.setState(0);
+            tBobbinDetail.setDeleteNo(0);
+
+            TBobbinDetail tBobbinDetail1 =  bobbinDetailRepository.save(tBobbinDetail);//保存线轴明细
+
+            TBobbinHistory tBobbinHistory = new TBobbinHistory();
+            tBobbinHistory.setBobbinDetailId(tBobbinDetail1.getId());
+            tBobbinHistory.setCreateTime(new Date());
+            tBobbinHistory.setHistoryBobbinWeight(tBobbinDetail.getNewBobbinWeight());
+
+            bobbinHistoryRepository.save(tBobbinHistory);//保存线轴历史数据
+        }
+
+    }
+
+//    ---------------------------------线轴管理维护end----------------------------------------------------------------
+
+
+
+
+
+//-------------------仪器设备管理维护-----------------------------------------------------
 
 
 
@@ -491,6 +659,18 @@ public class BasicSettingService {
 
         job.put("SBType",sdRepository.findByDicCode("SBType"));//设备类型
         job.put("SBNumber",getEquipmentNumber());//设备编号
+        return job;
+    }
+
+    /**
+     * 设备管理- 新增/编辑设备页面根据模具类型id查询模具
+     * @param
+     * @throws PassportException
+     */
+    public JSONObject getAllTmouldByTypeId(SelectModel selectModel)throws PassportException {
+        JSONObject job = new JSONObject();
+
+        job.put("mouldXiaLa",mesMapper.findAllTmouldByXiaLa(selectModel.getFindById()));//模具下拉框
         return job;
     }
 
@@ -514,15 +694,30 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(eq.getState()) && eq.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(StringUtils.isEmpty(eq.getId()) && equipmentRepository.countByEquipmentNumber(eq.getEquipmentNumber()) > 0){
             throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
         }
+
         eq.setDeleteNo(0);
         eq.setState(0);
         eq.setCheckNo(0);
 
         Equipment equipment = equipmentRepository.save(eq);
         Integer tpid = equipment.getId();
+
+        //        设备新增的时候多加了个绑定模具id的,如果模具id不为空就顺便绑定模具管理的设备id
+        if(!StringUtils.isEmpty(eq.getMouldId())){
+            TMould tMould =  mouldRepository.findByid(eq.getMouldId());
+            if(StringUtils.isEmpty(tMould)){throw new PassportException(ResultCode.DATA_NOEXIST_MSG);}
+
+            tMould.setModelusedId(tpid);//绑定设备id
+            mouldRepository.save(tMould);//保存
+        }
 
         List<EquipmentItems> equipmentItemsList = new ArrayList<>();
 
@@ -544,18 +739,21 @@ public class BasicSettingService {
      */
     public PageInfo getAllEquipment(SelectModel smodel)throws PassportException{
         PageInfo page=new PageInfo();
-        Calendar now = Calendar.getInstance();
+        Calendar c = Calendar.getInstance();
         if(StringUtils.isEmpty(smodel.getPageNum()) || StringUtils.isEmpty(smodel.getPageSize())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        List<Equipment> listSale = mesMapper.findAllEquipment(smodel.getFindName(),smodel.getFindIdOne(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+        Integer intMonth = c.get(Calendar.MONTH) > 10 ? c.get(Calendar.MONTH) : 0 + c.get(Calendar.MONTH);
 
-        for (Equipment eq:listSale) {
-            //此步操作是查询当天是否有新增数据
-            Integer countoverhaul = equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentId(DateUtil.today(),eq.getId());
-            eq.setCheckNo(countoverhaul >= 0 ? 0 :1);//检修否（当日）
-        }
+        List<Equipment> listSale = mesMapper.findAllEquipment(smodel.getFindName(),smodel.getFindIdOne(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize(),
+                   c.get(Calendar.YEAR),intMonth+1,c.get(Calendar.DAY_OF_MONTH));
+
+//        for (Equipment eq:listSale) {
+//            //此步操作是查询当天是否有新增数据
+//            Integer countoverhaul = equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentId(DateUtil.today(),eq.getId());
+//            eq.setCheckNo(countoverhaul >= 0 ? 0 :1);//检修否（当日）
+//        }
 
         page.setList(listSale);
         page.setTotal(mesMapper.countByEquipment(smodel.getFindName(),smodel.getFindIdOne()));
@@ -575,10 +773,19 @@ public class BasicSettingService {
         if(StringUtils.isEmpty(equipment)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
+
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(updateModel.getUpdateType().equals("S")){
             equipment.setState(equipment.getState() == 0?1:0);
         }else if(updateModel.getUpdateType().equals("D")){
             equipment.setDeleteNo(equipment.getDeleteNo() == 0?1:0);
+        }else if(updateModel.getUpdateType().equals("B")){
+            equipment.setState(2);//报废状态后，所有都无法修改
         }
         equipmentRepository.save(equipment);
     }
@@ -654,7 +861,8 @@ public class BasicSettingService {
         jsonObject1.put("SumOutMonth",SumOutMonth);//累计停用运行时间
 
         Calendar c = Calendar.getInstance();
-        jsonObject.put("equipment",mesMapper.findEquipmentVoById(smodel.getFindById(),c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH)));
+        Integer intMonth = c.get(Calendar.MONTH) > 10 ? c.get(Calendar.MONTH) : 0 + c.get(Calendar.MONTH);
+        jsonObject.put("equipment",mesMapper.findEquipmentVoById(smodel.getFindById(),c.get(Calendar.YEAR),intMonth+1,c.get(Calendar.DAY_OF_MONTH)));
         jsonObject.put("sumTime",jsonObject1);//统计的时间
 
 
@@ -674,6 +882,13 @@ public class BasicSettingService {
         JSONObject jsonObject = new JSONObject();
         if(StringUtils.isEmpty(selectModel.getFindById()) || StringUtils.isEmpty(selectModel.getFindDate())){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
+        }
+
+        Equipment equipment = equipmentRepository.findByid(selectModel.getFindById());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
         }
 
         Integer countoverhaul = equipmentOverhaulRepository.countByEquipmentIdAndEquipmentTime(selectModel.getFindById(),selectModel.getFindDate());
@@ -732,6 +947,13 @@ public class BasicSettingService {
 
         if(StringUtils.isEmpty(equipmentCheckRecord.getEquipmentId()) ||StringUtils.isEmpty(equipmentCheckRecord.getFrequency())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
+        }
+
+        Equipment equipment = equipmentRepository.findByid(equipmentCheckRecord.getEquipmentId());
+
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
         }
 
         if(equipmentCheckRecordRepository.countByEquipmentTimeAndEquipmentIdAndFrequency(equipmentCheckRecord.getEquipmentTime(),equipmentCheckRecord.getEquipmentId(),equipmentCheckRecord.getFrequency()) > 0 ){
@@ -890,6 +1112,11 @@ public class BasicSettingService {
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
 
+        //判断一下是否为报废状态
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
+        }
+
         if(repairReportRepository.countByEquipmentIdAndStateNot(updateModel.getUpdateID(),RepairReportStateChange.Purchase_OrderAudit_Finished_Sured) > 0 ){
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_REPORD_MSG);
         }
@@ -911,7 +1138,10 @@ public class BasicSettingService {
         matters.setMatterNews("您有1个报修单待处理");
         matters.setStaffId(auditSettingRepository.getstaffIdByauditTypeandLevel("BX","1"));
         matters.setOrderId(repairReport1.getId());
+        matters.setType(6);//类型 1 采购-订单审核  2 采购-来料检验 3销售-订单审核 4销售-退回审核 5生产计划单-审核 6 设备报修-审核
         matters.setDeleteNo(0);
+        matters.setFinishedNo(0);
+        matters.setReadNo(0);
         mattersRepository.save(matters);//新增待办事项
 
         AuditPocess auditPocess = new AuditPocess();
@@ -929,19 +1159,38 @@ public class BasicSettingService {
      * @param
      * @throws PassportException
      */
-    public JSONObject getRepairReportById(SelectModel smodel)throws PassportException{
+    public JSONObject getRepairReportById(UserInfoForToken userInfoForToken,SelectModel smodel)throws PassportException{
         JSONObject jsonObject=new JSONObject();
 
         if(StringUtils.isEmpty(smodel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-
         EquipmentVo equipmentVo = mesMapper.getRepairReportById(smodel.getFindById());
+
+        updateMatterReadNo(Integer.valueOf(userInfoForToken.getUserId()),equipmentVo.getId());
 
         jsonObject.put("equipmentVo",equipmentVo);
         jsonObject.put("auditDetail",mesMapper.findAuditListById(equipmentVo.getId(),"BX",""));//加上审核详情
 
         return jsonObject;
+    }
+
+
+    /**
+     * 待办事项-修改状态（已读否）
+     * @throws PassportException
+     */
+    public void updateMatterReadNo(Integer staffId,Integer orderId)throws PassportException {
+
+        String str = "BX";
+        Integer type = 6;
+
+        List<OrderAuditPocess> oldaudit = orderAuditPocessRepository.findByAuditTypeAndOrderId(str,orderId);
+
+        if(oldaudit.size() != 0 &&  staffId == oldaudit.get(0).getStaffId()){//对比两个操作的员工是否相同
+            mattersRepository.updateReadNoByStaffIdAndTypeAndOrderId(staffId,type,orderId);
+        }
+
     }
 
     /**
@@ -954,6 +1203,12 @@ public class BasicSettingService {
         RepairReport repairReport = repairReportRepository.findByid(updateModel.getUpdateID());
         if(StringUtils.isEmpty(repairReport)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
+        }
+
+        //判断一下是否为报废状态
+        Equipment equipment = equipmentRepository.findByid(repairReport.getEquipmentId());
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
         }
 
         if(repairReport.getState() != RepairReportStateChange.Purchase_OrderAudit_Finished_Sured){
@@ -998,10 +1253,17 @@ public class BasicSettingService {
      * @throws PassportException
      */
     @Transactional(rollbackFor = Exception.class)//回滚标志
-    public void  updateRepairReportAuditPocessById(UpdateModel updateModel)throws PassportException{
+    public void  updateRepairReportAuditPocessById(UserInfoForToken userInfoForToken,UpdateModel updateModel)throws PassportException{
+        Integer currentStaffId = Integer.valueOf(userInfoForToken.getUserId());
+
         RepairReport repairReport = repairReportRepository.findByid(updateModel.getUpdateID());
         if(StringUtils.isEmpty(repairReport)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
+        }
+
+        Equipment equipment = equipmentRepository.findByid(repairReport.getEquipmentId());
+        if(!StringUtils.isEmpty(equipment.getState()) && equipment.getState() == 2){
+            throw new PassportException(ResultCode.NO_ACCESS);
         }
 
         if(repairReport.getState() == RepairReportStateChange.Purchase_OrderAudit_Finished_Sured){
@@ -1012,14 +1274,17 @@ public class BasicSettingService {
         List<OrderAuditPocess> oldauditCG = orderAuditPocessRepository.findByAuditTypeAndOrderId("BX",orderId);
         if(!StringUtils.isEmpty(oldauditCG)){
 
-            Matters oldmatters = new Matters();
-            oldmatters.setOrderId(orderId);
-            oldmatters.setStaffId(oldauditCG.get(0).getStaffId());
-            oldmatters.setFinishedNo(1);
-            mattersRepository.save(oldmatters);
+            Integer oldstaffid = oldauditCG.get(0).getStaffId();
+
+            if(currentStaffId != oldstaffid){//对比两个操作的员工是否相同
+                throw new PassportException(ResultCode.NO_ACCESS);
+            }
+
+            //修改待办事项
+            mattersRepository.updateByStaffIdAndTypeAndOrderId(oldstaffid,6,orderId);
 
             //修改订单审核流程完成度
-            orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("BX",orderId,oldauditCG.get(0).getStaffId());
+            orderAuditPocessRepository.updateByAuditTypeAndOrderIdandAndStaffId("BX",orderId,oldstaffid);
         }
         if(oldauditCG.size() >1){
             Integer countId = oldauditCG.get(1).getStaffId() ;
@@ -1030,6 +1295,8 @@ public class BasicSettingService {
                 matters.setStaffId(countId);// 获取下一个阶段需要审核的员工Id
                 matters.setOrderId(orderId);
                 matters.setDeleteNo(0);
+                matters.setType(6);
+                matters.setReadNo(0);
                 matters.setFinishedNo(0);
                 mattersRepository.save(matters);//新增待办事项
             }
@@ -1048,4 +1315,48 @@ public class BasicSettingService {
         repairReport.setState(getint);
         repairReportRepository.save(repairReport);//更新状态
     }
+
+
+//骚操作：导出excel--暂停
+//    @RequestMapping("/export")
+//    @ResponseBody
+//    public void export(HttpServletResponse response){
+//        List<User> list = new ArrayList<>();
+//        list.add(new User("zhangsan","1231",new Date()));
+//        list.add(new User("zhangsan1","1232",new Date()));
+//        list.add(new User("zhangsan2","1233",new Date()));
+//        list.add(new User("zhangsan3","1234",new Date()));
+//        list.add(new User("zhangsan4","1235",new Date()));
+//        list.add(new User("zhangsan5","1236", DateUtil.date(new Date())));
+//        // 通过工具类创建writer，默认创建xls格式
+//        ExcelWriter writer = ExcelUtil.getWriter();
+//        //自定义标题别名
+//        writer.addHeaderAlias("name", "姓名");
+//        writer.addHeaderAlias("age", "年龄");
+//        writer.addHeaderAlias("birthDay", "生日");
+//        // 合并单元格后的标题行，使用默认标题样式
+//        writer.merge(2, "申请人员信息");
+//        // 一次性写出内容，使用默认样式，强制输出标题
+//        writer.write(list, true);
+//        //out为OutputStream，需要写出到的目标流
+//        //response为HttpServletResponse对象
+//        response.setContentType("application/vnd.ms-excel;charset=utf-8");
+//        //test.xls是弹出下载对话框的文件名，不能为中文，中文请自行编码
+//        String name = StringUtils.toUtf8String("申请学院");
+//        response.setHeader("Content-Disposition","attachment;filename="+name+".xls");
+//        ServletOutputStream out= null;
+//        try {
+//            out = response.getOutputStream();
+//            writer.flush(out, true);
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        finally {
+//            // 关闭writer，释放内存
+//            writer.close();
+//        }
+//        //此处记得关闭输出Servlet流
+//        IoUtil.close(out);
+//    }
 }

@@ -1,23 +1,32 @@
 package com.jichuangsi.mes.model;
 
+import java.math.BigDecimal;
+
 public class UpdateModel {
     private String findModelName;//需要查询的模块名字
 
 
     private Integer updateID;//需要修改的ID
     private Integer updateWarehourseID;//需要修改的仓库ID（调拨：转出）
-    private Integer updateNum;//需要修改的数量
+    private BigDecimal updateNum;//需要修改的数量
     private String updateType;//修改的类型    是Delete_no “D”还是state "S"
 
     private String updateRemark;//需要添加的备注
 
-
-
+    private String axleNumber;//轴号
     private String stockName;//名称
     private String stockModel;//模型
     private String stockNumber;//编号
     private String standards;//规格
     private Integer unitId;//单位id
+
+    public String getAxleNumber() {
+        return axleNumber;
+    }
+
+    public void setAxleNumber(String axleNumber) {
+        this.axleNumber = axleNumber;
+    }
 
     public String getStockName() {
         return stockName;
@@ -59,11 +68,11 @@ public class UpdateModel {
         this.unitId = unitId;
     }
 
-    public Integer getUpdateNum() {
+    public BigDecimal getUpdateNum() {
         return updateNum;
     }
 
-    public void setUpdateNum(Integer updateNum) {
+    public void setUpdateNum(BigDecimal updateNum) {
         this.updateNum = updateNum;
     }
 

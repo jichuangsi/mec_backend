@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.service;
 
+import cn.hutool.core.date.DateTime;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.util.StringUtil;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 
 @Service
 public class PurchaseService {
@@ -60,6 +62,10 @@ public class PurchaseService {
     private InventoryStatusRepository inventoryStatusRepository;
     @Resource
     private InventoryRecordRepository inventoryRecordRepository;
+
+
+    @Resource
+    private SummaryRecordRepository summaryRecordRepository;
 
     /**
      * 采购订单管理- 新增/编辑页面获取下拉框数据
@@ -106,7 +112,7 @@ public class PurchaseService {
     public JSONObject getPurchaseDetailById(SelectModel smodel)throws PassportException {
         JSONObject job = new JSONObject();
 
-        job.put("stockDetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(smodel.getFindById(),null));//原材料下拉框
+        job.put("stockDetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(smodel.getFindById(),1));//原材料下拉框
 
         return job;
     }
@@ -417,8 +423,8 @@ public class PurchaseService {
     /**
      * 采购订单管理-修改订单状态(审核流程点击的通过/驳回)
      * //先判断当前操作人员是否有权利操作该审核
-     * 订单审核：任何一个审核不通过都是返回到未提交状态
-     * 来料审核：任何一个审核不通过都是退回状态
+     * 订单审核：任何一个审核不通过都是返回到未提交状态 (订单审核通过后就有出账数据。)
+     * 来料审核：任何一个审核不通过都是退回状态        (来料检验不通过后就有进账数据。)
      * @param
      * @param model
      * @throws PassportException
@@ -446,6 +452,10 @@ public class PurchaseService {
                 strauditType =map.get("auditType");
                 orderAuditPocessId =Integer.valueOf(map.get("id"));
                 newstateId = newstateId> 0 ? newstateId:purchase.getOrderState();
+
+                if(newstateId == OrderStateChange.Purchase_OrderCheckout_NotCheck){//如果审核通过到了待审核后，就可以记录一下数据了
+                    saveSummaryRecord(1,purchase.getId(),"-",purchase.getPaytypeId());
+                }
                 break;
             case "F"://不通过
                 if(purchase.getOrderState() == OrderStateChange.Purchase_OrderAudit_AuditING){//订单审核-审核中
@@ -456,6 +466,8 @@ public class PurchaseService {
                 }else if(purchase.getOrderState() == OrderStateChange.Purchase_OrderCheckout_Checking){//来料检验-检验中
                     newstateId = OrderStateChange.Purchase_OrderAudit_Returning_AuditIng;
                     strauditType="LL";
+
+                    saveSummaryRecord(1,purchase.getId(),"+",purchase.getPaytypeId());//输出一下数据
                 }
 
                 levelName ="在-----"+levelName+ "------中被驳回";
@@ -476,6 +488,30 @@ public class PurchaseService {
 
         purchase.setOrderState(newstateId);
         tpurchaseRepository.save(purchase);
+    }
+
+    //保存账单
+    @Transactional(rollbackFor = Exception.class)//回滚标志
+    public void saveSummaryRecord(Integer orderType,Integer orderId,String orderState,Integer getparTypeId){
+
+        BigDecimal amount = BigDecimal.ZERO;
+        if(orderType == 1){//采购
+            amount = mesMapper.findPurchaseMoneyById(orderId);
+        }else if(orderType == 2){//销售
+            amount = mesMapper.findSaleMoneyById(orderId);
+        }
+
+        String strName = sdictionarierRepository.findByid(getparTypeId).getName();//获取支付方式
+
+        SummaryRecord summaryRecord = new SummaryRecord();
+        summaryRecord.setOrderId(orderId);
+        summaryRecord.setCreateTime(new Date());
+        summaryRecord.setOrderType(orderType);
+        summaryRecord.setSettlementAccount(strName);//付款方式
+        summaryRecord.setAmountIncurred(orderState+amount);//发生金额
+
+        summaryRecordRepository.save(summaryRecord);//保存实体
+
     }
 
     /**
@@ -626,14 +662,14 @@ public class PurchaseService {
         List<InventoryRecord> inventoryRecordList = new ArrayList<>();
         for(TPurchasedetailModel tPurchasedetailModel : listdetail){
             InventoryStatus countInventoryStatus=  inventoryStatusRepository.findByProductIdAndWarehouseIdAndInventoryType(tPurchasedetailModel.getStockId(),purchase.getWarehouseiId(),InventoryRecordReturnCode.InventoryType_YL);
-            Integer surplusquantity = 0;
+            BigDecimal surplusquantity ;
             if(StringUtils.isEmpty(countInventoryStatus)){//如果为空就是新增。如果不为空就是修改咯
                 InventoryStatus inventoryStatus = new InventoryStatus();
                 inventoryStatus.setProductId(tPurchasedetailModel.getStockId());//产品/原料明细Id
                 inventoryStatus.setWarehouseId(purchase.getWarehouseiId());//仓库Id
 //                inventoryStatus.setRecordType(InventoryRecordReturnCode.RecordType_CG);//出入库类型 (1 出库,2 入库，3 调拨，4 销售，5 采购等)
                 inventoryStatus.setInventoryType(InventoryRecordReturnCode.InventoryType_YL);//库存类型(1 原料 2 产品 )
-                surplusquantity = tPurchasedetailModel.getStockAmount();
+                surplusquantity =new BigDecimal(tPurchasedetailModel.getStockAmount()) ;
                 inventoryStatus.setInventorysum(surplusquantity);
 
                 inventoryStatus.setStockName(tPurchasedetailModel.getStockName());
@@ -641,10 +677,13 @@ public class PurchaseService {
                 inventoryStatus.setStockNumber(tPurchasedetailModel.getStockNumber());
                 inventoryStatus.setStandards(tPurchasedetailModel.getStandards());
                 inventoryStatus.setUnitId(tPurchasedetailModel.getUnitId());
+
+                inventoryStatus.setDeleteNo(0);
+                inventoryStatus.setState(0);
                 inventoryStatusList.add(inventoryStatus);
 
             }else{
-                surplusquantity = countInventoryStatus.getInventorysum() + tPurchasedetailModel.getStockAmount();
+                surplusquantity = countInventoryStatus.getInventorysum().add(new BigDecimal(tPurchasedetailModel.getStockAmount()));
                 countInventoryStatus.setInventorysum(surplusquantity);//更改数量
                 inventoryStatusList.add(countInventoryStatus);
             }

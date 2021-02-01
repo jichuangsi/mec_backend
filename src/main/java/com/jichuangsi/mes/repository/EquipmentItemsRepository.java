@@ -11,7 +11,7 @@ import java.util.List;
 public interface EquipmentItemsRepository  extends JpaRepository<EquipmentItems,Integer> {
     @Transactional
     @Modifying
-    @Query(value = "UPDATE t_equipmentitems SET delete_no = 1 AND equipment_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE t_equipmentitems SET delete_no = 1 where equipment_id = ?1",nativeQuery = true)
     void updateByEquipmentId(Integer EquipmentId);
 
     List<EquipmentItems> findAllByEquipmentIdAndDeleteNo(Integer equipmentId,Integer deleteNo);

@@ -12,6 +12,7 @@ public class PPPProducts3 {
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Integer id;//熔炼产物ID
     private Integer PPPId;//生产id
+    private Integer LPPId;//领料的生产id
     private Integer gxId;//工序id
     private Integer Fid;//上级id（默认0）
     private Date createTime;//生产时间
@@ -20,6 +21,8 @@ public class PPPProducts3 {
     private BigDecimal wireDiameterUm;//线径um
     private BigDecimal lengthM;//长度m/轴
 
+    private String axleNumber ;//轴号
+    private BigDecimal axleloadWeight ;//轴重g
     private BigDecimal grossWeight ;//毛重g
     private BigDecimal netWeightg;//净重g
     private BigDecimal wastageg;//废料g
@@ -43,9 +46,33 @@ public class PPPProducts3 {
     private BigDecimal totalLength;//总长度（长度*数量）
     private BigDecimal netWeightgSum;//总净重g(净重*数量)
 
-    private Integer state;//改绕/绕线否 0否 1是（默认0）
+    private Integer state;//使用否 （0 未使用  1已使用）
 
     private Integer deleteNo;//删除否
+
+    public String getAxleNumber() {
+        return axleNumber;
+    }
+
+    public void setAxleNumber(String axleNumber) {
+        this.axleNumber = axleNumber;
+    }
+
+    public BigDecimal getAxleloadWeight() {
+        return axleloadWeight;
+    }
+
+    public void setAxleloadWeight(BigDecimal axleloadWeight) {
+        this.axleloadWeight = axleloadWeight;
+    }
+
+    public Integer getLPPId() {
+        return LPPId;
+    }
+
+    public void setLPPId(Integer LPPId) {
+        this.LPPId = LPPId;
+    }
 
     public Integer getFid() {
         return Fid;

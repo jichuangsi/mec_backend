@@ -12,7 +12,7 @@ public interface TMouldDetailRepository extends JpaRepository<TMouldDetail,Integ
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE t_moulddetail SET delete_no = 1 AND mould_id = ?1",nativeQuery = true)
+    @Query(value = "UPDATE t_moulddetail SET delete_no = 1 WHERE mould_id = ?1",nativeQuery = true)
     void updateMoulddetailByMouldId(Integer orderId);
 
     List<TMouldDetail> findByMouldIdAndDeleteNo(Integer mouldId,Integer deleteNo);
