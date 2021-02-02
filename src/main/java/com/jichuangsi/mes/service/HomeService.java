@@ -212,8 +212,22 @@ public class HomeService {
             idAllList.addAll(idList);
         }
 
-        jsonObject.put("list",new TreeBeanUtil().menuList(iMesMapper.findRolePowerByroleIds(idAllList,loginModel.getSysType())));//节点数据
-        jsonObject.put("rolePowerList",iMesMapper.findRolePowerDetailByroleIds(idAllList,loginModel.getSysType()));//功能数据
+        List<Integer> listone = iMesMapper.findRolePowerDetailByroleIds(idAllList,loginModel.getSysType(),null);
+        List<Integer> listtwo = new ArrayList<>();
+        listtwo.addAll(listone);
+        do{
+
+            listtwo = iMesMapper.findRolePowerFidByroleIds(listtwo,loginModel.getSysType());
+            listone.addAll(listtwo);
+        }while (listtwo.size() > 0);
+
+        List list=(List) listone.stream().distinct().collect(Collectors.toList());//去重
+
+        jsonObject.put("list",new TreeBeanUtil().menuList(iMesMapper.findRolePowerByroleIds(list,loginModel.getSysType())));//节点数据：去重后、的查询数据
+        jsonObject.put("rolePowerList",iMesMapper.findRolePowerDetailByroleIds(idAllList,loginModel.getSysType(),0));//功能数据
+
+//        jsonObject.put("list",new TreeBeanUtil().menuList(iMesMapper.findRolePowerByroleIds(idAllList,loginModel.getSysType())));//节点数据：去重后、的查询数据
+//        jsonObject.put("rolePowerList",iMesMapper.findRolePowerDetailByroleIds(idAllList,loginModel.getSysType()));//功能数据
         return jsonObject;
     }
 }

@@ -207,7 +207,8 @@ public class BasicSettingService {
             job.put("gxLossBislist",mesMapper.findAllGXLossBiVoById(selectModel.getFindById()));
         }
 
-        long tpNum =(tpRepository.findLastId()+1);
+        Integer  getlastId = tpRepository.findLastId();
+        long tpNum =StringUtils.isEmpty(getlastId) ? 1:(getlastId+1);
         String strnum = "TP000"+tpNum;
 
         job.put("productNumber",strnum);//产品编号
@@ -225,13 +226,16 @@ public class BasicSettingService {
         String strnum ="";
         switch (selectModel.getFindModelName()){
             case "YL":
-                strnum = "YL-000"+(stockRepository.findLastId()+1);
+                Integer count1 =  stockRepository.findLastId();
+                strnum = "YL-000"+(StringUtils.isEmpty(count1) ? 1: count1 +1);
                 break;
             case "XZ":
-                strnum = "XZ-000"+(tbobbinRepository.findLastId()+1);
+                Integer count2 =  tbobbinRepository.findLastId();
+                strnum = "XZ-000"+(StringUtils.isEmpty(count2) ? 1: count2 +1);
                 break;
             case "QT":
-                strnum = "QT-000"+(stockRepository.findLastId()+1);
+                Integer count3 =  stockRepository.findLastId();
+                strnum = "QT-000"+(StringUtils.isEmpty(count3) ? 1: count3 +1);
                 break;
         }
 
@@ -331,7 +335,8 @@ public class BasicSettingService {
 //            throw new PassportException(ResultCode.NUMBER_ISEXIST_MSG);
 //        }
         if(StringUtils.isEmpty(stock.getId())){//新增的时候
-            stock.setStockNumber("YL-000"+(stockRepository.findLastId()+1));
+            Integer getLastId =  tpRepository.findLastId();
+            stock.setStockNumber("YL-000"+(StringUtils.isEmpty(getLastId) ? 1: getLastId+1));
         }
 
         stock.setMaterialType(1);//1原料 2其他
@@ -368,7 +373,8 @@ public class BasicSettingService {
 //        }
 
         if(StringUtils.isEmpty(tb.getId())){//新增
-            tb.setBobbinNumber("XZ-000"+tbobbinRepository.findLastId()+1);//编号
+            Integer getLastId =  tbobbinRepository.findLastId();
+            tb.setBobbinNumber("XZ-000"+(StringUtils.isEmpty(getLastId) ? 1:getLastId+ 1));//编号
         }
         tb.setDeleteNo(0);
         tb.setState(0);
@@ -409,7 +415,8 @@ public class BasicSettingService {
 //        }
 
         if(StringUtils.isEmpty(stock.getId())){//新增的时候
-            stock.setStockNumber("QT-000"+(stockRepository.findLastId()+1));
+            Integer getLastId =  stockRepository.findLastId();
+            stock.setStockNumber("QT-000"+(StringUtils.isEmpty(getLastId) ? 1:getLastId+ 1));
         }
 
         stock.setMaterialType(2);//1原料 2其他

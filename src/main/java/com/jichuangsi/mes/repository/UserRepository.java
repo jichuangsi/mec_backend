@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface UserRepository extends JpaRepository<SStaff,Integer> {
     int countByStaffNum(String staffnum);
 
-    SStaff findByStaffNumAndLoginPassword(String account,String Pwd);
+    SStaff findByStaffNumAndLoginPasswordAndDeleteNo(String account,String Pwd,Integer deleteNo);
 
     SStaff findByid(Integer id);
 

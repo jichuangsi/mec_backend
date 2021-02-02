@@ -138,7 +138,7 @@ public class UserService {
                 Md5Util.encodeByMd5(model.getPwd())
         );
         try {
-            SStaff backUser=userRepository.findByStaffNumAndLoginPassword(model.getAccount(),Md5Util.encodeByMd5(model.getPwd()));
+            SStaff backUser=userRepository.findByStaffNumAndLoginPasswordAndDeleteNo(model.getAccount(),Md5Util.encodeByMd5(model.getPwd()),0);
             String user=JSONObject.toJSONString(MappingEntityModelCoverter.CONVERTERFROMBACKUSERINFO(backUser));
             jsonObject.put("accessToken",backTokenService.createdToken(user));
             jsonObject.put("userId",backUser.getId());

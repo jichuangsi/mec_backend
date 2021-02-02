@@ -21,9 +21,9 @@ public interface IMesMapper {
             "de.department_name AS departmentName,mp.post_name as postName,\n" +
             "(SELECT GROUP_CONCAT(s_role.role_name)  FROM s_role INNER JOIN s_staffrole onesf ON s_role.id = onesf.role_id where onesf.staff_id = sf.id)as roleName\n" +
             "FROM s_staff sf\n" +
-            "INNER JOIN department de ON sf.department_id = de.id\n" +
-            "INNER JOIN mes_post mp on sf.post_id = mp.id\n" +
-            "INNER JOIN workshop ws on sf.workshop_id = ws.id\n" +
+            "LEFT JOIN department de ON sf.department_id = de.id\n" +
+            "LEFT JOIN mes_post mp on sf.post_id = mp.id\n" +
+            "LEFT JOIN workshop ws on sf.workshop_id = ws.id\n" +
             "WHERE sf.delete_no = 0" +
             "<if test='name != null'>AND sf.`staff_name` LIKE CONCAT('%', #{name},'%')</if>"+
             "<if test='deId != null'>AND sf.department_id=#{deId}</if>" +
@@ -33,9 +33,9 @@ public interface IMesMapper {
 
     @Select(value = "<script>SELECT count(1)" +
             "FROM s_staff sf\n" +
-            "INNER JOIN department de ON sf.department_id = de.id\n" +
-            "INNER JOIN mes_post mp on sf.post_id = mp.id\n" +
-            "INNER JOIN workshop ws on sf.workshop_id = ws.id\n" +
+            "LEFT JOIN department de ON sf.department_id = de.id\n" +
+            "LEFT JOIN mes_post mp on sf.post_id = mp.id\n" +
+            "LEFT JOIN workshop ws on sf.workshop_id = ws.id\n" +
             "WHERE sf.delete_no = 0" +
             "<if test='name != null'>AND sf.`staff_name` LIKE CONCAT('%', #{name},'%')</if>"+
             "<if test='deId != null'>AND sf.department_id=#{deId}</if>" +
@@ -51,9 +51,9 @@ public interface IMesMapper {
             "INNER JOIN s_staffrole onesf ON s_role.id = onesf.role_id \n" +
             "where onesf.staff_id = sf.id)as roleId \n" +
             "FROM s_staff sf \n" +
-            "INNER JOIN department de ON sf.department_id = de.id \n" +
-            "INNER JOIN mes_post mp on sf.post_id = mp.id \n" +
-            "INNER JOIN workshop ws on sf.workshop_id = ws.id \n" +
+            "LEFT JOIN department de ON sf.department_id = de.id \n" +
+            "LEFT JOIN mes_post mp on sf.post_id = mp.id \n" +
+            "LEFT JOIN workshop ws on sf.workshop_id = ws.id \n" +
             "WHERE sf.delete_no = 0 \n" +
             "AND sf.id = #{deId}</script>")
     UserInfoModel findUserById(@Param("deId")Integer deId);
@@ -455,7 +455,7 @@ public interface IMesMapper {
             "LEFT JOIN s_customer sc ON sc.id = tp.customer_id\n" +
             "LEFT JOIN s_staff sf ON sf.id = tp.staff_id\n" +
             "LEFT JOIN t_purchasedetail tpd ON tpd.purchase_id = tp.id\n" +
-            "WHERE tp.delete_no = 0 and order_state &lt;= 2\n"+
+            "WHERE tp.delete_no = 0 and order_state &lt;= 2 and order_state != 0\n"+
             "<if test='name != null'>AND tp.purchase_order LIKE CONCAT('%', #{name},'%')</if>\n"+
             "GROUP BY tp.id\n" +
             "Order BY tp.id desc\n" +
@@ -473,7 +473,7 @@ public interface IMesMapper {
             "LEFT JOIN s_customer sc ON sc.id = tp.customer_id\n" +
             "LEFT JOIN s_staff sf ON sf.id = tp.staff_id\n" +
             "LEFT JOIN t_purchasedetail tpd ON tpd.purchase_id = tp.id\n" +
-            "WHERE tp.delete_no = 0 and (order_state = 3 or order_state = 4) \n"+//and (order_state = 3 or order_state = 4)
+            "WHERE tp.delete_no = 0 and (order_state = 3 or order_state = 4)  \n"+//and (order_state = 3 or order_state = 4)
             "<if test='name != null'>AND tp.purchase_order LIKE CONCAT('%', #{name},'%')</if>\n"+
             "GROUP BY tp.id\n" +
             "Order BY tp.id desc\n" +
@@ -1553,12 +1553,20 @@ public interface IMesMapper {
     //   权限管理-根据用户id查询用户功能数据
     @Select(value = "<script>SELECT id as id \n" +
             "FROM s_rolepower \n" +
-            "WHERE delete_no = 0 and sys_type = #{sysType} and is_node = 0  and  id IN \n" +
+            "WHERE delete_no = 0 and sys_type = #{sysType} \n" +
+            "<if test='isnode != null'>and is_node = #{isnode}</if>\n"+
+            "and  id IN \n" +
             "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
             "</script>")
-    List<Integer> findRolePowerDetailByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType);
+    List<Integer> findRolePowerDetailByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType,@Param("isnode")Integer isnode);
 
-
+    //   权限管理-根据用户id查询用户功能数据
+    @Select(value = "<script>SELECT DISTINCT fid as id \n" +
+            "FROM s_rolepower \n" +
+            "WHERE delete_no = 0 and sys_type = #{sysType}  and  id IN \n" +
+            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item}</foreach>\n" +
+            "</script>")
+    List<Integer> findRolePowerFidByroleIds(@Param("ids")List<Integer> ids,@Param("sysType")Integer sysType);
 
 
 
