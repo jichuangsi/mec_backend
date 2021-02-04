@@ -52,12 +52,6 @@ public class UserController {
             return ResponseModel.sucess("",userService.loginBackUser(model,request,inputStream));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
-        }catch (UnknownAccountException e) {
-            return ResponseModel.fail("","用户名不存在");
-        } catch (AuthenticationException e) {
-            return ResponseModel.fail("","账号或密码错误");
-        } catch (AuthorizationException e) {
-            return ResponseModel.fail("","没有权限");
         }
     }
 

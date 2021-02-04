@@ -138,12 +138,6 @@ public class UserService {
                 Md5Util.encodeByMd5(model.getPwd())
         );
         try {
-            SStaff backUser=userRepository.findByStaffNumAndLoginPassword(model.getAccount(),Md5Util.encodeByMd5(model.getPwd()));
-            String user=JSONObject.toJSONString(MappingEntityModelCoverter.CONVERTERFROMBACKUSERINFO(backUser));
-            jsonObject.put("accessToken",backTokenService.createdToken(user));
-            jsonObject.put("userId",backUser.getId());
-            jsonObject.put("userName",backUser.getStaffName());
-
             //进行验证，这里可以捕获异常，然后返回对应信息
             subject.login(usernamePasswordToken);
         } catch (UnknownAccountException e) {
@@ -152,6 +146,13 @@ public class UserService {
             throw new PassportException("账号或密码错误!");
         } catch (AuthorizationException e) {
             throw new PassportException("没有权限");
+        }
+        SStaff backUser=userRepository.findByStaffNumAndLoginPassword(model.getAccount(),Md5Util.encodeByMd5(model.getPwd()));
+        if(backUser!=null){
+            String user=JSONObject.toJSONString(MappingEntityModelCoverter.CONVERTERFROMBACKUSERINFO(backUser));
+            jsonObject.put("accessToken",backTokenService.createdToken(user));
+            jsonObject.put("userId",backUser.getId());
+            jsonObject.put("userName",backUser.getStaffName());
         }
         return jsonObject;
 

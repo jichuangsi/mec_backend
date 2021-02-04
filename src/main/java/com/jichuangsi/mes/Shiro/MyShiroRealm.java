@@ -1,5 +1,6 @@
 package com.jichuangsi.mes.Shiro;
 
+import com.jichuangsi.mes.constant.ResultCode;
 import com.jichuangsi.mes.entity.RolePower;
 import com.jichuangsi.mes.entity.SRole;
 import com.jichuangsi.mes.entity.SStaff;
@@ -17,6 +18,9 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
@@ -39,6 +43,7 @@ public class MyShiroRealm extends AuthorizingRealm {
     private SStaffRoleRepository sStaffRoleRepository;
     @Resource
     private IMesMapper iMesMapper;
+    private static final Logger logger = LoggerFactory.getLogger(ShiroConfig.class);
     /**
      *  执行授权访问控制逻辑
      *
@@ -47,9 +52,12 @@ public class MyShiroRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-//        System.out.println("权限配置-->MyShiroRealm.doGetAuthorizationInfo()");
-//
-//        SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
+        logger.info("====执行授权访问控制逻辑=====");
+       System.out.println("权限配置-->MyShiroRealm.doGetAuthorizationInfo()");
+
+       SimpleAuthorizationInfo authorizationInfo = new SimpleAuthorizationInfo();
+        Subject subject=SecurityUtils.getSubject();
+        SStaff user=(SStaff) subject.getPrincipal();
 //        List<String> roleList=new ArrayList<>();
 //        // 获取用户名
 //        SStaff stafff = (SStaff) principals.getPrimaryPrincipal();
@@ -73,9 +81,9 @@ public class MyShiroRealm extends AuthorizingRealm {
 
 
         //获取登录用户名
-        String name = (String) principals.getPrimaryPrincipal();
+        //String name = (String) principals.getPrimaryPrincipal();
         //查询用户名称
-        SStaff user = userRepository.findByStaffNum(name);
+        //SStaff user = userRepository.findByStaffNum(name);
         //添加角色和权限
         SimpleAuthorizationInfo simpleAuthorizationInfo = new SimpleAuthorizationInfo();
 
@@ -106,6 +114,7 @@ public class MyShiroRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+        logger.info("====执行认证逻辑=====");
         if (StringUtils.isEmpty(token.getPrincipal())) {
             return null;
         }
@@ -113,11 +122,12 @@ public class MyShiroRealm extends AuthorizingRealm {
         String name = token.getPrincipal().toString();
         SStaff user = userRepository.findByStaffNum(name);
         if (user == null) {
-            //这里返回后会报出对应异常
             return null;
+            //这里返回后会报出对应异常
+            //throw new AuthenticationException(ResultCode.ACCOUNT_ISNOTEXIST_MSG);
         } else {
             //这里验证authenticationToken和simpleAuthenticationInfo的信息
-            SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(name, user.getLoginPassword(), getName());
+            SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(user, user.getLoginPassword(), this.getName());
             return simpleAuthenticationInfo;
         }
 //
