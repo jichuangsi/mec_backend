@@ -151,7 +151,7 @@ public class BasicSettingService {
                 //规格型号 TProstandard
                 jsonObject.put("listTProstandard",tprostRepository.findByProductIdAndDeleteNo(smodel.getFindById(),0));
 //                // 工序损耗比 GXLossBi
-//                jsonObject.put("listGXLossBi",mesMapper.findAllGXLossBiVoById(smodel.getFindById()));
+                jsonObject.put("listGXLossBi",mesMapper.findAllGXLossBiVoById(smodel.getFindById()));
                 // 原料配比 RawMaterialRatio
                 jsonObject.put("listRawMaterialRatio",mesMapper.findAllRawMaterialRatioById(smodel.getFindById()));
                 break;
@@ -990,6 +990,7 @@ public class BasicSettingService {
                 throw new PassportException(ResultCode.PARAM_MISS_MSG);
             }
 
+            equipmentCheckDetailRecord.setId(null);
             equipmentCheckDetailRecord.setEquipmentCheckRecordId(equipmentCheckRecord2.getId());
         }
         equipmentCheckDetailRecordRepository.saveAll(listdetail);

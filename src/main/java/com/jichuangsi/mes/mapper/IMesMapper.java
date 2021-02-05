@@ -1644,10 +1644,16 @@ public interface IMesMapper {
 
 
     //   库存管理-根据库存ids修改状态
-    @Select(value = "<script>UPDATE inventory_status SET state = 1 where ppp_id = #{pppId} WHERE  id IN \n" +
-            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item.id}</foreach>\n" +
+//    @Select(value = "<script>UPDATE inventory_status SET state = 1 where ppp_id = #{pppId} and  product_id IN \n" +
+//            "<foreach collection='ids' item='item' open='(' separator=',' close=')'>#{item.id}</foreach>\n" +
+//            "</script>")
+    @Select(value = "<script>UPDATE inventory_status SET state = 1 where ppp_id = #{pppId}  \n" +
+            "and inventory_type != 4 and  product_id IN\n" +
+            "(SELECT id\n" +
+            "FROM ppp_products#{id}\n" +
+            "WHERE state = 1 AND lppid = #{lpppId})" +
             "</script>")
-    void updateStateByProductIdAndInventoryType(@Param("ids")List<PPPProducts0> ids,@Param("pppId")Integer pppId);
+    void updateStateByProductIdAndInventoryType(@Param("id")Integer id,@Param("lpppId")Integer lpppId,@Param("pppId")Integer pppId);
 
 
 }

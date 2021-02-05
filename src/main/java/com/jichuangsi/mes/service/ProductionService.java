@@ -503,8 +503,6 @@ public class ProductionService {
 
             BigDecimal wastagegs =pppProducts.getWastageg();// new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getWastageg().toString())).stripTrailingZeros().toPlainString());
             BigDecimal netWeightgs =pppProducts.getNetWeightg(); //new BigDecimal(BigDecimal.valueOf(Double.parseDouble(pppProducts.getNetWeightg().toString())).stripTrailingZeros().toPlainString());
-//            Integer wastageg =Integer.valueOf(wastagegs.toString()) ;
-//            Integer netWeightg = Integer.valueOf(netWeightgs.toString());
 
             InventoryStatus inventoryStatus1 = new InventoryStatus();//废料
             InventoryStatus inventoryStatus2 = new InventoryStatus();//产品/半成品
@@ -1141,7 +1139,7 @@ public class ProductionService {
             }
 
 
-            mesMapper.updateStateByProductIdAndInventoryType(ppProductionModel.getTwoList(),ppProduction.getFid());//库存管理-根据库存ids修改状态为已用
+            mesMapper.updateStateByProductIdAndInventoryType(ppProduction.getFid()%10,ppProduction.getId(),ppProduction.getFid());//库存管理-根据库存ids修改状态为已用
 //            inventoryStatusRepository.updateStateByProductIdAndInventoryType(ppProduction.getFid(),2);//把上批的产物清零
             for (int i = 0; i < list.size(); i++) {
                 ProductsVo pppProducts = list.get(i);
@@ -1201,7 +1199,7 @@ public class ProductionService {
     public JSONObject getAllFinished()throws PassportException {
         JSONObject jsonObject = new JSONObject();
 
-        jsonObject.put("LData",iProductionMapper.findAllFinished());//根据生产id查询本班产物list
+        jsonObject.put("LData",mesMapper.findAllInventoryByState(2,null,9));
 
         return jsonObject;
     }
@@ -1216,7 +1214,7 @@ public class ProductionService {
         if(StringUtils.isEmpty(selectModel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        jsonObject.put("RData",iProductionMapper.findAllInventoryStateByPPPId(selectModel.getFindById(),selectModel.getFindById()%10));//根据生产id查询本班产物list
+        jsonObject.put("RData",mesMapper.findAllInventoryStateByPPPId(2,selectModel.getFindById(),selectModel.getFindById()%10));//根据生产id查询本班产物list
 
         return jsonObject;
     }
