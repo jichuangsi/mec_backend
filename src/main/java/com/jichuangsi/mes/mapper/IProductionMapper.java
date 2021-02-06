@@ -89,7 +89,7 @@ public interface IProductionMapper {
             "LEFT JOIN s_dictionarier dw ON dw.id = tp.product_unit_id \n" +
             "LEFT JOIN s_dictionarier xz ON xz.id = tp.bobbin_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tp.begin_id \n" +
-            "LEFT JOIN s_dictionarier md ON sd.id = tp.end_id \n" +
+            "LEFT JOIN s_dictionarier md ON md.id = tp.end_id \n" +
             "LEFT JOIN s_customer sc ON sc.id = tsa.customer_id\n" +
             "WHERE ppp.id = #{deId}" +
             "</script>")
@@ -111,7 +111,7 @@ public interface IProductionMapper {
             "LEFT JOIN s_dictionarier dw ON dw.id = tp.product_unit_id \n" +
             "LEFT JOIN s_dictionarier xz ON xz.id = tp.bobbin_id \n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = tp.begin_id \n" +
-            "LEFT JOIN s_dictionarier md ON sd.id = tp.end_id\n" +
+            "LEFT JOIN s_dictionarier md ON md.id = tp.end_id\n" +
             "WHERE ppp.id = #{deId}" +
             "</script>")
     PPProductionVo findMeltingBasicInfoByNoSaleId(@Param("deId")Integer deId);

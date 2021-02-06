@@ -423,12 +423,12 @@ public interface IMesMapper {
             "LEFT JOIN s_customer sc ON sc.id = tp.customer_id\n" +
             "LEFT JOIN s_staff sf ON sf.id = tp.staff_id\n" +
             "LEFT JOIN t_purchasedetail tpd ON tpd.purchase_id = tp.id\n" +
-            "WHERE tp.delete_no = 0\n"+
+            "WHERE tp.delete_no = 0 and (tp.order_state != 0) or (tp.order_state = 0 and tp.staff_id = #{staffId})\n"+
             "<if test='name != null'>AND tp.purchase_order LIKE CONCAT('%', #{name},'%')</if>\n"+
             "GROUP BY tp.id\n" +
             "ORDER BY tp.id DESC\n" +
             "LIMIT #{pageNum},#{pageSize}</script>")
-    List<PurchaseModel> findAllPurchase(@Param("name")String name,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
+    List<PurchaseModel> findAllPurchase(@Param("name")String name,@Param("staffId")Integer staffId,@Param("pageNum")int pageNum,@Param("pageSize")int pageSize);
 
     //根据采购订单id查询采购总金额
     @Select(value = "<script>SELECT SUM(stock_unit_price*stock_amount)\n" +
@@ -483,10 +483,10 @@ public interface IMesMapper {
     //统计采购订单总数
     @Select(value = "<script>SELECT count(1)\n" +
             "FROM t_purchase tp\n" +
-            "WHERE tp.delete_no = 0"+
+            "WHERE tp.delete_no = 0 and (tp.order_state != 0) or (tp.order_state = 0 and tp.staff_id = #{staffId})"+
             "<if test='name != null'>AND tp.purchase_order LIKE CONCAT('%', #{name},'%')</if>"+
             "</script>")
-    Integer countByPurchase(@Param("name")String name);
+    Integer countByPurchase(@Param("name")String name,@Param("staffId")Integer staffId);
 
     //统计订单审核(采购管理)总数
     @Select(value = "<script>SELECT count(1)\n" +

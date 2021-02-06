@@ -72,9 +72,9 @@ public class PurchaseController {
     @ApiOperation("采购订单管理-查询")
     @ApiImplicitParams({})
     @PostMapping("/getAllPurchase")
-    public ResponseModel getAllPurchase(@RequestBody SelectModel smodel){
+    public ResponseModel getAllPurchase(@ModelAttribute UserInfoForToken userInfoForToken,@RequestBody SelectModel smodel){
         try {
-            return ResponseModel.sucess("",purchaseService.getAllPurchase(smodel));
+            return ResponseModel.sucess("",purchaseService.getAllPurchase(userInfoForToken,smodel));
         }catch (PassportException e){
             return ResponseModel.fail("",e.getMessage());
         }

@@ -191,17 +191,17 @@ public class PurchaseService {
      * @param
      * @throws PassportException
      */
-    public PageInfo getAllPurchase(SelectModel smodel)throws PassportException{
+    public PageInfo getAllPurchase(UserInfoForToken userInfoForToken,SelectModel smodel)throws PassportException{
         PageInfo page=new PageInfo();
 
-        List<PurchaseModel> listPurchase = mesMapper.findAllPurchase(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
+        List<PurchaseModel> listPurchase = mesMapper.findAllPurchase(smodel.getFindName(),Integer.valueOf(userInfoForToken.getUserId()),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
         for (PurchaseModel modes: listPurchase) {
             Map<String,String> map =  OrderStateChange.getOrderState(modes.getOrderStateId());
             modes.setCheckState(map.get("checkState"));
             modes.setOrderState(map.get("orderstate"));
         }
         page.setList(listPurchase);
-        page.setTotal(mesMapper.countByPurchase(smodel.getFindName()));
+        page.setTotal(mesMapper.countByPurchase(smodel.getFindName(),Integer.valueOf(userInfoForToken.getUserId())));
 
         page.setPageSize(smodel.getPageSize());
         page.setPageNum(smodel.getPageNum());

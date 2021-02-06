@@ -307,24 +307,27 @@ public class ProductionDataService {
             JSONObject jsonObject4 = new JSONObject();
             List<PPProductsVo>  ppProductsVoList =  iProductionMapper.findAllByProductionTeam(createTime,list.get(i).getMapKey());
 
-            //设置比例率
-            ppProductsVoList.get(0).setNetWeightgRate(ppProductsVoList.get(0).getFinishEdP().divide(ppProductsVoList.get(0).getIncomeHeavy(),8,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
-            ppProductsVoList.get(0).setWastagegRate(ppProductsVoList.get(0).getWastageg().divide(ppProductsVoList.get(0).getIncomeHeavy(),8,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
-            ppProductsVoList.get(0).setLossgRate(ppProductsVoList.get(0).getLossg().divide(ppProductsVoList.get(0).getIncomeHeavy(),8,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
+            if(!ppProductsVoList.isEmpty()){
+                //设置比例率
+                ppProductsVoList.get(0).setNetWeightgRate(ppProductsVoList.get(0).getFinishEdP().divide(ppProductsVoList.get(0).getIncomeHeavy(),8,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
+                ppProductsVoList.get(0).setWastagegRate(ppProductsVoList.get(0).getWastageg().divide(ppProductsVoList.get(0).getIncomeHeavy(),8,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
+                ppProductsVoList.get(0).setLossgRate(ppProductsVoList.get(0).getLossg().divide(ppProductsVoList.get(0).getIncomeHeavy(),8,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
 
-            jsonObject3.put("product",list.get(i).getMapValue());//班组
-            jsonObject3.put("成品",ppProductsVoList.get(0).getFinishEdP());
-            jsonObject3.put("废料",ppProductsVoList.get(0).getWastageg());
-            jsonObject3.put("损耗",ppProductsVoList.get(0).getLossg());
+                jsonObject3.put("product",list.get(i).getMapValue());//班组
+                jsonObject3.put("成品",ppProductsVoList.get(0).getFinishEdP());
+                jsonObject3.put("废料",ppProductsVoList.get(0).getWastageg());
+                jsonObject3.put("损耗",ppProductsVoList.get(0).getLossg());
 
-            jsonObject4.put("product",list.get(i).getMapValue());//班组
-            jsonObject4.put("成品",ppProductsVoList.get(0).getNetWeightgRate());
-            jsonObject4.put("废料",ppProductsVoList.get(0).getWastagegRate());
-            jsonObject4.put("损耗",ppProductsVoList.get(0).getLossgRate());
+                jsonObject4.put("product",list.get(i).getMapValue());//班组
+                jsonObject4.put("成品",ppProductsVoList.get(0).getNetWeightgRate());
+                jsonObject4.put("废料",ppProductsVoList.get(0).getWastagegRate());
+                jsonObject4.put("损耗",ppProductsVoList.get(0).getLossgRate());
 
-            ppProductsVoArrayList.addAll(ppProductsVoList);
-            jsonArray1.add(jsonObject3);
-            jsonArray2.add(jsonObject4);
+                ppProductsVoArrayList.addAll(ppProductsVoList);
+                jsonArray1.add(jsonObject3);
+                jsonArray2.add(jsonObject4);
+            }
+
         }
 
         jsonObject1.put("source",jsonArray1);//第一个直方图数据

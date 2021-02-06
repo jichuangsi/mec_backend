@@ -511,7 +511,7 @@ public class ProductionService {
 
             inventoryStatus1.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
             inventoryStatus1.setPppId(pppid);
-            inventoryStatus1.setWarehouseId(1);//仓库Id
+            inventoryStatus1.setWarehouseId(9);//仓库Id
             inventoryStatus1.setInventoryType(4);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryStatus1.setInventorysum(wastagegs);//废料数量
 //            inventoryStatus1.setInventorynumbers(wastagegs);//数量
@@ -526,7 +526,7 @@ public class ProductionService {
 
             inventoryStatus2.setProductId(pppProducts.getId());//产品/原料明细Id/生产id
             inventoryStatus2.setPppId(pppid);
-            inventoryStatus2.setWarehouseId(1);//仓库Id
+            inventoryStatus2.setWarehouseId(9);//仓库Id
             inventoryStatus2.setInventoryType(inventoryType);//库存类型(1 原料 2 产品 3半成品 4废料 5线轴  6其他)
             inventoryStatus2.setInventorysum(netWeightgs);//数量
 //            inventoryStatus2.setInventorynumbers(netWeightgs);//净含量数量
@@ -1199,7 +1199,8 @@ public class ProductionService {
     public JSONObject getAllFinished()throws PassportException {
         JSONObject jsonObject = new JSONObject();
 
-        jsonObject.put("LData",mesMapper.findAllInventoryByState(2,null,9));
+//        jsonObject.put("LData",mesMapper.findAllInventoryByState(2,null,9));
+        jsonObject.put("LData",iProductionMapper.findAllFinished());
 
         return jsonObject;
     }
@@ -1214,8 +1215,8 @@ public class ProductionService {
         if(StringUtils.isEmpty(selectModel.getFindById())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
-        jsonObject.put("RData",mesMapper.findAllInventoryStateByPPPId(2,selectModel.getFindById(),selectModel.getFindById()%10));//根据生产id查询本班产物list
-
+//        jsonObject.put("RData",mesMapper.findAllInventoryStateByPPPId(2,selectModel.getFindById(),selectModel.getFindById()%10));//根据生产id查询本班产物list
+        jsonObject.put("RData",iProductionMapper.findAllInventoryStateByPPPId(selectModel.getFindById(),selectModel.getFindById()%10));
         return jsonObject;
     }
 

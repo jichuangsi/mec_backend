@@ -45,6 +45,8 @@ public class TemplatesService {
     private TSamplingReportDetailRepository tSamplingReportDetailRepository;
     @Resource
     private TCertificateReportRepository tCertificateReportRepository;
+    @Resource
+    private InventoryStatusRepository inventoryStatusRepository;
 
     /**
      * 新增模板—下拉框
@@ -163,11 +165,16 @@ public class TemplatesService {
     public JSONObject getTemplatesByChooseIds(UserInfoForToken userInfoForToken, SelectModel selectModel)throws PassportException {
         JSONObject jsonObject = new JSONObject();
 
-        if(StringUtils.isEmpty(selectModel.getFindById()) || StringUtils.isEmpty(selectModel.getFindIdOne())||StringUtils.isEmpty(selectModel.getPageSize())||StringUtils.isEmpty(selectModel.getPageNum())||StringUtils.isEmpty(selectModel.getFindName())){
+        if(StringUtils.isEmpty(selectModel.getFindIdOne())||StringUtils.isEmpty(selectModel.getPageSize())||StringUtils.isEmpty(selectModel.getPageNum())||StringUtils.isEmpty(selectModel.getFindName())){
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        PPProduction ppProduction = ppProductionRepository.findByid(selectModel.getFindById());//这个库存里面找出来的
+        InventoryStatus inventoryStatus = inventoryStatusRepository.findByid(selectModel.getFindIdOne());//根据id查找出来pppid跟产物id
+
+        Integer pppId = inventoryStatus.getPppId();//生产id
+        Integer ppppId = inventoryStatus.getProductId();//生产产物id
+
+        PPProduction ppProduction = ppProductionRepository.findByid(pppId);//这个库存里面找出来的
         if(StringUtils.isEmpty(ppProduction)){
             throw new PassportException(ResultCode.DATA_NOEXIST_MSG);
         }
@@ -187,13 +194,13 @@ public class TemplatesService {
         tSamplingReport.setReportName(selectModel.getFindName());//报告名称
         tSamplingReport.setInspectionSum(selectModel.getPageSize());//进检轴数
         tSamplingReport.setSamplesNums(selectModel.getPageNum());//抽检轴数
-        tSamplingReport.setPppId(selectModel.getFindById());//生产id
-        tSamplingReport.setPpppId(selectModel.getFindIdOne());//生产产物id
+        tSamplingReport.setPppId(pppId);//生产id
+        tSamplingReport.setPpppId(ppppId);//生产产物id
 
         jsonObject.put("tSamplingReport",tSamplingReport);//抽样检验数据
 
 //        抽样检验报告明细
-        ProductsVo productsVo = iProductionMapper.findBypppProducts(selectModel.getFindById()%10,selectModel.getFindIdOne());//根据产物id查询详情
+        ProductsVo productsVo = iProductionMapper.findBypppProducts(pppId%10,ppppId);//根据产物id查询详情
         List<TSamplingReportDetail> tSamplingReportDetailList = new ArrayList<>();
         for(int i = 0; i < selectModel.getPageNum(); i++){
             TSamplingReportDetail tSamplingReportDetail = new TSamplingReportDetail();
