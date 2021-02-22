@@ -595,7 +595,9 @@ public interface IMesMapper {
             "tp.product_name as productName,tp.product_model as productModel,tp.product_number as productNumber,\n" +
             "tpro.um_start as umStart,tsde.unit_id as unitId,\n" +
             "sd.`name` as unitName,tsde.product_num as productNum,\n" +
-            "tsde.product_price as productPrice,(tsde.product_num * tsde.product_price) as productSum,\n" +
+            "tsde.product_price as productPrice," +
+            "(tsde.product_num * tsde.product_price) as productSum,\n" +
+            "(tsde.product_num * tsde.product_price * tsde.lengthm) as productLengthSum,\n" +
             "tsde.remark as remark,tsde.delete_no as deleteNo\n" +
             "FROM t_saleorderdetail tsde\n" +
             "LEFT JOIN t_prostandard tpro ON tpro.id = tsde.product_id \n" +

@@ -13,12 +13,21 @@ public class UpdateModel {
 
     private String updateRemark;//需要添加的备注
 
+    private String bobbinColor;//线轴颜色
     private String axleNumber;//轴号
     private String stockName;//名称
     private String stockModel;//模型
     private String stockNumber;//编号
     private String standards;//规格
     private Integer unitId;//单位id
+
+    public String getBobbinColor() {
+        return bobbinColor;
+    }
+
+    public void setBobbinColor(String bobbinColor) {
+        this.bobbinColor = bobbinColor;
+    }
 
     public String getAxleNumber() {
         return axleNumber;

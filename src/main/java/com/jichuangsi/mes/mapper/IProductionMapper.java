@@ -490,12 +490,15 @@ public interface IProductionMapper {
 //    List<ProductsVo> findKuCunProductsVoByPPPId(@Param("deId")Integer deId,@Param("id")Integer id);
 
     @Select(value = "<script>SELECT ins.id as updateID,tb.bobbin_name as updateRemark,\n" +
-            "pp.lengthm as standards,ins.inventorysum as updateNum,ins.unit_id as unitId," +
+            "pp.lengthm as standards,ins.inventorysum as updateNum," +
+            "ins.standards as stockName,pw.bobbin_color as bobbinColor," +
+            "ins.unit_id as unitId," +
             "sd.`name` as updateType,pp.axle_number as  axleNumber\n" +
             "FROM ppp_products#{id} pp\n" +
             "LEFT JOIN inventory_status ins ON ins.product_id = pp.id\n" +
             "LEFT JOIN t_standards ts ON ts.id = pp.bobbin_detail_id\n" +
             "LEFT JOIN t_bobbin tb ON tb.id = ts.material_id\n" +
+            "LEFT JOIN ppp_winding_info pw ON pw.ppppid = pp.id\n" +
             "LEFT JOIN s_dictionarier sd ON sd.id = ins.unit_id\n" +
             "WHERE  ins.ppp_id =#{deId} AND ins.inventory_type = 2 \n" +
             "AND pp.delete_no = 0 AND ins.delete_no = 0 AND ins.state = 0" +
