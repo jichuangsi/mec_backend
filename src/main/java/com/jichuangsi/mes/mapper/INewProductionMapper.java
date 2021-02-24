@@ -13,13 +13,14 @@ public interface INewProductionMapper {
 
 
 
-    //生产领料-查询当前生产计划单--查询已经审核完成的
+    //生产领料-查询当前生产计划单--查询已经审核完成的and 未超出计划完工时间的
     @Select(value = "<script>SELECT pp.id as id,pp.pp_name as ppName,\n" +
             "pp.pp_number as ppNumber,pp.create_time as createTime,pp.finished_time as finishedTime,\n" +
             "IFNULL(ts.sale_order,\"无\") as SaleOrder\n" +
             "FROM product_plan pp\n" +
             "LEFT JOIN t_saleorder ts ON ts.id = pp.sale_id\n" +
-            "WHERE pp.delete_no = 0 and pp.pp_plan_state = 3 \n"+
+            "WHERE pp.delete_no = 0 and pp.pp_plan_state = 3 " +
+            "and TO_DAYS( pp.finished_time) >= TO_DAYS(NOW()) \n"+
             "ORDER BY pp.id DESC\n" +
             "</script>")
     List<PPVo> findProductPlanInfo();

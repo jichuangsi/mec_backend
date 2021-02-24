@@ -10,18 +10,18 @@ public class TStandards {
     private Integer id;//材料规格ID
     private Integer materialId;//材料ID
     private String standards;//规格(1g2g等)
-    private Integer bobbinWeight;//轴重。只有线轴有
+//    private Integer bobbinWeight;//轴重。只有线轴有
     private Integer materialType;//材料类型(1 原料/ 2 线轴/3 其他)
     private String remark;
     private Integer deleteNo;
 
-    public Integer getBobbinWeight() {
-        return bobbinWeight;
-    }
-
-    public void setBobbinWeight(Integer bobbinWeight) {
-        this.bobbinWeight = bobbinWeight;
-    }
+//    public Integer getBobbinWeight() {
+//        return bobbinWeight;
+//    }
+//
+//    public void setBobbinWeight(Integer bobbinWeight) {
+//        this.bobbinWeight = bobbinWeight;
+//    }
 
     public Integer getId() {
         return id;

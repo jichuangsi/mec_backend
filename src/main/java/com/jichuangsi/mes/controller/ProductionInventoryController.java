@@ -97,8 +97,6 @@ public class ProductionInventoryController {
         return ResponseModel.sucessWithEmptyData("");
     }
 
-
-
     @ApiOperation("生产库存管理-生产入库-查询车间库存")
     @ApiImplicitParams({})
     @PostMapping("/getWorkshopInventory")
@@ -133,4 +131,17 @@ public class ProductionInventoryController {
         }
         return ResponseModel.sucessWithEmptyData("");
     }
+
+    @ApiOperation("生产库存管理-生产入库- 查询")
+    @ApiImplicitParams({})
+    @PostMapping("/getAllPPPRK")
+    public ResponseModel getAllPPPRK(@RequestBody SelectModel selectModel){
+        try {
+            return ResponseModel.sucess("",productionInventoryService.getAllPPPRK(selectModel));
+        }catch (PassportException e){
+            return ResponseModel.fail("",e.getMessage());
+        }
+    }
+
+
 }

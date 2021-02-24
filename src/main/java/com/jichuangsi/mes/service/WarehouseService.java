@@ -731,7 +731,7 @@ public class WarehouseService {
             case "nofinished"://半成品
             case "waste"://废料
             case "product"://成品
-                job.put("DetailXiaLa",mesMapper.findAllProductDetailByIdXiaLa(null));//产品规格下拉框
+                job.put("DetailXiaLa",mesMapper.findAllProductDetailByIdXiaLa(null,null));//产品规格下拉框
                 break;
             case "bobbin"://线轴
                 job.put("DetailXiaLa",mesMapper.findAllStockDetailByIdXiaLa(productid,2));//原料规格下拉框

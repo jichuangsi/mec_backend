@@ -19,7 +19,7 @@ public interface IMesMapper {
             "sf.workshop_id as workshopId,ws.workshop_name as workshopName," +
             "sf.remark as remark,sf.state as state," +
             "de.department_name AS departmentName,mp.post_name as postName,\n" +
-            "(SELECT GROUP_CONCAT(s_role.role_name)  FROM s_role INNER JOIN s_staffrole onesf ON s_role.id = onesf.role_id where onesf.staff_id = sf.id)as roleName\n" +
+            "(SELECT GROUP_CONCAT(s_role.role_name)  FROM s_role INNER JOIN s_staffrole onesf ON s_role.id = onesf.role_id where onesf.staff_id = sf.id and onesf.delete_no = 0)as roleName\n" +
             "FROM s_staff sf\n" +
             "LEFT JOIN department de ON sf.department_id = de.id\n" +
             "LEFT JOIN mes_post mp on sf.post_id = mp.id\n" +
@@ -49,7 +49,7 @@ public interface IMesMapper {
             "sf.state as state,\n" +
             " (SELECT GROUP_CONCAT(s_role.id) FROM s_role \n" +
             "INNER JOIN s_staffrole onesf ON s_role.id = onesf.role_id \n" +
-            "where onesf.staff_id = sf.id)as roleId \n" +
+            "where onesf.staff_id = sf.id and onesf.delete_no = 0)as roleId \n" +
             "FROM s_staff sf \n" +
             "LEFT JOIN department de ON sf.department_id = de.id \n" +
             "LEFT JOIN mes_post mp on sf.post_id = mp.id \n" +
@@ -304,14 +304,15 @@ public interface IMesMapper {
             "tb.bobbin_name as stockName,\n" +
             "tb.bobbin_model as stockModel,\n" +
             "tb.bobbin_number as stockNumber,\n" +
-            "sd.`name` as gxName,\n" +
+//            "sd.`name` as gxName,\n" +
+            "tb.procedure_id as gxName,\n" +
             "sdd.`name` as stockType,\n" +
             "sdi.`name` as dictionarier,\n" +
             "tb.remark as stockRemarks,\n" +
             "tb.state as state,\n" +
             "tb.delete_no as deleteNo\n" +
             "FROM t_bobbin tb\n" +
-            "LEFT JOIN s_dictionarier sd ON tb.procedure_id = sd.id\n" +
+//            "LEFT JOIN s_dictionarier sd ON tb.procedure_id = sd.id\n" +
             "LEFT JOIN s_dictionarier sdd ON tb.bobbintype_id = sdd.id\n" +
             "LEFT JOIN s_dictionarier sdi ON tb.dictionarier_id = sdi.id\n" +
             "WHERE tb.delete_no = 0"+
@@ -353,7 +354,8 @@ public interface IMesMapper {
     Integer countBybobbin(@Param("name")String name,@Param("deId")Integer deId);
 
     //    查询原材料下拉框
-    @Select(value = "<script>SELECT id as MapKey,stock_number as MapValue,stock_name as MapValue2,stock_model as Mapliandong  FROM t_stock WHERE delete_no = 0 and state = 0 </script>")
+    @Select(value = "<script>SELECT id as MapKey,stock_number as MapValue,stock_name as MapValue2,stock_model as Mapliandong," +
+            "dictionarier_id as Mapliandong2  FROM t_stock WHERE delete_no = 0 and state = 0 </script>")
     List<MapVo> findAllStockByXiaLa();
 
     //    联动下拉框：根据原材料Id查出原材料规格明细
@@ -375,10 +377,11 @@ public interface IMesMapper {
     List<MapVo> findAllProductByXiaLa(@Param("name")String name);
 
     //    联动下拉框：根据产品Id查出产品规格明细
-    @Select(value = "<script>SELECT id as MapKey,um_start as MapValue FROM t_prostandard WHERE delete_no = 0 \n" +
+    @Select(value = "<script>SELECT id as MapKey," +
+            "IF(#{findType},mil_start,um_start) as MapValue FROM t_prostandard WHERE delete_no = 0 \n" +
             "<if test='deId != null'>and product_id =#{deId}</if> \n" +
             "</script>")
-    List<MapVo> findAllProductDetailByIdXiaLa(@Param("deId")Integer deId);
+    List<MapVo> findAllProductDetailByIdXiaLa(@Param("deId")Integer deId,@Param("findType")Integer findType);
 
     //查询审核设置
     @Select(value = "<script>SELECT aud.id as id,aud.audit_level as auditLevel,\n" +
@@ -589,7 +592,7 @@ public interface IMesMapper {
 
 
 
-    //根据销售订单Id查询销售订单
+    //根据销售订单Id查询销售订单 轴数*价格 = 订单金额  长度*数量=总长度
     @Select(value = "<script>SELECT tsde.id as id,tsde.saleorder_id as saleorderId," +
             "tsde.product_id as productdetailId,tpro.product_id as productId,tsde.lengthm as lengthM, \n" +
             "tp.product_name as productName,tp.product_model as productModel,tp.product_number as productNumber,\n" +
@@ -597,7 +600,7 @@ public interface IMesMapper {
             "sd.`name` as unitName,tsde.product_num as productNum,\n" +
             "tsde.product_price as productPrice," +
             "(tsde.product_num * tsde.product_price) as productSum,\n" +
-            "(tsde.product_num * tsde.product_price * tsde.lengthm) as productLengthSum,\n" +
+            "(tsde.product_num * tsde.lengthm) as productLengthSum,\n" +
             "tsde.remark as remark,tsde.delete_no as deleteNo\n" +
             "FROM t_saleorderdetail tsde\n" +
             "LEFT JOIN t_prostandard tpro ON tpro.id = tsde.product_id \n" +
@@ -1362,7 +1365,7 @@ public interface IMesMapper {
 
     //计划单-关联销售订单-查询所有销售订单
     @Select(value = "<script>SELECT ts.id as MapKey,ts.sale_order as MapValue,\n" +
-            "sc.customer_name as MapValue2\n" +
+            "sc.customer_name as MapValue2,ts.finished_time as Mapliandong\n" +
             "FROM t_saleorder ts\n" +
             "LEFT JOIN s_customer sc ON sc.id = ts.customer_id\n" +
             "WHERE ts.delete_no = 0 and ts.order_state_id = 3 \n" +

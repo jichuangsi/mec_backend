@@ -158,14 +158,25 @@ public class SysController {
     }
 
     @ApiOperation(value = "厂房管理-新增", notes = "")
-    @ApiImplicitParams({
-    })
+    @ApiImplicitParams({ })
     @PostMapping("/addWorkShop")
     @OperLog(operModul = "新增",operType = "2",operDesc = "厂房管理-新增")
     public ResponseModel addWorkShop(@RequestBody Workshop workshop){
         try {
             sysService.addWorkShop(workshop);
             return ResponseModel.sucessWithEmptyData("");
+        }catch (Exception e) {
+            return ResponseModel.fail("", e.getMessage());
+        }
+    }
+
+
+    @ApiOperation(value = "厂房管理- 查询最新一条数据", notes = "")
+    @ApiImplicitParams({ })
+    @PostMapping("/getWorkShopNewInfo")
+    public ResponseModel getWorkShopNewInfo(){
+        try {
+            return ResponseModel.sucess("",sysService.getWorkShopNewInfo());
         }catch (Exception e) {
             return ResponseModel.fail("", e.getMessage());
         }

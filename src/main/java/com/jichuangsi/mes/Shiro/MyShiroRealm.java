@@ -84,7 +84,7 @@ public class MyShiroRealm extends AuthorizingRealm {
         //添加角色和权限
         SimpleAuthorizationInfo simpleAuthorizationInfo = new SimpleAuthorizationInfo();
 
-        List<SStaffRole> list = sStaffRoleRepository.findByStaffId(user.getId());
+        List<SStaffRole> list = sStaffRoleRepository.findByStaffIdAndDeleteNo(user.getId(),0);
 
         List<String> listAll = new ArrayList<String>(new HashSet<String>(iMesMapper.findRolePowerIdsByStaffId(user.getId())));
 

@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface WorkshopRepository extends JpaRepository<Workshop,Integer> {
-
+    Workshop findFirstByOrderByIdDesc();//获取最新一条数据回填
 
 }

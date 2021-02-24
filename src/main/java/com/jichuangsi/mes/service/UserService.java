@@ -63,9 +63,8 @@ public class UserService {
         }
 
         //查询用户编号是否存在
-        if (StringUtils.isEmpty(usermodel.getId()) && userRepository.countByStaffNum(usermodel.getStaffNum())>0){
-            throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
-        }else if(!StringUtils.isEmpty(usermodel.getId()) && userRepository.countByStaffNum(usermodel.getStaffNum())>1){
+        Integer numCount = userRepository.countByStaffNum(usermodel.getStaffNum(),usermodel.getId());
+        if (numCount>0){
             throw new PassportException(ResultCode.ACCOUNT_ISEXIST_MSG);
         }
 
@@ -106,13 +105,15 @@ public class UserService {
         String str = usermodel.getRoleId();
         String[] strArr = str.split("\\,");
         if(strArr.length != 0){
+            sstaffRoleRepository.updateByStaffId(staffid);//先把所有变成已删除状态
 
             for (int i = 0; i < strArr.length; i++) {
                 Integer roleId = Integer.valueOf(strArr[i]);
-                if(sstaffRoleRepository.findByStaffIdAndRoleId(staffid,roleId).size() == 0){
+                if(sstaffRoleRepository.findByStaffIdAndRoleIdAndDeleteNo(staffid,roleId,0).size() == 0){
                     SStaffRole sr = new SStaffRole();
                     sr.setRoleId(roleId);
                     sr.setStaffId(staffid);
+                    sr.setDeleteNo(0);
                     sstaffRoleRepository.save(sr);
                 }
             }

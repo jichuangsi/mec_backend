@@ -401,7 +401,7 @@ public class SysService {
     }
 
     /**
-     * 厂房管理-新增厂房
+     * 厂房管理-新增/修改厂房
      * @param ws
      * @throws IOException
      * @throws PassportException
@@ -412,6 +412,16 @@ public class SysService {
 
         }
         workshopRepository.save(ws);
+    }
+
+
+    /**
+     * 厂房管理- 查询最新一条数据
+     * @param
+     * @throws PassportException
+     */
+    public Workshop getWorkShopNewInfo()throws PassportException{
+        return workshopRepository.findFirstByOrderByIdDesc();
     }
 
 
@@ -645,7 +655,7 @@ public class SysService {
             throw new PassportException(ResultCode.PARAM_MISS_MSG);
         }
 
-        if(sdictionarierRepository.countByNameAndDictFID(sDictionarier.getName(),sDictionarier.getDictFID()) > 0 ){
+        if(sdictionarierRepository.countByNameAndDictFIDAndDeleteNo(sDictionarier.getName(),sDictionarier.getDictFID(),0) > 0 ){
             throw new PassportException(ResultCode.DICTIONARY_ISEXIST_MSG);
         }
 

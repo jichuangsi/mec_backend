@@ -19,8 +19,16 @@ public class TSaleorderdetail {
     private Integer productNum;//数量(轴)
     private BigDecimal productPrice;//单价
     private String remark;//备注
+    private Integer finished;//完成否
     private Integer deleteNo;
 
+    public Integer getFinished() {
+        return finished;
+    }
+
+    public void setFinished(Integer finished) {
+        this.finished = finished;
+    }
 
     public BigDecimal getLengthM() {
         return lengthM;

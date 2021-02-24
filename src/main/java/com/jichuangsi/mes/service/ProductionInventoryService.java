@@ -575,14 +575,33 @@ public class ProductionInventoryService {
         inventoryRecordRepository.saveAll(inventoryRecordList);
 
 //        根据包装id添加入库历史
-        addRKHistory(listInt);
+//        addRKHistory(listInt);
     }
 
 
-    public void addRKHistory(List<Integer> listInt){
-        for (Integer id:listInt) {
+    /**
+     * 生产库存管理-生产入库- 查询
+     * @param
+     * @throws PassportException
+     */
+    public PageInfo getAllPPPRK(SelectModel smodel)throws PassportException{
+        PageInfo page=new PageInfo();
 
-        }
+        List<PPPickingVo>  ppVoList=iNewProductionMapper.findAllPPPicking(smodel.getFindName(),(smodel.getPageNum()-1)*smodel.getPageSize(),smodel.getPageSize());
 
+        page.setList(ppVoList);
+        page.setTotal(iNewProductionMapper.countAllPPPicking(smodel.getFindName()));
+
+        page.setPageSize(smodel.getPageSize());
+        page.setPageNum(smodel.getPageNum());
+        return page;
     }
+
+
+//    public void addRKHistory(List<Integer> listInt){
+//        for (Integer id:listInt) {
+//            ProductionPicking productionPicking = new ProductionPicking();
+//        }
+//
+//    }
 }

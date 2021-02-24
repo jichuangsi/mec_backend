@@ -11,6 +11,15 @@ public class SStaffRole {
     private Integer id;//用户角色ID
     private Integer staffId;//用户ID (一个用户能有多个角色)
     private Integer roleId;//用户角色ID
+    private Integer deleteNo;//删除否
+
+    public Integer getDeleteNo() {
+        return deleteNo;
+    }
+
+    public void setDeleteNo(Integer deleteNo) {
+        this.deleteNo = deleteNo;
+    }
 
     public Integer getId() {
         return id;

@@ -99,7 +99,7 @@ public class ProductionPlanService {
         }else{
             List<MapVo> listvo = mesMapper.findAllProductByXiaLa(selectModel.getFindName());
             job.put("LData",listvo.size() == 0 ? "":listvo);//左边的产品list
-            job.put("RData",listvo.size() == 0 ? "":mesMapper.findAllProductDetailByIdXiaLa(listvo.get(0).getMapKey()));//右边的产品明细
+            job.put("RData",listvo.size() == 0 ? "":mesMapper.findAllProductDetailByIdXiaLa(listvo.get(0).getMapKey(),null));//右边的产品明细
         }
 
         return job;
@@ -120,7 +120,7 @@ public class ProductionPlanService {
         if (selectModel.getIswhether() == 1){
             job.put("RData",mesMapper.findSaleDetailById(selectModel.getFindById()));//右边的销售订单明细
         }else{
-            job.put("RData",mesMapper.findAllProductDetailByIdXiaLa(selectModel.getFindById()));//右边的产品明细
+            job.put("RData",mesMapper.findAllProductDetailByIdXiaLa(selectModel.getFindById(),null));//右边的产品明细
         }
 
         return job;

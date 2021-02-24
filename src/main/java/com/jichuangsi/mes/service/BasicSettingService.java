@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BasicSettingService {
@@ -120,6 +121,10 @@ public class BasicSettingService {
             case "bobbin"://线轴管理-线轴
 
                 List<StockModel> listbobbin = mesMapper.findAllbobbin(smodel.getFindName(),smodel.getFindIdOne(),pagenum,pagesize);
+
+                for(StockModel selectmodel :listbobbin){
+                    selectmodel.setGxName(sdRepository.findNamesByids( Arrays.asList(selectmodel.getGxName().split(",")).stream().map(s -> Integer.parseInt(s.trim())).collect(Collectors.toList())));
+                }
                 page.setList(listbobbin);
                 page.setTotal(mesMapper.countBybobbin(smodel.getFindName(),smodel.getFindIdOne()));
                 break;
@@ -346,7 +351,7 @@ public class BasicSettingService {
 
         Integer tpid = stock2.getId();
 
-        tStandardsRepository.updateByOrderId(tpid);
+        tStandardsRepository.updateByOrderId(tpid,1);
         for (int i = 0; i < model.getTstandards().size(); i++) {
             TStandards tStandards = model.getTstandards().get(i);
             tStandards.setDeleteNo(0);
@@ -381,7 +386,7 @@ public class BasicSettingService {
         TBobbin tBobbin =   tbobbinRepository.save(tb);
         Integer tpid = tBobbin.getId();
 
-        tStandardsRepository.updateByOrderId(tpid);
+        tStandardsRepository.updateByOrderId(tpid,2);
         List<TStandards> list = model.getTstandards();
         for (int i = 0; i < list.size(); i++) {
             TStandards tStandards = list.get(i);
@@ -426,7 +431,7 @@ public class BasicSettingService {
 
         Integer tpekseid = stock2.getId();
 
-        tStandardsRepository.updateByOrderId(tpekseid);
+        tStandardsRepository.updateByOrderId(tpekseid,3);
 
         for (int i = 0; i < model.getTstandards().size(); i++) {
             TStandards tStandards = model.getTstandards().get(i);

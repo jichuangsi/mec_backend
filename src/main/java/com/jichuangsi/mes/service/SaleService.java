@@ -117,8 +117,8 @@ public class SaleService {
      */
     public JSONObject getSaleDetailBasicInfo(SelectModel smodel)throws PassportException {
         JSONObject job = new JSONObject();
-
-        job.put("productDetailXiaLa",mesMapper.findAllProductDetailByIdXiaLa(smodel.getFindById()));//产品下拉框
+//        0/null:查询的是um_start  1：mil_start
+        job.put("productDetailXiaLa",mesMapper.findAllProductDetailByIdXiaLa(smodel.getFindById(),smodel.getFindIdOne()));//产品下拉框
 
         return job;
     }
